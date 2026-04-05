@@ -31,7 +31,8 @@
   --orange:#f97316;--blue:#3b82f6;
   --max:480px;
 }
-body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;}
+body{background:var(--bg) !important;color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;color-scheme:dark;}
+html{background:var(--bg) !important;}
 
 /* Desktop wrapper - centers the app like a phone on a big screen */
 #app{min-height:100vh;}
@@ -86,7 +87,7 @@ textarea{resize:vertical;min-height:72px;}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
 .content{padding:14px 14px 90px;}
 .footer{font-size:9px;color:var(--muted);text-align:center;padding:8px 16px;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);}
-.screen{display:flex;flex-direction:column;min-height:100vh;padding:0 24px;max-width:var(--max);margin:0 auto;}
+.screen{display:flex;flex-direction:column;min-height:100vh;padding:0 24px;max-width:var(--max);margin:0 auto;background:var(--bg);}
 .screen-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
 .opt-btn{width:100%;background:var(--surf);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:14px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;}
 .opt-btn.sel{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:900;}
@@ -142,6 +143,7 @@ if (ONESIGNAL_APP_ID !== 'YOUR_ONESIGNAL_APP_ID') {
 var S = {
   screen: 'loading',
   step: 0,
+  diagStep: 0,
   answers: {},
   profile: null,
   tab: 'today',
@@ -200,12 +202,22 @@ function load() {
 }
 
 // ─── Data ───────────────────────────────────────────────────────────────────
-// Phase 1: 4 essential number questions only - AI conversation handles the rest
+// Phase 1: 4 number questions
 var QUESTIONS = [
   { id:'name',     e:'👋', q:"What's your first name?",            type:'text',   ph:'First name' },
   { id:'takehome', e:'💰', q:'Monthly take-home pay after taxes?', type:'dollar', ph:'e.g. 5000'  },
   { id:'carddebt', e:'💳', q:'Total credit card debt?',            type:'dollar', ph:'0 if none'  },
   { id:'checking', e:'🏦', q:'Cash in checking right now?',        type:'dollar', ph:'e.g. 2500'  },
+];
+
+// Phase 2: 4 diagnostic questions replacing AI chat
+var DIAG = [
+  { id:'goal', e:'🎯', q:'What is the main thing you want to fix right now?', type:'choice',
+    opts:['Get out of debt','Stop living paycheck to paycheck','Build my savings','Just get control of my money'] },
+  { id:'blocker', e:'🧱', q:'What has been getting in the way?', type:'text', ph:'Be honest - this shapes your plan' },
+  { id:'savings', e:'💵', q:'About how much do you have in savings right now?', type:'choice',
+    opts:['$0 - nothing saved','Less than $500','$500 to $2,000','More than $2,000'] },
+  { id:'rent', e:'🏡', q:'Monthly rent or biggest fixed expense?', type:'dollar', ph:'e.g. 1500' },
 ];
 
 
@@ -408,50 +420,36 @@ function scheduleReminder() {
 // ─── Profile Builder ────────────────────────────────────────────────────────
 function buildProfile(a) {
   var n = function(id) { return parseInt(a[id]) || 0; };
-  var th = n('takehome'), ch = n('checking'), sv = n('savings') || 0;
-  var mg = n('mortgage') || 0, cd = n('carddebt');
+  var th = n('takehome'), ch = n('checking'), cd = n('carddebt');
+  var mg = n('rent') || 0;
+
+  // Derive savings from choice
+  var sv = 0;
+  if (a.savings === 'Less than $500') sv = 250;
+  else if (a.savings === '$500 to $2,000') sv = 1000;
+  else if (a.savings === 'More than $2,000') sv = 2000;
+
   var liquid = ch + sv;
   var minCard = Math.round(cd * 0.025);
   var oblig = mg + minCard + 500;
   var surplus = th - oblig - 400;
 
-  // Extract additional context from AI conversation
-  var chatCtx = S.chatContext || '';
-  var goal = a.goal || extractGoal(chatCtx) || 'Get organized';
-  var stress = a.stress || extractStress(chatCtx) || '';
-  var credit = a.credit || extractCredit(chatCtx) || '';
+  var goal = a.goal || 'Get control of my money';
+  var stress = a.blocker || '';
 
-  return { name:a.name||'Friend', goal:goal, stress:stress, credit:credit, timeline:a.timeline||'',
-    th:th, ch:ch, sv:sv, mg:mg, cd:cd, minCard:minCard, liquid:liquid, oblig:oblig, surplus:surplus,
-    chatContext: chatCtx };
-}
+  // Derive credit hint from debt vs income ratio
+  var credit = '';
+  if (cd > th * 6) credit = 'Under 580 - needs work';
+  else if (cd > th * 3) credit = '580-669 - fair';
+  else if (cd > 0) credit = '670-739 - good';
+  else credit = '740+ - great';
 
-function extractGoal(ctx) {
-  ctx = ctx.toLowerCase();
-  if (ctx.indexOf('debt') >= 0 || ctx.indexOf('card') >= 0) return 'Get out of debt';
-  if (ctx.indexOf('credit') >= 0 || ctx.indexOf('score') >= 0) return 'Fix my credit';
-  if (ctx.indexOf('save') >= 0 || ctx.indexOf('emergency') >= 0) return 'Build an emergency fund';
-  if (ctx.indexOf('move') >= 0 || ctx.indexOf('relocat') >= 0) return 'Save for a big move';
-  return 'Get organized';
-}
-
-function extractStress(ctx) {
-  var lines = ctx.split('\n');
-  for (var i = 0; i < lines.length; i++) {
-    if (lines[i].indexOf('user:') === 0 && lines[i].length > 20) {
-      return lines[i].replace('user:', '').trim().slice(0, 80);
-    }
-  }
-  return '';
-}
-
-function extractCredit(ctx) {
-  ctx = ctx.toLowerCase();
-  if (ctx.indexOf('740') >= 0 || ctx.indexOf('great') >= 0 || ctx.indexOf('excel') >= 0) return '740+ - great';
-  if (ctx.indexOf('670') >= 0 || ctx.indexOf('good') >= 0) return '670-739 - good';
-  if (ctx.indexOf('580') >= 0 || ctx.indexOf('fair') >= 0) return '580-669 - fair';
-  if (ctx.indexOf('poor') >= 0 || ctx.indexOf('bad') >= 0 || ctx.indexOf('low') >= 0) return 'Under 580 - needs work';
-  return '';
+  return {
+    name: a.name||'Friend', goal: goal, stress: stress, credit: credit,
+    timeline: 'I need help NOW', savings: a.savings || '$0',
+    th: th, ch: ch, sv: sv, mg: mg, cd: cd,
+    minCard: minCard, liquid: liquid, oblig: oblig, surplus: surplus
+  };
 }
 
 // ─── Format helpers ─────────────────────────────────────────────────────────
@@ -476,7 +474,7 @@ function renderLanding() {
     '<div style="font-size:68px;margin-bottom:16px">🌴</div>' +
     '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">NextStep</div>' +
     '<div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:8px">Your plan adjusts daily until you win.</div>' +
-    '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 10 questions. Get your plan. Monday is a great day to start - so is right now.</div>' +
+    '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 4 questions. Have a quick conversation. Get your personalized plan. Takes 3 minutes.</div>' +
     (!isInstalled ? '<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience including notifications.</div>' : '') +
     '<button class="btn btn-gold" onclick="startOnboarding()">Build My Plan</button>' +
     '<div style="color:var(--muted);font-size:11px;margin-top:8px">Takes 2 minutes. Stays on your device.</div>' +
@@ -514,51 +512,38 @@ function renderOnboarding() {
 }
 
 function renderChat() {
-  var msgs = S.chatMessages || [];
-  var loading = S.chatLoading;
-  var done = S.chatDone;
+  var dstep = S.diagStep || 0;
+  var q = DIAG[dstep];
+  var val = S.answers[q.id] || '';
+  var pct = Math.round(((QUESTIONS.length + dstep + 1) / (QUESTIONS.length + DIAG.length + 1)) * 100);
 
   var html = '<div class="screen">' +
-    '<div style="padding-top:44px;margin-bottom:16px">' +
+    '<div style="padding-top:52px;margin-bottom:36px">' +
     '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">' +
-    '<span>Step 5 of 5 &mdash; Your story</span>' +
-    '<span style="color:var(--gold);font-weight:700">Almost done</span></div>' +
-    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:95%;background:var(--gold)"></div></div>' +
+    '<span>Step ' + (QUESTIONS.length + dstep + 1) + ' of ' + (QUESTIONS.length + DIAG.length) + ' &mdash; Your situation</span>' +
+    '<span style="color:var(--gold);font-weight:700">' + pct + '%</span></div>' +
+    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:' + pct + '%;background:var(--gold)"></div></div>' +
     '</div>' +
-    '<div style="text-align:center;margin-bottom:16px">' +
-    '<div style="font-size:36px;margin-bottom:6px">🤝</div>' +
-    '<div style="font-family:Georgia,serif;font-size:18px;font-weight:900;margin-bottom:4px">Now tell us your story</div>' +
-    '<div style="font-size:12px;color:var(--muted);line-height:1.6">The numbers told us the facts. Now tell us what is actually going on. We will ask a couple of follow-up questions to build your plan.</div>' +
-    '</div>';
+    '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">' +
+    '<div style="font-size:52px;margin-bottom:14px;text-align:center">' + q.e + '</div>' +
+    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:28px">' + q.q + '</div>';
 
-  // Chat messages
-  html += '<div id="chatbox" style="flex:1;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px;">';
-  msgs.forEach(function(m) {
-    var isUser = m.role === 'user';
-    html += '<div style="display:flex;justify-content:' + (isUser?'flex-end':'flex-start') + '">' +
-      '<div style="max-width:85%;padding:10px 14px;border-radius:' + (isUser?'14px 14px 4px 14px':'14px 14px 14px 4px') + ';background:' + (isUser?'var(--gold)':'var(--surf)') + ';color:' + (isUser?'var(--bg)':'var(--text)') + ';font-size:14px;line-height:1.6;border:1px solid ' + (isUser?'var(--gold)':'var(--border)') + '">' +
-      m.content +
-      '</div></div>';
-  });
-
-  if (loading) {
-    html += '<div style="display:flex;justify-content:flex-start">' +
-      '<div style="padding:10px 14px;border-radius:14px 14px 14px 4px;background:var(--surf);border:1px solid var(--border);color:var(--muted);font-size:14px">' +
-      '<span style="animation:pulse 1s infinite">Thinking...</span>' +
-      '</div></div>';
+  if (q.type === 'choice') {
+    html += '<div style="display:flex;flex-direction:column;gap:8px">';
+    q.opts.forEach(function(opt) {
+      var sel = val === opt;
+      html += '<button class="opt-btn' + (sel?' sel':'') + '" onclick="pickDiag(\'' + opt.replace(/'/g,"\\'") + '\')">' + opt + '</button>';
+    });
+    html += '</div>';
+  } else {
+    html += '<input id="diaginput" type="' + (q.type==='dollar'?'tel':'text') + '" inputmode="' + (q.type==='dollar'?'numeric':'text') + '" placeholder="' + q.ph + '" value="' + val + '" oninput="S.answers[\'' + q.id + '\']=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
+    if (q.type === 'dollar' && val) html += '<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$' + parseInt(val.replace(/[^0-9]/g,'')).toLocaleString() + '</div>';
+    html += '<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">' + (dstep < DIAG.length-1 ? 'Next' : 'Build My Plan') + '</button>';
+    if (q.type === 'dollar') html += '<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
   }
+
   html += '</div>';
-
-  if (done) {
-    html += '<button class="btn btn-gold" style="font-size:16px" onclick="finishChat()">Build My Plan &rarr;</button>';
-  } else if (!loading) {
-    html += '<div style="display:flex;gap:8px;align-items:flex-end">' +
-      '<textarea id="chatinput" placeholder="Type your answer..." rows="2" style="flex:1;resize:none;border-radius:12px;padding:10px 12px;font-size:14px;" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();sendChat();}"></textarea>' +
-      '<button onclick="sendChat()" style="background:var(--gold);color:var(--bg);border:none;border-radius:12px;padding:10px 16px;font-size:18px;cursor:pointer;flex-shrink:0;font-weight:900;height:44px">&#8593;</button>' +
-      '</div>' +
-      '<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px">Press Enter to send &mdash; Shift+Enter for new line</div>';
-  }
-
+  html += '<button style="background:none;border:none;color:var(--muted);font-size:12px;padding:16px 0 32px;cursor:pointer;font-family:inherit" onclick="prevDiag()">Back</button>';
   html += '</div>';
   return html;
 }
@@ -1101,7 +1086,10 @@ function renderProtect() {
 }
 
 // ─── Event Handlers ──────────────────────────────────────────────────────────
-function startOnboarding() { S.screen='onboarding'; S.step=0; S.chatMessages=[]; S.chatLoading=false; S.chatDone=false; S.chatExchanges=0; render(); }
+function startOnboarding() {
+  S.screen='onboarding'; S.step=0; S.diagStep=0;
+  render();
+}
 
 function onInput(v) { S.answers[QUESTIONS[S.step].id] = v; }
 
@@ -1113,14 +1101,11 @@ function nextStep() {
     render();
     setTimeout(function() { var el = document.getElementById('qinput'); if(el) el.focus(); }, 50);
   } else {
-    // All 4 number questions done - go to AI conversation
+    // Numbers done — go to diagnostic questions
     S.screen = 'chat';
-    S.chatMessages = [];
-    S.chatLoading = true;
-    S.chatDone = false;
-    S.chatExchanges = 0;
+    S.diagStep = 0;
     render();
-    startChat();
+    setTimeout(function() { var el = document.getElementById('diaginput'); if(el) el.focus(); }, 50);
   }
 }
 
@@ -1129,121 +1114,32 @@ function prevStep() {
   if (S.step > 0) { S.step--; render(); }
 }
 
-function scrollChat() {
-  setTimeout(function() {
-    var box = document.getElementById('chatbox');
-    if (box) box.scrollTop = box.scrollHeight;
-    var inp = document.getElementById('chatinput');
-    if (inp) inp.focus();
-  }, 100);
+function pickDiag(opt) {
+  S.answers[DIAG[S.diagStep].id] = opt;
+  setTimeout(function() { nextDiag(); }, 120);
 }
 
-function startChat() {
-  var name = S.answers.name || 'Friend';
-  var income = parseInt(S.answers.takehome) || 0;
-  var debt = parseInt(S.answers.carddebt) || 0;
-  var cash = parseInt(S.answers.checking) || 0;
-
-  var systemPrompt = 'You are a warm, direct financial coach inside the NextStep app. You know these facts about the user:\n' +
-    '- Name: ' + name + '\n' +
-    '- Monthly take-home income: $' + income.toLocaleString() + '\n' +
-    '- Credit card debt: $' + debt.toLocaleString() + '\n' +
-    '- Cash in checking: $' + cash.toLocaleString() + '\n\n' +
-    'Your job: Have a SHORT conversational intake to understand their situation better. Ask ONE question at a time. Be warm and human - not clinical. You want to discover: their main financial stressor, their number 1 goal, their credit score range, their monthly rent/mortgage, any other debts, and their timeline. You have a maximum of 3 exchanges total. After 3 exchanges, say exactly this on its own line: [DONE] and then give a brief 2-sentence summary of what you learned. Keep responses under 60 words. Do not give advice yet - just listen and ask. Start by acknowledging their numbers briefly and asking about what is stressing them most right now.';
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: 'Start the conversation.' }]
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var text = data.content && data.content[0] ? data.content[0].text : 'Tell me what is going on with your money right now.';
-    S.chatMessages = [{ role: 'assistant', content: text }];
-    S.chatLoading = false;
-    checkChatDone(text);
+function nextDiag() {
+  var q = DIAG[S.diagStep];
+  if (!S.answers[q.id]) S.answers[q.id] = '';
+  if (S.diagStep < DIAG.length - 1) {
+    S.diagStep++;
     render();
-    scrollChat();
-  })
-  .catch(function() {
-    // Fallback if API fails - use a static opening question
-    S.chatMessages = [{ role: 'assistant', content: 'Hey ' + name + '! Looking at your numbers - $' + debt.toLocaleString() + ' in credit card debt on $' + income.toLocaleString() + '/mo take-home. What is stressing you most about your money situation right now?' }];
-    S.chatLoading = false;
+    setTimeout(function() { var el = document.getElementById('diaginput'); if(el) el.focus(); }, 50);
+  } else {
+    // All done — go to notifications
+    S.screen = 'notif';
     render();
-    scrollChat();
-  });
-}
-
-function sendChat() {
-  var inp = document.getElementById('chatinput');
-  var text = inp ? inp.value.trim() : '';
-  if (!text || S.chatLoading || S.chatDone) return;
-
-  S.chatMessages.push({ role: 'user', content: text });
-  S.chatLoading = true;
-  S.chatExchanges++;
-  render();
-  scrollChat();
-
-  var name = S.answers.name || 'Friend';
-  var income = parseInt(S.answers.takehome) || 0;
-  var debt = parseInt(S.answers.carddebt) || 0;
-  var cash = parseInt(S.answers.checking) || 0;
-
-  var systemPrompt = 'You are a warm, direct financial coach inside the NextStep app. You know these facts:\n' +
-    '- Name: ' + name + '\n- Monthly take-home: $' + income.toLocaleString() + '\n- Credit card debt: $' + debt.toLocaleString() + '\n- Cash in checking: $' + cash.toLocaleString() + '\n\n' +
-    'This is exchange ' + S.chatExchanges + ' of maximum 3. ' +
-    (S.chatExchanges >= 3 ? 'This is your LAST exchange. After your response, you MUST write [DONE] on its own line, then a 2-sentence summary of what you learned about their situation.' : 'Ask ONE follow-up question. Keep it under 50 words. Be warm and human.') +
-    ' Do not give advice yet - just listen.';
-
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 200,
-      system: systemPrompt,
-      messages: S.chatMessages.map(function(m) { return { role: m.role, content: m.content }; })
-    })
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(data) {
-    var text = data.content && data.content[0] ? data.content[0].text : 'Thank you for sharing that. [DONE] I have what I need to build your plan.';
-    S.chatMessages.push({ role: 'assistant', content: text });
-    S.chatLoading = false;
-    checkChatDone(text);
-
-    // Extract context from conversation for the plan
-    if (S.chatDone) {
-      S.chatContext = S.chatMessages.map(function(m) { return m.role + ': ' + m.content; }).join('\n');
-    }
-    render();
-    scrollChat();
-  })
-  .catch(function() {
-    S.chatMessages.push({ role: 'assistant', content: 'Got it. I have enough to build your plan. [DONE] Based on our conversation I understand your situation and your main priorities.' });
-    S.chatLoading = false;
-    S.chatDone = true;
-    render();
-    scrollChat();
-  });
-}
-
-function checkChatDone(text) {
-  if (text.indexOf('[DONE]') >= 0 || S.chatExchanges >= 3) {
-    S.chatDone = true;
   }
 }
 
-function finishChat() {
-  S.screen = 'notif';
-  render();
+function prevDiag() {
+  if (S.diagStep > 0) { S.diagStep--; render(); }
+  else { S.screen='onboarding'; S.step=QUESTIONS.length-1; render(); }
 }
+
+function scrollChat() {}
+
 
 
 function toggleNotif(id) {
@@ -1369,16 +1265,44 @@ function submitFeedback() {
 }
 
 function resetAll() {
-  if (!confirm('Start completely over? This will erase all your data.')) return;
   localStorage.clear();
   S = {
-    screen:'landing', step:0, answers:{}, profile:null, tab:'today',
+    screen:'landing', step:0, diagStep:0, answers:{}, profile:null, tab:'today',
     checked:{}, subChecked:{}, dayChecked:{},
     day:1, viewDay:1, plans:{},
     feedback:[], fbScreen:'view', fbDidIt:'yes', fbBlocker:'', fbEasier:'', fbSubmitted:false,
     energy:null, notifPrefs:{}, editing:false, editText:'', calAdded:{},
     expandedStep:null, expandedScript:null,
     todayAnswers:{completed:'',avoided:'',blocked:''},
-    chatMessages:[], chatLoading:false, chatDone:false, chatExchanges:0, chatContext:'',
   };
-  
+  render();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+function init() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  }
+
+  // Handle URL tab param
+  var urlTab = new URLSearchParams(window.location.search).get('tab');
+
+  // Load state
+  load();
+
+  if (S.profile) {
+    S.screen = 'dashboard';
+    if (urlTab) S.tab = urlTab;
+  } else {
+    S.screen = 'landing';
+  }
+
+  render();
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
