@@ -343,7 +343,7 @@ function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, block
   if (tight) avoid.push('Any unplanned purchase over $20 - every dollar matters right now');
   avoid.push('Waiting until you feel motivated - action creates motivation, not the other way around');
 
-  return { name:name, day:dayNum, priority:priority, energyLine:energyLine, actions:actions.slice(0,3), momentum:momentum, avoid:avoid.slice(0,2) };
+  return { name:name, day:dayNum, priority:priority, energyLine:energyLine, actions:actions.slice(0,3), momentum:momentum, avoid:avoid.slice(0,2), hasDebt:hasDebt };
 }
 
 // ─── Calendar Export ────────────────────────────────────────────────────────
@@ -645,7 +645,17 @@ function renderToday() {
     }
     html += '</div>';
   }
-  if (streak > 0) html += '<div class="center" style="margin-top:8px"><span class="streak-fire">🔥</span> <span style="color:var(--gold);font-weight:700;font-size:12px">' + streak + ' day' + (streak!==1?'s':'') + ' strong</span></div>';
+  if (streak > 0) {
+    var streakMsg = '';
+    var streakColor = 'var(--gold)';
+    if (streak >= 7) { streakMsg = streak + ' day streak. You are in rare company.'; streakColor = 'var(--green)'; }
+    else if (streak >= 3) { streakMsg = streak + ' days. Do not break it now.'; }
+    else if (streak === 2) { streakMsg = '2 days in. Most people quit here. Keep going.'; }
+    else { streakMsg = 'Day 1 done. Come back tomorrow or the streak dies.'; }
+    html += '<div class="center" style="margin-top:8px;padding:8px 12px;background:rgba(240,180,41,0.08);border-radius:8px">' +
+      '<span class="streak-fire">🔥</span> <span style="color:' + streakColor + ';font-weight:700;font-size:12px">' + streakMsg + '</span>' +
+      '</div>';
+  }
   html += '</div>';
 
   // Past day view
@@ -746,6 +756,30 @@ function renderToday() {
         html += '<div class="action-item"><div class="action-num">' + (i+1) + '.</div><div class="plan-body">' + a + '</div></div>';
       });
       html += '</div>';
+
+      // Zero-resistance action buttons
+      if (plan.hasDebt) {
+        html += '<div style="margin-bottom:14px">' +
+          '<div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1px;margin-bottom:8px">ONE-TAP ACTIONS</div>' +
+          '<div style="display:flex;flex-direction:column;gap:8px">';
+
+        // Call button with script
+        html += '<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">' +
+          '<div onclick="toggleScript(\'callscript\')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--surf)">' +
+          '<div style="display:flex;align-items:center;gap:10px">' +
+          '<span style="font-size:20px">📞</span>' +
+          '<div><div style="font-size:13px;font-weight:700">Call your credit card</div><div style="font-size:11px;color:var(--muted)">Script ready. Tap to see it first.</div></div>' +
+          '</div>' +
+          '<span id="callscript-arrow" style="color:var(--gold);font-size:14px">&#9660;</span>' +
+          '</div>' +
+          '<div id="callscript" style="display:none;padding:12px 14px;background:rgba(240,180,41,0.08);border-top:1px solid var(--border)">' +
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700">READ THIS WORD FOR WORD:</div>' +
+          '<div style="font-size:14px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:12px">"Hi, I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate on my account. Can you help me with that?"</div>' +
+          '<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Call Now</a>' +
+          '</div></div>';
+
+        html += '</div></div>';
+      }
       html += '<div class="plan-section"><div class="plan-title">MOMENTUM NOTE</div><div class="plan-body" style="font-style:italic">' + plan.momentum + '</div></div>';
       html += '<div class="plan-section"><div class="plan-title">AVOID TODAY</div>';
       plan.avoid.forEach(function(a) {
@@ -1202,107 +1236,5 @@ function toggleDayCheck(dayKey, stepId) {
   render();
 }
 
-function toggleCheck(id) {
-  S.checked[id] = !S.checked[id];
-  save();
-  render();
-}
-
-function toggleSub(id) {
-  S.subChecked[id] = !S.subChecked[id];
-  save();
-  render();
-}
-
-function toggleExpand(id) {
-  S.expandedStep = (S.expandedStep === id) ? null : id;
-  render();
-}
-
-function startEdit() { S.editText = formatPlanText(S.plans[S.viewDay]); S.editing=true; render(); }
-
-function saveEdit() {
-  var box = document.getElementById('editbox');
-  S.plans[S.viewDay] = box ? box.value : S.editText;
-  S.editing = false;
-  save();
-  render();
-}
-
-function cancelEdit() { S.editing=false; render(); }
-
-function copyPlan() {
-  var plan = S.plans[S.viewDay-1] || S.plans[S.day-1];
-  if (!plan) return;
-  var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function(){ alert('Copied!'); });
-}
-
-function resetPlan() {
-  if (!confirm('Reset this day? You will need to generate a new plan.')) return;
-  var d = S.day-1;
-  delete S.plans[d];
-  S.day = d;
-  S.viewDay = d;
-  save();
-  render();
-}
-
-function submitFeedback() {
-  var entry = {
-    day: S.day-1,
-    name: S.profile.name,
-    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),
-    didIt: S.fbDidIt || 'yes',
-    blocker: S.fbBlocker || '',
-    easier: S.fbEasier || '',
-  };
-  S.feedback.push(entry);
-  S.fbSubmitted = true;
-  S.fbScreen = 'view';
-  save();
-  render();
-}
-
-function resetAll() {
-  localStorage.clear();
-  S = {
-    screen:'landing', step:0, diagStep:0, answers:{}, profile:null, tab:'today',
-    checked:{}, subChecked:{}, dayChecked:{},
-    day:1, viewDay:1, plans:{},
-    feedback:[], fbScreen:'view', fbDidIt:'yes', fbBlocker:'', fbEasier:'', fbSubmitted:false,
-    energy:null, notifPrefs:{}, editing:false, editText:'', calAdded:{},
-    expandedStep:null, expandedScript:null,
-    todayAnswers:{completed:'',avoided:'',blocked:''},
-  };
-  render();
-}
-
-// ─── Init ────────────────────────────────────────────────────────────────────
-function init() {
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function(){});
-  }
-
-  // Handle URL tab param
-  var urlTab = new URLSearchParams(window.location.search).get('tab');
-
-  // Load state
-  load();
-
-  if (S.profile) {
-    S.screen = 'dashboard';
-    if (urlTab) S.tab = urlTab;
-  } else {
-    S.screen = 'landing';
-  }
-
-  render();
-}
-
-// Start
-init();
-</script>
-</body>
-</html>
+function toggleScript(id) {
+  var el = 
