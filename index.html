@@ -1137,4 +1137,264 @@ function scrollChat() {
 
 function startChat() {
   var name = S.answers.name || 'Friend';
-  var 
+  var income = parseInt(S.answers.takehome) || 0;
+  var debt = parseInt(S.answers.carddebt) || 0;
+  var cash = parseInt(S.answers.checking) || 0;
+
+  var systemPrompt = 'You are a warm, direct financial coach inside the NextStep app. You know these facts about the user:\n' +
+    '- Name: ' + name + '\n' +
+    '- Monthly take-home income: $' + income.toLocaleString() + '\n' +
+    '- Credit card debt: $' + debt.toLocaleString() + '\n' +
+    '- Cash in checking: $' + cash.toLocaleString() + '\n\n' +
+    'Your job: Have a SHORT conversational intake to understand their situation better. Ask ONE question at a time. Be warm and human - not clinical. You want to discover: their main financial stressor, their number 1 goal, their credit score range, their monthly rent/mortgage, any other debts, and their timeline. You have a maximum of 3 exchanges total. After 3 exchanges, say exactly this on its own line: [DONE] and then give a brief 2-sentence summary of what you learned. Keep responses under 60 words. Do not give advice yet - just listen and ask. Start by acknowledging their numbers briefly and asking about what is stressing them most right now.';
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: 'Start the conversation.' }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var text = data.content && data.content[0] ? data.content[0].text : 'Tell me what is going on with your money right now.';
+    S.chatMessages = [{ role: 'assistant', content: text }];
+    S.chatLoading = false;
+    checkChatDone(text);
+    render();
+    scrollChat();
+  })
+  .catch(function() {
+    // Fallback if API fails - use a static opening question
+    S.chatMessages = [{ role: 'assistant', content: 'Hey ' + name + '! Looking at your numbers - $' + debt.toLocaleString() + ' in credit card debt on $' + income.toLocaleString() + '/mo take-home. What is stressing you most about your money situation right now?' }];
+    S.chatLoading = false;
+    render();
+    scrollChat();
+  });
+}
+
+function sendChat() {
+  var inp = document.getElementById('chatinput');
+  var text = inp ? inp.value.trim() : '';
+  if (!text || S.chatLoading || S.chatDone) return;
+
+  S.chatMessages.push({ role: 'user', content: text });
+  S.chatLoading = true;
+  S.chatExchanges++;
+  render();
+  scrollChat();
+
+  var name = S.answers.name || 'Friend';
+  var income = parseInt(S.answers.takehome) || 0;
+  var debt = parseInt(S.answers.carddebt) || 0;
+  var cash = parseInt(S.answers.checking) || 0;
+
+  var systemPrompt = 'You are a warm, direct financial coach inside the NextStep app. You know these facts:\n' +
+    '- Name: ' + name + '\n- Monthly take-home: $' + income.toLocaleString() + '\n- Credit card debt: $' + debt.toLocaleString() + '\n- Cash in checking: $' + cash.toLocaleString() + '\n\n' +
+    'This is exchange ' + S.chatExchanges + ' of maximum 3. ' +
+    (S.chatExchanges >= 3 ? 'This is your LAST exchange. After your response, you MUST write [DONE] on its own line, then a 2-sentence summary of what you learned about their situation.' : 'Ask ONE follow-up question. Keep it under 50 words. Be warm and human.') +
+    ' Do not give advice yet - just listen.';
+
+  fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 200,
+      system: systemPrompt,
+      messages: S.chatMessages.map(function(m) { return { role: m.role, content: m.content }; })
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    var text = data.content && data.content[0] ? data.content[0].text : 'Thank you for sharing that. [DONE] I have what I need to build your plan.';
+    S.chatMessages.push({ role: 'assistant', content: text });
+    S.chatLoading = false;
+    checkChatDone(text);
+
+    // Extract context from conversation for the plan
+    if (S.chatDone) {
+      S.chatContext = S.chatMessages.map(function(m) { return m.role + ': ' + m.content; }).join('\n');
+    }
+    render();
+    scrollChat();
+  })
+  .catch(function() {
+    S.chatMessages.push({ role: 'assistant', content: 'Got it. I have enough to build your plan. [DONE] Based on our conversation I understand your situation and your main priorities.' });
+    S.chatLoading = false;
+    S.chatDone = true;
+    render();
+    scrollChat();
+  });
+}
+
+function checkChatDone(text) {
+  if (text.indexOf('[DONE]') >= 0 || S.chatExchanges >= 3) {
+    S.chatDone = true;
+  }
+}
+
+function finishChat() {
+  S.screen = 'notif';
+  render();
+}
+
+
+function toggleNotif(id) {
+  S.notifPrefs[id] = !S.notifPrefs[id];
+  render();
+}
+
+function finishNotif() {
+  S.profile = buildProfile(S.answers);
+  if (S.notifPrefs.checkin) requestNativeNotif();
+  S.screen = 'dashboard';
+  save();
+  render();
+}
+
+function setTab(tab) { S.tab=tab; render(); }
+
+function navDay(dir) {
+  var next = S.viewDay + dir;
+  if (next >= 1 && next <= S.day) { S.viewDay=next; S.editing=false; render(); }
+}
+
+function setEnergy(e) { S.energy=e; render(); }
+
+function genPlan() {
+  if (!S.energy) { alert('Please select your energy level first.'); return; }
+  var isDay1 = S.day === 1;
+  var plan = generatePlan(S.profile, S.day, isDay1, S.energy, S.todayAnswers.completed, S.todayAnswers.avoided, S.todayAnswers.blocked);
+  S.plans[S.day] = plan;
+  var nextDay = S.day + 1;
+  S.day = nextDay;
+  S.viewDay = nextDay;
+  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
+  S.energy = null;
+  scheduleReminder();
+  save();
+  S.viewDay = S.day - 1; // show the plan we just made
+  render();
+}
+
+function toggleDayCheck(dayKey, stepId) {
+  if (!S.dayChecked) S.dayChecked = {};
+  if (!S.dayChecked[dayKey]) S.dayChecked[dayKey] = {};
+  var wasChecked = !!S.dayChecked[dayKey][stepId];
+  S.dayChecked[dayKey][stepId] = !wasChecked;
+  // First time checking something syncs to PLAN tab
+  if (!wasChecked) S.checked[stepId] = true;
+  save();
+  render();
+}
+
+function toggleCheck(id) {
+  S.checked[id] = !S.checked[id];
+  save();
+  render();
+}
+
+function toggleSub(id) {
+  S.subChecked[id] = !S.subChecked[id];
+  save();
+  render();
+}
+
+function toggleExpand(id) {
+  S.expandedStep = (S.expandedStep === id) ? null : id;
+  render();
+}
+
+function startEdit() { S.editText = formatPlanText(S.plans[S.viewDay]); S.editing=true; render(); }
+
+function saveEdit() {
+  var box = document.getElementById('editbox');
+  S.plans[S.viewDay] = box ? box.value : S.editText;
+  S.editing = false;
+  save();
+  render();
+}
+
+function cancelEdit() { S.editing=false; render(); }
+
+function copyPlan() {
+  var plan = S.plans[S.viewDay-1] || S.plans[S.day-1];
+  if (!plan) return;
+  var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function(){ alert('Copied!'); });
+}
+
+function resetPlan() {
+  if (!confirm('Reset this day? You will need to generate a new plan.')) return;
+  var d = S.day-1;
+  delete S.plans[d];
+  S.day = d;
+  S.viewDay = d;
+  save();
+  render();
+}
+
+function submitFeedback() {
+  var entry = {
+    day: S.day-1,
+    name: S.profile.name,
+    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),
+    didIt: S.fbDidIt || 'yes',
+    blocker: S.fbBlocker || '',
+    easier: S.fbEasier || '',
+  };
+  S.feedback.push(entry);
+  S.fbSubmitted = true;
+  S.fbScreen = 'view';
+  save();
+  render();
+}
+
+function resetAll() {
+  if (!confirm('Start completely over? This will erase all your data.')) return;
+  localStorage.clear();
+  S = {
+    screen:'landing', step:0, answers:{}, profile:null, tab:'today',
+    checked:{}, subChecked:{}, dayChecked:{},
+    day:1, viewDay:1, plans:{},
+    feedback:[], fbScreen:'view', fbDidIt:'yes', fbBlocker:'', fbEasier:'', fbSubmitted:false,
+    energy:null, notifPrefs:{}, editing:false, editText:'', calAdded:{},
+    expandedStep:null, expandedScript:null,
+    todayAnswers:{completed:'',avoided:'',blocked:''},
+    chatMessages:[], chatLoading:false, chatDone:false, chatExchanges:0, chatContext:'',
+  };
+  render();
+}
+
+// ─── Init ────────────────────────────────────────────────────────────────────
+function init() {
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(function(){});
+  }
+
+  // Handle URL tab param
+  var urlTab = new URLSearchParams(window.location.search).get('tab');
+
+  // Load state
+  load();
+
+  if (S.profile) {
+    S.screen = 'dashboard';
+    if (urlTab) S.tab = urlTab;
+  } else {
+    S.screen = 'landing';
+  }
+
+  render();
+}
+
+// Start
+init();
+</script>
+</body>
+</html>
