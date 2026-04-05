@@ -649,29 +649,12 @@ function renderToday() {
       html += '<div style="font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap">' + plan + '</div>';
     }
 
-    // Mini step checklist
-    html += '<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
-    html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE &mdash; syncs everywhere</div>';
-    STEPS.slice(0,4).forEach(function(step) {
-      var d = !!S.checked[step.id];
-      html += '<div onclick="toggleCheck(\'' + step.id + '\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">' +
-        '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">' + (d?'✓':'') + '</div>' +
-        '<div style="font-size:12px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
-        '</div>';
-    });
-
-    html += '<div style="display:flex;gap:8px;margin-top:14px">';
-    var planText = typeof plan === 'object' ? formatPlanText(plan) : plan;
-    html += '<button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="copyPlan()">Copy</button>';
-    html += '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="resetPlan()">Reset Day</button>';
-    html += '</div>';
-
-    // Mini checklist - fresh each day, syncs to PLAN tab on first check
+    // Per-day checklist - fresh each day
     var dayKey = 'day' + (S.day - 1);
     if (!S.dayChecked) S.dayChecked = {};
     if (!S.dayChecked[dayKey]) S.dayChecked[dayKey] = {};
     html += '<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
-    html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE FOR TODAY &mdash; fresh each day</div>';
+    html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY &mdash; fresh each day</div>';
     STEPS.slice(0, 4).forEach(function(step) {
       var d = !!S.dayChecked[dayKey][step.id];
       html += '<div onclick="toggleDayCheck(\'' + dayKey + '\',\'' + step.id + '\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">' +
@@ -679,7 +662,11 @@ function renderToday() {
         '<div style="font-size:12px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
         '</div>';
     });
-    html += '</div>';
+
+    html += '<div style="display:flex;gap:8px;margin-top:14px">';
+    html += '<button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="copyPlan()">Copy</button>';
+    html += '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="resetPlan()">Reset Day</button>';
+    html += '</div></div>';
   }
 
   if (!plan && !isDay1) {
