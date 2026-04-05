@@ -1,0 +1,34 @@
+{
+  "name": "NextStep — Your Daily Financial Plan",
+  "short_name": "NextStep",
+  "description": "Your plan adjusts daily until you win.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070b15",
+  "theme_color": "#f0b429",
+  "categories": ["finance", "lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Today's Plan",
+      "short_name": "Today",
+      "url": "/?tab=today",
+      "description": "Open today's financial plan"
+    },
+    {
+      "name": "Log Feedback",
+      "short_name": "Feedback",
+      "url": "/?tab=feedback",
+      "description": "Log your daily feedback"
+    }
+  ]
+}
