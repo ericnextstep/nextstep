@@ -29,9 +29,36 @@
   --green:#10b981;--green-dim:rgba(16,185,129,0.12);--green-b:rgba(16,185,129,0.3);
   --red:#ef4444;--red-dim:rgba(239,68,68,0.12);--red-b:rgba(239,68,68,0.3);
   --orange:#f97316;--blue:#3b82f6;
+  --max:480px;
 }
 body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;}
+
+/* Desktop wrapper - centers the app like a phone on a big screen */
 #app{min-height:100vh;}
+#app > div {max-width:var(--max);margin:0 auto;position:relative;}
+
+/* Desktop background treatment */
+@media(min-width:520px){
+  body{background:#040810;}
+  #app > div {
+    box-shadow:0 0 80px rgba(0,0,0,0.8);
+    background:var(--bg);
+    min-height:100vh;
+  }
+  .header{border-radius:0;}
+  .footer{max-width:var(--max);left:50%;transform:translateX(-50%);}
+}
+
+/* Slightly larger text and spacing on desktop */
+@media(min-width:520px){
+  .card{padding:18px;font-size:14px;}
+  .plan-body{font-size:15px;}
+  .tab-btn{font-size:9px;}
+  .content{padding:18px 18px 90px;}
+  input,textarea{font-size:14px;}
+  .btn{font-size:16px;}
+}
+
 .card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
 .card-gold{background:var(--gold-dim);border:2px solid var(--gold-b);}
 .card-green{background:var(--green-dim);border:2px solid var(--green-b);}
@@ -59,7 +86,7 @@ textarea{resize:vertical;min-height:72px;}
 .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
 .content{padding:14px 14px 90px;}
 .footer{font-size:9px;color:var(--muted);text-align:center;padding:8px 16px;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--border);}
-.screen{display:flex;flex-direction:column;min-height:100vh;padding:0 24px;}
+.screen{display:flex;flex-direction:column;min-height:100vh;padding:0 24px;max-width:var(--max);margin:0 auto;}
 .screen-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
 .opt-btn{width:100%;background:var(--surf);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:14px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;}
 .opt-btn.sel{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:900;}
@@ -580,8 +607,23 @@ function renderToday() {
           '<div style="font-size:9px;color:var(--gold);letter-spacing:2px">DAY ' + S.viewDay + ' PLAN</div>' +
           '<button class="cal-btn" onclick="startEdit()">Edit</button>' +
           '</div>' +
-          '<div style="font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap">' + (typeof plan === 'string' ? plan : formatPlanText(plan)) + '</div>' +
-          '<button class="btn btn-gold" style="margin-top:12px;font-size:13px" onclick="S.viewDay=S.day;render()">Back to Today (Day ' + S.day + ')</button>' +
+          '<div style="font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap">' + (typeof plan === 'string' ? plan : formatPlanText(plan)) + '</div>';
+
+        // Checklist inside past day view
+        var dayKey2 = 'day' + S.viewDay;
+        if (!S.dayChecked) S.dayChecked = {};
+        if (!S.dayChecked[dayKey2]) S.dayChecked[dayKey2] = {};
+        html += '<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
+        html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY</div>';
+        STEPS.slice(0, 4).forEach(function(step) {
+          var d = !!S.dayChecked[dayKey2][step.id];
+          html += '<div onclick="toggleDayCheck(\'' + dayKey2 + '\',\'' + step.id + '\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">' +
+            '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">' + (d?'&#10003;':'') + '</div>' +
+            '<div style="font-size:12px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
+            '</div>';
+        });
+
+        html += '<button class="btn btn-gold" style="margin-top:12px;font-size:13px" onclick="S.viewDay=S.day;render()">Back to Today (Day ' + S.day + ')</button>' +
           '</div>';
       }
     } else {
