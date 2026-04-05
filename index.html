@@ -286,18 +286,16 @@ function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, block
   var actions = [];
   if (isDay1) {
     if (energy === 'low') {
-      actions.push('Set a 10-minute timer and do just one thing: write down every subscription you pay. That is your whole job today.');
-      actions.push('Put your debit card in your front pocket. Put your credit cards somewhere inconvenient.');
+      actions.push('Open your bank app right now and screenshot your checking balance. 30 seconds. Done.');
+      actions.push('Set a reminder for tomorrow at 8am that says "NextStep Day 2." Do it before you close this app.');
     } else if (energy === 'medium') {
-      if (hasDebt) actions.push('Call your highest-rate card and ask for a lower interest rate. Say: I have been a good customer, can you lower my rate? Takes 10 minutes.');
-      actions.push('Open your bank statement and cancel one subscription you forgot about.');
-      actions.push('Set a reminder on your phone for tomorrow at this same time. That is Day 2.');
+      if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. You are going to attack this one first. Takes 60 seconds.');
+      actions.push('Go to your phone Settings right now and remove Apple Pay or Google Pay access from one credit card. Takes 2 minutes.');
+      actions.push('Set a reminder for tomorrow at 8am that says "NextStep Day 2." Do it before you close this app.');
     } else {
-      if (hasDebt) actions.push('Call your highest-rate card and ask for a lower interest rate. Do this FIRST before anything else today.');
-      actions.push('Remove every credit card from Apple Pay and Google Pay right now. Debit only from this point forward.');
-      if (badCredit) actions.push('Pull your free credit report at AnnualCreditReport.com and look for errors you can dispute.');
-      if ((profile.sv || 0) === 0) actions.push('Open a dedicated savings account today and name it after your goal.');
-      actions.push('Set a reminder on your phone for tomorrow at this same time. That is Day 2.');
+      if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. This is the one you attack first. 60 seconds.');
+      actions.push('Go to phone Settings right now and remove Apple Pay or Google Pay access from every credit card. Debit only from this point. Takes 3 minutes.');
+      actions.push('Set a reminder for tomorrow at 8am that says "NextStep Day 2." Then set one for 8am every day this week. Takes 2 minutes.');
     }
   } else if (didSomething) {
     if (energy === 'low') {
@@ -707,8 +705,8 @@ function renderToday() {
     return html;
   }
 
-  // Energy check-in (only for current day, before plan generated)
-  if (!plan) {
+  // Energy check-in (only for Day 2+, before plan generated)
+  if (!plan && !isDay1) {
     html += '<div class="card">' +
       '<div style="font-size:12px;font-weight:700;margin-bottom:12px">How is your energy today?</div>' +
       '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">This shapes your plan. Be honest.</div>' +
@@ -741,10 +739,15 @@ function renderToday() {
     html += '</div>';
   }
 
-  // Generate button
-  if (!plan) {
+  // Generate button - Day 2+ only (Day 1 auto-generates on onboarding complete)
+  if (!plan && !isDay1) {
     html += '<button class="btn btn-gold" style="border-radius:14px;padding:18px;font-size:16px;margin-bottom:10px" onclick="genPlan()">' +
-      (isDay1 ? 'Get My Day 1 Plan' : 'Get Day ' + S.day + ' Plan') + '</button>';
+      'Get Day ' + S.day + ' Plan' + '</button>';
+  }
+
+  // Day 1 waiting state (shouldn't normally show - plan auto-generates)
+  if (!plan && isDay1) {
+    html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">Building your Day 1 plan...</div></div>';
   }
 
   // Plan output
@@ -1252,6 +1255,16 @@ function finishNotif() {
   S.profile = buildProfile(S.answers);
   if (S.notifPrefs.checkin) requestNativeNotif();
   S.screen = 'dashboard';
+  S.tab = 'today';
+  // Auto-generate Day 1 plan immediately — no waiting, no friction
+  if (S.day === 1 && !S.plans[1]) {
+    var plan = generatePlan(S.profile, 1, true, 'medium', '', '', '');
+    S.plans[1] = plan;
+    S.day = 2;
+    S.viewDay = 1;
+    S.todayAnswers = { completed:'', avoided:'', blocked:'' };
+    S.energy = null;
+  }
   save();
   render();
 }
@@ -1266,9 +1279,10 @@ function navDay(dir) {
 function setEnergy(e) { S.energy=e; render(); }
 
 function genPlan() {
-  if (!S.energy) { alert('Please select your energy level first.'); return; }
   var isDay1 = S.day === 1;
-  var plan = generatePlan(S.profile, S.day, isDay1, S.energy, S.todayAnswers.completed, S.todayAnswers.avoided, S.todayAnswers.blocked);
+  if (!isDay1 && !S.energy) { alert('Please select your energy level first.'); return; }
+  var energy = S.energy || 'medium';
+  var plan = generatePlan(S.profile, S.day, isDay1, energy, S.todayAnswers.completed, S.todayAnswers.avoided, S.todayAnswers.blocked);
   S.plans[S.day] = plan;
   var nextDay = S.day + 1;
   S.day = nextDay;
@@ -1277,7 +1291,7 @@ function genPlan() {
   S.energy = null;
   scheduleReminder();
   save();
-  S.viewDay = S.day - 1; // show the plan we just made
+  S.viewDay = S.day - 1;
   render();
 }
 
@@ -1367,34 +1381,4 @@ function resetAll() {
     todayAnswers:{completed:'',avoided:'',blocked:''},
     chatMessages:[], chatLoading:false, chatDone:false, chatExchanges:0, chatContext:'',
   };
-  render();
-}
-
-// ─── Init ────────────────────────────────────────────────────────────────────
-function init() {
-  // Register service worker
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(function(){});
-  }
-
-  // Handle URL tab param
-  var urlTab = new URLSearchParams(window.location.search).get('tab');
-
-  // Load state
-  load();
-
-  if (S.profile) {
-    S.screen = 'dashboard';
-    if (urlTab) S.tab = urlTab;
-  } else {
-    S.screen = 'landing';
-  }
-
-  render();
-}
-
-// Start
-init();
-</script>
-</body>
-</html>
+  
