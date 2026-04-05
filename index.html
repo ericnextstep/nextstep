@@ -502,9 +502,11 @@ function renderDashboard() {
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
     '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>' +
     '<div style="font-size:10px;color:var(--muted)">' + p.name + ' &middot; Day ' + S.day + ' &middot; ' + p.goal + '</div></div>' +
+    '<div style="display:flex;align-items:center;gap:10px">' +
+    '<button onclick="resetAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Reset</button>' +
     '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">' + pct + '%</div>' +
     '<div style="font-size:9px;color:var(--muted)">complete</div></div>' +
-    '</div>' +
+    '</div></div>' +
     '<div class="track-wrap" style="height:6px"><div class="track-fill" style="height:6px;width:' + pct + '%;background:linear-gradient(90deg,var(--gold)88,var(--gold))"></div></div>' +
     '</div>' +
     '<div class="tabs">';
