@@ -1337,16 +1337,22 @@ render();
 // ─── Init ────────────────────────────────────────────────────────────────────
 function init() {
 // Register service worker
-// Force unregister ALL old service workers first
 if (‘serviceWorker’ in navigator) {
-navigator.serviceWorker.getRegistrations().then(function(registrations) {
-for (var i = 0; i < registrations.length; i++) {
-registrations[i].unregister();
-}
+navigator.serviceWorker.getRegistrations().then(function(regs) {
+regs.forEach(function(r) { r.unregister(); });
 }).then(function() {
-// Re-register with correct path
-navigator.serviceWorker.register(’/nextstep/sw.js’).catch(function(){});
+return navigator.serviceWorker.register(’/nextstep/sw.js’);
+}).then(function(reg) {
+if (reg.waiting) reg.waiting.postMessage({ type: ‘SKIP_WAITING’ });
+reg.addEventListener(‘updatefound’, function() {
+var newWorker = reg.installing;
+newWorker.addEventListener(‘statechange’, function() {
+if (newWorker.state === ‘installed’ && navigator.serviceWorker.controller) {
+newWorker.postMessage({ type: ‘SKIP_WAITING’ });
+}
 });
+});
+}).catch(function() {});
 }
 
 // Handle URL tab param
