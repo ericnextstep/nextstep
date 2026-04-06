@@ -1,4 +1,4 @@
-const CACHE = ‘nextstep-v3’;
+const CACHE = ‘nextstep-v4’;
 const ASSETS = [’/nextstep/’, ‘/nextstep/index.html’, ‘/nextstep/manifest.json’, ‘/nextstep/icon.svg’];
 
 self.addEventListener(‘install’, function(e) {
@@ -26,6 +26,10 @@ return caches.match(e.request);
 );
 });
 
+self.addEventListener(‘message’, function(e) {
+if (e.data && e.data.type === ‘SKIP_WAITING’) self.skipWaiting();
+});
+
 self.addEventListener(‘push’, function(e) {
 var data = {};
 try { data = e.data ? e.data.json() : {}; } catch(err) {}
@@ -51,4 +55,3 @@ if (clients.openWindow) return clients.openWindow(’/nextstep/’);
 })
 );
 });
-
