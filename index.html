@@ -11,16 +11,6 @@
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
 <title>NextStep</title>
-<!--
-ONESIGNAL SETUP (takes 10 minutes, free):
-1. Go to onesignal.com - create free account
-2. Add New App > Web Push
-3. Set Site URL to your Replit URL (e.g. https://nextstep.yourusername.repl.co)
-4. Copy your App ID
-5. Replace YOUR_ONESIGNAL_APP_ID below with your actual App ID
-6. In OneSignal dashboard: upload your sw.js file path as /sw.js
--->
-<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 :root{
@@ -136,16 +126,6 @@ var box = document.getElementById('errbox');
 if (box) { box.style.display='block'; box.textContent = 'ERROR: ' + msg + ' (line ' + line + ')'; }
 return false;
 };
-// --- OneSignal Setup --------------------------------------------------------
-// Replace YOUR_ONESIGNAL_APP_ID with your actual App ID from onesignal.com
-var ONESIGNAL_APP_ID = 'YOUR_ONESIGNAL_APP_ID';
-
-window.OneSignalDeferred = window.OneSignalDeferred || [];
-if (ONESIGNAL_APP_ID !== 'YOUR_ONESIGNAL_APP_ID') {
-OneSignalDeferred.push(function(OneSignal) {
-OneSignal.init({ appId: ONESIGNAL_APP_ID });
-});
-}
 
 // --- State ------------------------------------------------------------------
 var S = {
