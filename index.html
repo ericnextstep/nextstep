@@ -409,14 +409,8 @@ render();
 }
 
 function scheduleReminder() {
-if ('serviceWorker' in navigator && 'Notification' in window && Notification.permission === 'granted') {
-var msg = 'Day ' + (S.day) + ' is ready. Open NextStep for your plan.';
-navigator.serviceWorker.ready.then(function(reg) {
-setTimeout(function() {
-reg.showNotification('NextStep', { body: msg, icon:'/icon.svg', vibrate:[100,50,100] });
-}, 24 * 60 * 60 * 1000);
-});
-}
+// Push notifications temporarily disabled - service worker removed for stability
+// Will re-enable with proper backend after beta test
 }
 
 // ─── Profile Builder ────────────────────────────────────────────────────────
@@ -1379,23 +1373,11 @@ render();
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 function init() {
-// Register service worker
+// Kill ALL service workers permanently - they cause blank screen caching issues
 if (‘serviceWorker’ in navigator) {
 navigator.serviceWorker.getRegistrations().then(function(regs) {
 regs.forEach(function(r) { r.unregister(); });
-}).then(function() {
-return navigator.serviceWorker.register(’/nextstep/sw.js’);
-}).then(function(reg) {
-if (reg.waiting) reg.waiting.postMessage({ type: ‘SKIP_WAITING’ });
-reg.addEventListener(‘updatefound’, function() {
-var newWorker = reg.installing;
-newWorker.addEventListener(‘statechange’, function() {
-if (newWorker.state === ‘installed’ && navigator.serviceWorker.controller) {
-newWorker.postMessage({ type: ‘SKIP_WAITING’ });
-}
 });
-});
-}).catch(function() {});
 }
 
 // Handle URL tab param
