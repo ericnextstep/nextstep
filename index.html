@@ -465,7 +465,8 @@ if (S.screen === 'dashboard') { app.innerHTML = renderDashboard(); return; }
 }
 
 function renderLanding() {
-var isInstalled = window.matchMedia('(display-mode: standalone)').matches;
+var isInstalled = false;
+try { isInstalled = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches; } catch(e) {}
 return '<div class="screen"><div class="screen-center">' +
 '<div style="font-size:68px;margin-bottom:16px">🌴</div>' +
 '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">NextStep</div>' +
