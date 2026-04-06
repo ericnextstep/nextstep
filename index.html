@@ -782,7 +782,7 @@ html += '<div style="border:1px solid var(--border);border-radius:12px;overflow:
 '<div id="callscript" style="display:none;padding:12px 14px;background:rgba(240,180,41,0.08);border-top:1px solid var(--border)">' +
 '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700">READ THIS WORD FOR WORD:</div>' +
 '<div style="font-size:14px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:12px">"Hi, I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate on my account. Can you help me with that?"</div>' +
-'<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Call Now</a>' +
+'<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Open Dialer &mdash; Script is above</a>' +
 '</div></div>';
 
 html += '</div></div>';
@@ -1144,17 +1144,40 @@ function onInput(v) { S.answers[QUESTIONS[S.step].id] = v; }
 
 function nextStep() {
 var q = QUESTIONS[S.step];
-if (!S.answers[q.id]) S.answers[q.id] = ‘0’;
+var val = S.answers[q.id] || ‘’;
+
+// Validate
+if (q.id === ‘name’ && !val.trim()) {
+showNudge(‘qinput’, ‘We need your name to personalize your plan.’); return;
+}
+if (q.type === ‘dollar’ && (!val || parseInt(val.replace(/[^0-9]/g,’’)) === 0) && q.id === ‘takehome’) {
+showNudge(‘qinput’, ‘Your income is required to build your plan.’); return;
+}
+
+if (!val) S.answers[q.id] = ‘0’;
+
 if (S.step < QUESTIONS.length - 1) {
 S.step++;
 render();
 setTimeout(function() { var el = document.getElementById(‘qinput’); if(el) el.focus(); }, 50);
 } else {
-// Numbers done — go to diagnostic questions
 S.screen = ‘chat’;
 S.diagStep = 0;
 render();
 setTimeout(function() { var el = document.getElementById(‘diaginput’); if(el) el.focus(); }, 50);
+}
+}
+
+function showNudge(inputId, msg) {
+var el = document.getElementById(inputId);
+if (el) {
+el.style.border = ‘2px solid var(–red)’;
+el.placeholder = msg;
+el.focus();
+setTimeout(function() {
+el.style.border = ‘2px solid var(–gold)’;
+el.placeholder = ‘’;
+}, 2500);
 }
 }
 
@@ -1170,13 +1193,23 @@ setTimeout(function() { nextDiag(); }, 120);
 
 function nextDiag() {
 var q = DIAG[S.diagStep];
-if (!S.answers[q.id]) S.answers[q.id] = ‘’;
+var val = S.answers[q.id] || ‘’;
+
+// Goal and rent are required. Blocker and savings are optional.
+if (q.id === ‘goal’ && !val) {
+showNudge(‘diaginput’, ‘Please pick your main goal.’); return;
+}
+if (q.id === ‘rent’ && (!val || parseInt(val.replace(/[^0-9]/g,’’)) === 0)) {
+showNudge(‘diaginput’, ‘Enter your monthly rent or biggest bill.’); return;
+}
+
+if (!val) S.answers[q.id] = ‘’;
+
 if (S.diagStep < DIAG.length - 1) {
 S.diagStep++;
 render();
 setTimeout(function() { var el = document.getElementById(‘diaginput’); if(el) el.focus(); }, 50);
 } else {
-// All done — go to notifications
 S.screen = ‘notif’;
 render();
 }
@@ -1199,12 +1232,12 @@ S.profile = buildProfile(S.answers);
 if (S.notifPrefs.checkin) requestNativeNotif();
 S.screen = ‘dashboard’;
 S.tab = ‘today’;
-// Auto-generate Day 1 plan immediately — no waiting, no friction
+// Auto-generate Day 1 plan – keep day at 1 so header shows “Day 1” correctly
 if (S.day === 1 && !S.plans[1]) {
 var plan = generatePlan(S.profile, 1, true, ‘medium’, ‘’, ‘’, ‘’);
 S.plans[1] = plan;
-S.day = 2;
 S.viewDay = 1;
+// Stay on day 1 – will advance to 2 when user comes back tomorrow
 S.todayAnswers = { completed:’’, avoided:’’, blocked:’’ };
 S.energy = null;
 }
@@ -1222,6 +1255,16 @@ if (next >= 1 && next <= S.day) { S.viewDay=next; S.editing=false; render(); }
 function setEnergy(e) { S.energy=e; render(); }
 
 function genPlan() {
+// If Day 1 plan already exists, this is the user returning for Day 2
+if (S.day === 1 && S.plans[1]) {
+S.day = 2;
+S.viewDay = 2;
+S.todayAnswers = { completed:’’, avoided:’’, blocked:’’ };
+S.energy = null;
+save();
+render();
+return;
+}
 var isDay1 = S.day === 1;
 if (!isDay1 && !S.energy) { alert(‘Please select your energy level first.’); return; }
 var energy = S.energy || ‘medium’;
