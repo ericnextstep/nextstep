@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="NextStep gives you one clear financial action to take today. Not a budget app. A daily execution system.">
+<title>NextStep -- One clear action. Every day.</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --navy:#070b15;--gold:#f0b429;--green:#10b981;--text:#dce4f0;--muted:#a0b0cc;
+  --surf:#0e1520;--border:#1a2840;--max:640px;
+  --gold-dim:rgba(240,180,41,0.12);--gold-b:rgba(240,180,41,0.3);
+  --green-dim:rgba(16,185,129,0.08);--green-b:rgba(16,185,129,0.25);
+}
+html{background:#070b15;}body{background:#070b15 !important;color:#dce4f0;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 24px;}
+nav{padding:20px 24px;display:flex;justify-content:space-between;align-items:center;max-width:var(--max);margin:0 auto;}
+.logo{font-family:Georgia,serif;font-size:22px;font-weight:900;color:var(--gold);}
+.nav-cta{background:var(--gold);color:var(--navy);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:900;cursor:pointer;text-decoration:none;font-family:inherit;}
+.hero{padding:60px 24px 32px;text-align:center;max-width:var(--max);margin:0 auto;}
+.eyebrow{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--gold);margin-bottom:16px;text-transform:uppercase;}
+.hero h1{font-family:Georgia,serif;font-size:clamp(30px,7vw,50px);font-weight:900;line-height:1.15;margin-bottom:20px;}
+.hero h1 span{color:var(--gold);}
+.hero-sub{font-size:16px;color:var(--muted);max-width:460px;margin:0 auto 16px;line-height:1.7;}
+.trust-badge{display:inline-flex;align-items:center;gap:8px;background:var(--green-dim);border:1px solid var(--green-b);border-radius:20px;padding:8px 16px;font-size:13px;color:var(--green);font-weight:700;margin-bottom:28px;}
+.hero-cta{display:flex;flex-direction:column;gap:12px;align-items:center;margin-bottom:8px;}
+.btn-primary{background:var(--gold);color:var(--navy);border:none;border-radius:12px;padding:18px 40px;font-size:17px;font-weight:900;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;width:100%;max-width:320px;text-align:center;}
+.btn-secondary{background:none;color:var(--muted);border:1px solid var(--border);border-radius:12px;padding:14px 32px;font-size:14px;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;width:100%;max-width:320px;text-align:center;}
+.hero-note{font-size:13px;color:var(--muted);}
+.sample{background:#070b15;padding:32px 24px;max-width:var(--max);margin:0 auto;}
+.sample-label{font-size:12px;letter-spacing:2px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:16px;text-transform:uppercase;}
+.plan-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.plan-header{background:var(--gold-dim);border-bottom:1px solid var(--gold-b);padding:12px 18px;display:flex;align-items:center;gap:8px;}
+.plan-header span{font-size:12px;font-weight:700;color:var(--gold);letter-spacing:1px;}
+.plan-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);}
+.plan-section{padding:16px 18px;border-bottom:1px solid var(--border);}
+.plan-section:last-child{border-bottom:none;}
+.plan-tag{font-size:11px;font-weight:700;letter-spacing:2px;color:var(--green);margin-bottom:6px;text-transform:uppercase;}
+.plan-text{font-size:14px;color:var(--text);line-height:1.7;}
+.plan-action{display:flex;gap:10px;padding:6px 0;align-items:flex-start;font-size:14px;color:var(--text);line-height:1.6;}
+.plan-num{color:var(--gold);font-weight:900;font-size:13px;flex-shrink:0;margin-top:1px;}
+.plan-avoid{font-size:13px;color:var(--muted);padding:3px 0;line-height:1.5;}
+.plan-note{font-size:13px;color:var(--muted);text-align:center;padding:12px 18px;font-style:italic;}
+.problem{padding:60px 24px;max-width:var(--max);margin:0 auto;text-align:center;background:#070b15;}
+.problem h2{font-family:Georgia,serif;font-size:26px;font-weight:900;margin-bottom:16px;line-height:1.3;}
+.problem-line{font-size:17px;color:var(--muted);line-height:2;}
+.vs-arrow{font-size:28px;margin:20px 0;color:var(--gold);}
+.nextstep-claim{background:var(--gold-dim);border:1px solid var(--gold-b);border-radius:14px;padding:24px;font-size:16px;font-weight:700;color:var(--text);line-height:1.8;}
+.nextstep-claim span{color:var(--gold);}
+.how{background:#070b15;padding:60px 24px;max-width:var(--max);margin:0 auto;}
+.section-title{font-family:Georgia,serif;font-size:26px;font-weight:900;text-align:center;margin-bottom:8px;}
+.section-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:36px;}
+.steps{display:flex;flex-direction:column;gap:12px;}
+.step{display:flex;gap:16px;align-items:flex-start;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.step-num{width:34px;height:34px;border-radius:50%;background:var(--gold-dim);border:2px solid var(--gold-b);display:flex;align-items:center;justify-content:center;font-weight:900;color:var(--gold);font-size:14px;flex-shrink:0;}
+.step-content h3{font-size:15px;font-weight:800;margin-bottom:4px;}
+.step-content p{font-size:14px;color:var(--muted);line-height:1.6;}
+.wedge{background:#070b15;padding:60px 24px;max-width:var(--max);margin:0 auto;}
+.wedge-box{background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:36px 24px;text-align:center;}
+.wedge-box h2{font-family:Georgia,serif;font-size:24px;font-weight:900;margin-bottom:16px;line-height:1.4;}
+.wedge-line{font-size:16px;color:var(--muted);line-height:2;}
+.wedge-punchline{font-size:18px;font-weight:800;color:var(--gold);margin:20px 0 28px;}
+.stat-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:32px;}
+.stat{background:var(--navy);border:1px solid var(--border);border-radius:12px;padding:16px 18px;text-align:center;flex:1;min-width:100px;}
+.stat-num{font-family:Georgia,serif;font-size:24px;font-weight:900;color:var(--gold);display:block;}
+.stat-label{font-size:12px;color:var(--muted);line-height:1.4;margin-top:4px;}
+.privacy{padding:40px 24px;max-width:var(--max);margin:0 auto;}
+.privacy-box{background:var(--green-dim);border:1px solid var(--green-b);border-radius:14px;padding:24px;display:flex;gap:16px;align-items:flex-start;}
+.privacy-icon{font-size:28px;flex-shrink:0;}
+.privacy-box h3{font-size:15px;font-weight:800;color:var(--green);margin-bottom:6px;}
+.privacy-box p{font-size:14px;color:var(--muted);line-height:1.7;}
+.signal{background:#070b15;padding:40px 24px;max-width:var(--max);margin:0 auto;}
+.signal-label{font-size:12px;letter-spacing:2px;color:var(--muted);font-weight:700;text-align:center;margin-bottom:16px;text-transform:uppercase;}
+.signal-card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:10px;}
+.signal-text{font-size:14px;line-height:1.7;font-style:italic;color:var(--text);margin-bottom:10px;}
+.signal-attr{font-size:13px;color:var(--muted);}
+.signal-note{font-size:13px;color:var(--muted);text-align:center;font-style:italic;margin-top:8px;}
+.coffee{background:#070b15;padding:32px 24px;max-width:var(--max);margin:0 auto;}
+.coffee-box{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;}
+.coffee-box h3{font-size:15px;font-weight:800;margin-bottom:8px;}
+.coffee-box p{font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px;}
+.btn-coffee{background:none;color:var(--gold);border:1px solid var(--gold-b);border-radius:10px;padding:12px 28px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;}
+.final-cta{background:#070b15;padding:60px 24px;max-width:var(--max);margin:0 auto;text-align:center;}
+.final-cta h2{font-family:Georgia,serif;font-size:28px;font-weight:900;margin-bottom:12px;line-height:1.3;}
+.final-cta p{font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.7;}
+footer{border-top:1px solid var(--border);padding:24px;text-align:center;}
+footer p{font-size:13px;color:var(--muted);line-height:1.8;}
+@media(min-width:520px){
+  body{background:#040810;}
+  .hero-cta{flex-direction:row;justify-content:center;}
+  .btn-primary,.btn-secondary{width:auto;}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">NextStep 🌴</div>
+  <a href="#get-started" class="nav-cta">Try It Free</a>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow">Daily Execution System for Personal Finance</div>
+  <h1>You know what to do.<br><span>NextStep tells you</span><br>what to do <em>today.</em></h1>
+  <p class="hero-sub">Answer a few questions. Get one clear action. Come back tomorrow. We adjust based on what you actually did.</p>
+  <div class="trust-badge">🔒 No account. No server. Your data never leaves your phone.</div>
+  <div class="hero-cta">
+    <a href="https://ericnextstep.github.io/nextstep/" class="btn-primary" id="get-started">Build My Plan -- Free</a>
+    <a href="#how-it-works" class="btn-secondary">See How It Works</a>
+  </div>
+  <p class="hero-note">No download required. Takes 2 minutes.</p>
+</section>
+
+<section class="sample">
+  <div class="sample-label">What your Day 1 plan actually looks like</div>
+  <div class="plan-card">
+    <div class="plan-header">
+      <div class="plan-dot"></div>
+      <span>DAY 1 PLAN -- MEDIUM ENERGY</span>
+    </div>
+    <div class="plan-section">
+      <div class="plan-tag">Today's Priority</div>
+      <div class="plan-text">Your highest-rate card is costing you money every single day. Today we fight back.</div>
+    </div>
+    <div class="plan-section">
+      <div class="plan-tag">Do This Today</div>
+      <div class="plan-action"><div class="plan-num">1.</div><div>Open your bank app. Find your highest-rate credit card. Screenshot the balance.</div></div>
+      <div class="plan-action"><div class="plan-num">2.</div><div>Remove that card from Apple Pay or Google Pay. Debit only from this point.</div></div>
+      <div class="plan-action"><div class="plan-num">3.</div><div>Set a reminder for tomorrow at 8am: "NextStep Day 2."</div></div>
+    </div>
+    <div class="plan-section">
+      <div class="plan-tag">Momentum Note</div>
+      <div class="plan-text" style="font-style:italic;">Day 1 is always the hardest. You showed up. Everything from here is easier than this moment.</div>
+    </div>
+    <div class="plan-section">
+      <div class="plan-tag">Avoid Today</div>
+      <div class="plan-avoid">Using any credit card -- cash or debit only</div>
+      <div class="plan-avoid">Waiting until you feel motivated -- action creates motivation</div>
+    </div>
+    <div class="plan-note">Tomorrow you tell us what happened. We adjust.</div>
+  </div>
+</section>
+
+<section class="problem">
+  <div class="wrap">
+    <h2>Every other app shows you your money.<br>Nobody tells you what to do with it.</h2>
+    <div class="problem-line">They give you a dashboard and expect you to figure out the rest.</div>
+    <div class="vs-arrow">&#8595;</div>
+    <div class="nextstep-claim">
+      <span>No one owns the daily execution layer.</span><br><br>
+      Not Mint. Not YNAB. Not Rocket Money. Not Credit Karma.<br><br>
+      They show you what you already know.<br>
+      <span>NextStep tells you exactly what to do next -- and holds you to it tomorrow.</span>
+    </div>
+  </div>
+</section>
+
+<section class="how" id="how-it-works">
+  <div class="section-title">How It Works</div>
+  <div class="section-sub">A few questions. One action. A loop that adjusts every single day.</div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Tell us your real numbers</h3>
+        <p>Income, debt, checking balance, biggest fixed expense. No email. No account. Just your numbers.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Tell us your situation</h3>
+        <p>What is your main goal? What keeps getting in the way? We listen before we prescribe.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Get one clear action for today</h3>
+        <p>Not a plan. Not a dashboard. One specific thing to do today based on your exact situation and your energy level right now.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>Come back tomorrow. We adjust based on what you actually did.</h3>
+        <p>Tell us what happened. The plan adjusts based on what you actually did -- not what you planned to do. Every day gets smarter.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wedge">
+  <div class="wedge-box">
+    <h2>No one ever built the part<br>that actually gets done.</h2>
+    <div class="wedge-line">They show you your money.</div>
+    <div class="wedge-line">They don't tell you what to do.</div>
+    <div class="wedge-punchline">NextStep does.</div>
+    <div class="stat-row">
+      <div class="stat">
+        <span class="stat-num">62%</span>
+        <div class="stat-label">U.S. adults living paycheck to paycheck</div>
+      </div>
+      <div class="stat">
+        <span class="stat-num">$0</span>
+        <div class="stat-label">Cost to try NextStep right now</div>
+      </div>
+      <div class="stat">
+        <span class="stat-num">2 min</span>
+        <div class="stat-label">Time to get your Day 1 plan</div>
+      </div>
+    </div>
+    <a href="https://ericnextstep.github.io/nextstep/" class="btn-primary">Get My Day 1 Plan</a>
+  </div>
+</section>
+
+<section class="privacy">
+  <div class="privacy-box">
+    <div class="privacy-icon">&#128274;</div>
+    <div>
+      <h3>Your data never leaves your phone. Ever.</h3>
+      <p>Everything you enter is stored locally on your device only. No server. No database. No account. Not even we can see it. That is not a policy -- that is how it is built. Most finance apps store your data on their servers. NextStep stores nothing anywhere.</p>
+    </div>
+  </div>
+</section>
+
+<section class="signal">
+  <div class="signal-label">Early Signal -- Day 1</div>
+  <div class="signal-card">
+    <p class="signal-text">"Your approach with actual behavior tracking instead of just initial input sounds different though. Will give it a shot with my real disaster numbers -- curious if it can handle someone who makes decent money but still lives paycheck to paycheck because impulse purchases exist."</p>
+    <p class="signal-attr">-- Game developer, r/povertyfinance. Unprompted. Within 20 minutes of first post.</p>
+  </div>
+  <div class="signal-card">
+    <p class="signal-text">"DM you on Day 3 if I don't abandon it like every other finance thing I've tried."</p>
+    <p class="signal-attr">-- Same person.</p>
+  </div>
+  <p class="signal-note">"Like every other finance thing I've tried." That is exactly who NextStep is built for. Beta data coming soon.</p>
+</section>
+
+<section class="coffee">
+  <div class="coffee-box">
+    <h3>This is free. And we want to keep it that way.</h3>
+    <p>NextStep is freeware. If it helps you take one action you would not have taken otherwise, consider buying us a coffee. Every dollar goes directly into building what comes next.</p>
+    <a href="https://buymeacoffee.com/nextstep" class="btn-coffee" target="_blank">&#9749; Buy Me a Coffee</a>
+  </div>
+</section>
+
+<section class="final-cta">
+  <h2>One focused priority.<br>A few clear steps.<br>Every single day.</h2>
+  <p>Not a resolution. Not another budget app. One thing you can do in the next 10 minutes that actually moves you forward.</p>
+  <a href="https://ericnextstep.github.io/nextstep/" class="btn-primary">Build My Plan -- Free</a>
+</section>
+
+<footer>
+  <p>NextStep &copy; 2026 &middot; Built by Eric Harris &middot; Columbia, MD</p>
+  <p style="margin-top:6px">Not financial advice. For execution support only. Your data stays on your device.</p>
+  <p style="margin-top:6px"><a href="mailto:mynextstepapp@gmail.com" style="color:var(--muted)">mynextstepapp@gmail.com</a></p>
+  <p style="display:none"><span class="
