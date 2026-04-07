@@ -292,15 +292,15 @@ function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, block
   if (isDay1) {
     if (energy === 'low') {
       actions.push('Open your bank app right now and screenshot your checking balance. 30 seconds. Done.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it's costing you every day you wait.');
+      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
     } else if (energy === 'medium') {
       if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. You are going to attack this one first. Takes 60 seconds.');
       actions.push('Go to your phone Settings right now and remove Apple Pay or Google Pay access from one credit card. Takes 2 minutes.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it's costing you every day you wait.');
+      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
     } else {
       if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. This is the one you attack first. 60 seconds.');
       actions.push('Go to phone Settings right now and remove Apple Pay or Google Pay access from every credit card. Debit only from this point. Takes 3 minutes.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it's costing you every day you wait.');
+      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
     }
   } else if (didSomething) {
     if (energy === 'low') {
