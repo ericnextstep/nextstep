@@ -1319,8 +1319,8 @@ function cancelEdit() { S.editing=false; render(); }
 
 function copyPlan() {
   trackEvent('action_click', { action: 'copy_plan', day: S.day });
-  var plan = S.plans[S.viewDay-1] || S.plans[S.day-1];
-  if (!plan) return;
+  var plan = S.plans[S.viewDay] || S.plans[S.viewDay-1] || S.plans[S.day] || S.plans[S.day-1];
+  if (!plan) { alert('No plan to copy yet. Generate your plan first.'); return; }
   var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
