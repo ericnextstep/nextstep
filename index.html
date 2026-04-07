@@ -1014,7 +1014,10 @@ function renderFeedback() {
   html += '<div class="card card-dark">' +
     '<div class="label">DAILY FEEDBACK LOG</div>' +
     '<div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:12px">Log what you actually did each day. Be honest. Your feedback is what separates a good idea from a real product.</div>' +
-    '<button class="btn btn-gold" onclick="S.fbScreen=\'log\';S.fbDidIt=\'yes\';S.fbBlocker=\'\';S.fbEasier=\'\';render()">+ Log Day ' + S.day + ' Feedback</button></div>';
+    '<button class="btn btn-gold" onclick="S.fbScreen=\'log\';S.fbDidIt=\'yes\';S.fbBlocker=\'\';S.fbEasier=\'\';render()">+ Log Day ' + S.day + ' Feedback</button>' +
+    '<div style="margin-top:10px;text-align:center">' +
+    '<a href="mailto:mynextstepapp@gmail.com?subject=NextStep Feedback - Day ' + S.day + '&body=Did you do the step? (Yes / Partial / No):%0A%0AWhat got in the way?%0A%0AWhat would have made it easier?%0A%0AAnything else?" style="display:block;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;text-align:center;">📧 Email your feedback instead</a>' +
+    '</div></div>';
 
   if (S.fbSubmitted) {
     html += '<div class="card card-green center">' +
@@ -1313,19 +1316,19 @@ function copyPlan() {
   var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function(){ alert('Copied!'); }).catch(function(){
+      navigator.clipboard.writeText(text).then(function(){ alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.'); }).catch(function(){
         var ta = document.createElement('textarea');
         ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
         document.body.appendChild(ta); ta.focus(); ta.select();
         document.execCommand('copy'); document.body.removeChild(ta);
-        alert('Copied!');
+        alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');
       });
     } else {
       var ta = document.createElement('textarea');
       ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
       document.body.appendChild(ta); ta.focus(); ta.select();
       document.execCommand('copy'); document.body.removeChild(ta);
-      alert('Copied!');
+      alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');
     }
   } catch(e) { alert('Please long-press and copy the text manually.'); }
 }
