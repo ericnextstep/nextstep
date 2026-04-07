@@ -1416,6 +1416,21 @@ function resetAll() {
 }
 
 // --- Init --------------------------------------------------------------------
+function loadDevMode() {
+  S.profile = buildProfile({
+    name: 'Dev', takehome: '5000', carddebt: '8000', checking: '1200',
+    goal: 'Get out of debt', blocker: 'Testing dev mode', savings: '$500 to $2,000', rent: '1500'
+  });
+  S.day = 1;
+  S.viewDay = 1;
+  S.plans[1] = generatePlan(S.profile, 1, true, 'medium', '', '', '');
+  S.screen = 'dashboard';
+  S.tab = 'today';
+  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
+  S.energy = null;
+  render();
+}
+
 function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -1423,7 +1438,16 @@ function init() {
     });
   }
 
-  var urlTab = new URLSearchParams(window.location.search).get('tab');
+  var params = new URLSearchParams(window.location.search);
+  var urlTab = params.get('tab');
+  var devMode = params.get('dev') === 'true';
+
+  if (devMode) {
+    loadDevMode();
+    if (urlTab) { S.tab = urlTab; render(); }
+    return;
+  }
+
   load();
 
   if (S.profile) {
