@@ -109,6 +109,7 @@ textarea{resize:vertical;min-height:72px;}
 .sub-check.done{background:var(--green);border-color:var(--green);}
 .streak-fire{font-size:24px;}
 .install-banner{background:var(--gold-dim);border:1px solid var(--gold-b);border-radius:12px;padding:12px 14px;margin-bottom:10px;font-size:12px;color:var(--text);line-height:1.7;}
+@media(min-width:520px){.install-banner{display:none;}}
 .bmc-btn{display:inline-flex;align-items:center;gap:8px;background:#FFDD00;color:#000000;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;font-family:inherit;}
 .bmc-btn:hover{background:#f5d400;}
 </style>
@@ -211,16 +212,16 @@ var DIAG = [
 ];
 
 var STEPS = [
-  { id:'s1',  week:'Monday',  e:'🔒', label:'Remove all cards from Apple/Google Pay',    detail:'Debit only. Every swipe becomes intentional. This one change reduces impulse spending by creating friction.' },
-  { id:'s2',  week:'Monday',  e:'💳', label:'Call highest-rate card - ask for rate cut',  detail:'Say exactly: I have been a good customer for X years and I would like to request a lower interest rate. Takes 10 minutes. Works 70% of the time.' },
-  { id:'s3',  week:'Monday',  e:'📋', label:'List every subscription you pay',            detail:'Open your bank statement. Find every recurring charge. Cancel anything you forgot about or have not used in 30 days.' },
-  { id:'s4',  week:'Monday',  e:'🏦', label:'Open a dedicated savings account',           detail:'Name it after your goal. Out of sight, out of mind. Naming it makes it real.' },
-  { id:'s5',  week:'Week 2',  e:'💼', label:'Define your side income idea',               detail:'What do you know that someone would pay for? Write down 3 options. Pick the one you could start this week.' },
-  { id:'s6',  week:'Week 2',  e:'📞', label:'Reach out to 5 potential clients',           detail:'Do not pitch. Just reconnect. Ask what challenges they are facing. Let them describe the problem you solve.' },
-  { id:'s7',  week:'Week 3',  e:'📈', label:'Track your net worth for the first time',    detail:'Assets minus debts. Write the number down today. Seeing it is the beginning of changing it.' },
-  { id:'s8',  week:'Week 4',  e:'🎯', label:'Write your 3 non-negotiable exit criteria',  detail:'Income target. Cash reserve. Debt threshold. These three numbers define what freedom looks like for you.' },
-  { id:'s9',  week:'Month 2', e:'💰', label:'Land your first side income',                detail:'Even $500 from a friend counts. The goal is starting the clock and proving the concept to yourself.' },
-  { id:'s10', week:'Month 2', e:'🚀', label:'Set up business checking account',           detail:'Separate personal and business money from day one. This is the move that makes it feel real.' },
+  { id:'s1',  week:'Monday',  e:'🔒', label:'Remove all cards from Apple/Google Pay',    detail:'Go to Settings right now. Remove every credit card from Apple Pay or Google Pay. Debit only from this point. 3 minutes. Every tap you block is money you keep.' },
+  { id:'s2',  week:'Monday',  e:'💳', label:'Call highest-rate card - ask for rate cut',  detail:'Call the number on the back of your card. Say this: "I have been a customer for X years and I always pay on time. I am calling to request a lower interest rate." Takes 10 minutes. Works 70% of the time.' },
+  { id:'s3',  week:'Monday',  e:'📋', label:'List every subscription you pay',            detail:'Open your bank statement right now. Find every recurring charge. Write them down. Cancel anything you forgot about or have not used in 30 days. Do it today.' },
+  { id:'s4',  week:'Monday',  e:'🏦', label:'Open a dedicated savings account',           detail:'Open a separate account today. Name it after your goal. The name is the point — when you see it, you think twice before touching it.' },
+  { id:'s5',  week:'Week 2',  e:'💼', label:'Define your side income idea',               detail:'Write down 3 things you know that someone would pay for. Pick the one you could start this week. Write one name next to it — someone who might pay you. That is your first call.' },
+  { id:'s6',  week:'Week 2',  e:'📞', label:'Reach out to 5 potential clients',           detail:'Do not pitch. Just reconnect. Ask what challenges they are facing. Let them describe the problem. Then listen. Your product is in their answer.' },
+  { id:'s7',  week:'Week 3',  e:'📈', label:'Track your net worth for the first time',    detail:'Assets minus debts. Write the number down today. Do not judge it. Just write it. That number is your starting line — and you cannot run a race without one.' },
+  { id:'s8',  week:'Week 4',  e:'🎯', label:'Write your 3 non-negotiable exit criteria',  detail:'Three numbers: income target, cash reserve, debt threshold. Write them down. These define what free looks like for you. Without them you are running without a finish line.' },
+  { id:'s9',  week:'Month 2', e:'💰', label:'Land your first side income',                detail:'Even $50 from someone you know counts. The goal is not the money yet — it is starting the clock and proving to yourself it is possible.' },
+  { id:'s10', week:'Month 2', e:'🚀', label:'Set up business checking account',           detail:'Open a separate account for your side income today. The moment money goes into a dedicated account, it becomes real. That is the shift.' },
 ];
 
 var REMINDERS = [
@@ -286,32 +287,32 @@ function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, block
   var actions = [];
   if (isDay1) {
     if (energy === 'low') {
-      actions.push('Open your bank app right now and screenshot your checking balance. 30 seconds. Done.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
+      actions.push('Open your bank app right now. Screenshot your checking balance. 30 seconds. That number is your starting line.');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow that number becomes a plan.');
     } else if (energy === 'medium') {
-      if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. You are going to attack this one first. Takes 60 seconds.');
-      actions.push('Go to your phone Settings right now and remove Apple Pay or Google Pay access from one credit card. Takes 2 minutes.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
+      if (hasDebt) actions.push('Open your bank app right now. Find your highest-rate credit card. Screenshot the balance. 60 seconds. That card is the first target.');
+      actions.push('Go to phone Settings right now. Remove Apple Pay or Google Pay access from one credit card. 2 minutes. Every tap you block is money you keep.');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow we attack that number.');
     } else {
-      if (hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. This is the one you attack first. 60 seconds.');
-      actions.push('Go to phone Settings right now and remove Apple Pay or Google Pay access from every credit card. Debit only from this point. Takes 3 minutes.');
-      actions.push('Set a reminder for tomorrow at 8am. Tomorrow we decide what to do with that number -- it\'s costing you every day you wait.');
+      if (hasDebt) actions.push('Open your bank app right now. Find your highest-rate credit card. Screenshot the balance. 60 seconds. That card is the first target.');
+      actions.push('Go to phone Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point. 3 minutes. This is the move.');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow we attack that number.');
     }
   } else if (didSomething) {
     if (energy === 'low') {
-      actions.push('Write down the single next step after what you completed. Do not do it yet - just write it down. That counts.');
+      actions.push('Write down the single next step after what you completed. Just write it. Do not do it yet. Writing it is the win today.');
     } else {
-      actions.push('Identify the exact next step after what you completed and take it today.');
-      if (avoided && avoided.trim().length > 3) actions.push('Do the thing you avoided yesterday: ' + avoided.slice(0,40) + '. Do it in the next 2 hours.');
-      if (hasDebt) actions.push('Make one extra payment toward your highest-rate card, even if it is just $25.');
+      actions.push('Pick the exact next step after what you completed. Do it today. Not tomorrow. Today.');
+      if (avoided && avoided.trim().length > 3) actions.push('The thing you avoided yesterday: ' + avoided.slice(0,40) + '. Do it in the next 2 hours. The longer it waits the heavier it gets.');
+      if (hasDebt) actions.push('Put one extra payment toward your highest-rate card today. Even $25. Every dollar chips away the interest.');
     }
   } else {
     if (energy === 'low') {
-      actions.push('One thing. The smallest version you can think of. Even 5 minutes counts.');
+      actions.push('Pick the smallest possible version of the next step. The version that takes 5 minutes or less. Do that one thing.');
     } else {
-      actions.push('Pick the single smallest step from your plan and do only that one thing today.');
-      if (gotBlocked) actions.push('Remove what blocked you: ' + blocked.slice(0,40));
-      actions.push('Set a 20-minute timer and work on your plan during that window only.');
+      actions.push('Pull up your plan. Pick the single next step. Do only that one thing today. One thing done beats five things started.');
+      if (gotBlocked) actions.push('What blocked you yesterday: ' + blocked.slice(0,40) + '. Address that first. Everything else is noise until that is cleared.');
+      actions.push('Set a 20-minute timer right now. Work on the plan only during that window. When it goes off you are done for today.');
     }
   }
 
@@ -461,7 +462,7 @@ function renderLanding() {
     (!isInstalled ? '<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience including notifications.</div>' : '') +
     '<button class="btn btn-gold" onclick="startOnboarding()">Build My Plan</button>' +
     '<div style="color:var(--muted);font-size:11px;margin-top:8px;margin-bottom:24px">Takes 2 minutes. Stays on your device.</div>' +
-    '<a href="https://www.buymeacoffee.com/nextsteph" target="_blank" class="bmc-btn">☕ Buy me a coffee</a>' +
+    '<a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" class="bmc-btn">☕ Buy me a coffee</a>' +
     '<div style="color:var(--muted);font-size:10px;margin-top:8px">If this app helped you, consider supporting it.</div>' +
     '</div></div>';
 }
@@ -594,7 +595,7 @@ function renderDashboard() {
   else if (S.tab === 'feedback') html += renderFeedback();
   else if (S.tab === 'protect') html += renderProtect();
 
-  html += '</div><div class="footer">Not financial advice &middot; For execution support only &middot; <a href="https://www.buymeacoffee.com/nextsteph" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support NextStep</a></div></div>';
+  html += '</div><div class="footer">Not financial advice &middot; For execution support only &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support NextStep</a></div></div>';
   return html;
 }
 
@@ -808,7 +809,8 @@ function renderPlan() {
     '<div class="label">YOUR PROGRESS</div>' +
     '<div style="font-family:Georgia,serif;font-size:60px;color:var(--gold);line-height:1">' + pct + '%</div>' +
     '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">' + done + ' of ' + STEPS.length + ' steps complete</div>' +
-    '<div class="track-wrap" style="height:10px"><div class="track-fill" style="height:10px;width:' + pct + '%;background:var(--gold)"></div></div>';
+    '<div class="track-wrap" style="height:10px"><div class="track-fill" style="height:10px;width:' + pct + '%;background:var(--gold)"></div></div>' +
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;text-align:left;padding:8px;background:rgba(0,0,0,0.2);border-radius:8px">These are starting recommendations for most situations. Your daily TODAY plan is personalized to your numbers. Use these as a guide, not a prescription.</div>';
 
   if (next) {
     html += '<div style="background:var(--surf);border-radius:10px;padding:12px;margin-top:12px;text-align:left">' +
@@ -1277,7 +1279,23 @@ function copyPlan() {
   var plan = S.plans[S.viewDay-1] || S.plans[S.day-1];
   if (!plan) return;
   var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
-  if (navigator.clipboard) navigator.clipboard.writeText(text).then(function(){ alert('Copied!'); });
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function(){ alert('Copied!'); }).catch(function(){
+        var ta = document.createElement('textarea');
+        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta);
+        alert('Copied!');
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+      document.body.appendChild(ta); ta.focus(); ta.select();
+      document.execCommand('copy'); document.body.removeChild(ta);
+      alert('Copied!');
+    }
+  } catch(e) { alert('Please long-press and copy the text manually.'); }
 }
 
 function resetPlan() {
