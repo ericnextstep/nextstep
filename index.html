@@ -571,6 +571,7 @@ function renderDashboard() {
     '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>' +
     '<div style="font-size:10px;color:var(--muted)">' + p.name + ' &middot; Day ' + S.day + ' &middot; ' + p.goal + '</div></div>' +
     '<div style="display:flex;align-items:center;gap:10px">' +
+    '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>' +
     '<button onclick="resetAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Reset</button>' +
     '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">' + pct + '%</div>' +
     '<div style="font-size:9px;color:var(--muted)">complete</div></div>' +
@@ -1320,6 +1321,16 @@ function submitFeedback() {
   S.feedback.push(entry);
   S.fbSubmitted = true;
   S.fbScreen = 'view';
+  save();
+  render();
+}
+
+function simulateNextDay() {
+  if (!S.plans[S.day - 1] && S.day > 1) { alert('Generate today\'s plan first.'); return; }
+  S.day = S.day + 1;
+  S.viewDay = S.day;
+  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
+  S.energy = null;
   save();
   render();
 }
