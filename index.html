@@ -154,6 +154,7 @@ var S = {
   fbEasier: '',
   fbSubmitted: false,
   todayAnswers: { completed: '', avoided: '', blocked: '' },
+  editingMoney: false,
 };
 
 var KEY = 'nextstep-pwa-v1';
@@ -893,6 +894,28 @@ function renderMoney() {
       '</div>';
   }
 
+  if (S.editingMoney) {
+    html += '<div class="card" style="background:var(--gold-dim);border:1px solid var(--gold-b)">' +
+      '<div style="font-weight:800;font-size:14px;margin-bottom:14px;color:var(--gold)">Update My Numbers</div>' +
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div>' +
+      '<input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 2500" value="' + (p.ch||'') + '"></div>' +
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div>' +
+      '<input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 8000" value="' + (p.cd||'') + '"></div>' +
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div>' +
+      '<input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 5000" value="' + (p.th||'') + '"></div>' +
+      '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div>' +
+      '<input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1500" value="' + (p.mg||'') + '"></div>' +
+      '<div style="display:flex;gap:8px">' +
+      '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>' +
+      '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>' +
+      '</div></div>';
+  } else {
+    html += '<div class="card card-dark" style="text-align:center">' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Numbers changed? Paid down debt, got paid, moved money around?</div>' +
+      '<button class="btn btn-ghost" onclick="S.editingMoney=true;render()">Update My Numbers</button>' +
+      '</div>';
+  }
+
   return html;
 }
 
@@ -1325,6 +1348,29 @@ function submitFeedback() {
   render();
 }
 
+function saveUpdatedNumbers() {
+  var ch = parseInt(document.getElementById('u-checking').value.replace(/[^0-9]/g,'')) || 0;
+  var cd = parseInt(document.getElementById('u-debt').value.replace(/[^0-9]/g,'')) || 0;
+  var th = parseInt(document.getElementById('u-income').value.replace(/[^0-9]/g,'')) || 0;
+  var mg = parseInt(document.getElementById('u-rent').value.replace(/[^0-9]/g,'')) || 0;
+  var minCard = Math.round(cd * 0.025);
+  var oblig = mg + minCard + 500;
+  var surplus = th - oblig - 400;
+  var liquid = ch + (S.profile.sv || 0);
+  S.profile.ch = ch;
+  S.profile.cd = cd;
+  S.profile.th = th;
+  S.profile.mg = mg;
+  S.profile.minCard = minCard;
+  S.profile.oblig = oblig;
+  S.profile.surplus = surplus;
+  S.profile.liquid = liquid;
+  S.editingMoney = false;
+  save();
+  render();
+  alert('Numbers updated!');
+}
+
 function simulateNextDay() {
   if (!S.plans[S.day - 1] && S.day > 1) { alert('Generate today\'s plan first.'); return; }
   S.day = S.day + 1;
@@ -1345,6 +1391,7 @@ function resetAll() {
     energy:null, notifPrefs:{}, editing:false, editText:'', calAdded:{},
     expandedStep:null, expandedScript:null,
     todayAnswers:{completed:'',avoided:'',blocked:''},
+    editingMoney:false,
   };
   render();
 }
