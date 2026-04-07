@@ -271,8 +271,7 @@ function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, block
 
   var priority = '';
   if (isDay1) {
-    if (stress) priority = name + '. You said: "' + stress.slice(0,60) + '". That is exactly where we start.';
-    else if (hasDebt && badCredit) priority = name + ', your credit and debt are both bleeding. We stop the bleeding first.';
+    if (hasDebt && badCredit) priority = name + ', your credit and debt are both bleeding. We stop the bleeding first.';
     else if (hasDebt) priority = name + ', your highest-rate card is costing you money every single day. Today we fight back.';
     else if (tight) priority = name + ', your margin is thin. One cut today creates breathing room for everything else.';
     else priority = name + ', you want to ' + goal.toLowerCase() + '. Today we build the first step of that road.';
@@ -364,7 +363,10 @@ function downloadICS(stepId) {
   var blob = new Blob([makeICS(step)], { type:'text/calendar;charset=utf-8' });
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
-  a.href = url; a.download = step.id + '.ics'; a.click();
+  a.href = url; a.download = step.id + '.ics';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
   URL.revokeObjectURL(url);
   S.calAdded[stepId] = 'ics';
   save(); render();
