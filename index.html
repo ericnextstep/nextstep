@@ -1211,6 +1211,10 @@ function toggleNotif(id) {
   render();
 }
 
+function trackEvent(name, params) {
+  try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch(e) {}
+}
+
 function finishNotif() {
   S.profile = buildProfile(S.answers);
   if (S.notifPrefs.checkin) requestNativeNotif();
@@ -1223,6 +1227,7 @@ function finishNotif() {
     S.todayAnswers = { completed:'', avoided:'', blocked:'' };
     S.energy = null;
   }
+  trackEvent('onboarding_complete', { goal: S.profile.goal });
   save();
   render();
 }
@@ -1251,6 +1256,8 @@ function genPlan() {
   var energy = S.energy || 'medium';
   var plan = generatePlan(S.profile, S.day, isDay1, energy, S.todayAnswers.completed, S.todayAnswers.avoided, S.todayAnswers.blocked);
   S.plans[S.day] = plan;
+  trackEvent('plan_generated', { day: S.day });
+  if (S.day === 2) trackEvent('day2_return', {});
   var nextDay = S.day + 1;
   S.day = nextDay;
   S.viewDay = nextDay;
@@ -1311,6 +1318,7 @@ function saveEdit() {
 function cancelEdit() { S.editing=false; render(); }
 
 function copyPlan() {
+  trackEvent('action_click', { action: 'copy_plan', day: S.day });
   var plan = S.plans[S.viewDay-1] || S.plans[S.day-1];
   if (!plan) return;
   var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
