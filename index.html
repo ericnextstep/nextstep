@@ -186,6 +186,8 @@ var S = {
   completionInput: '',
   completionInput2: '',
   showReminderCard: false,
+  returnIntent: null,
+  returnTriggerShown: false,
 };
 
 var KEY = 'nextstep-pwa-v1';
@@ -685,13 +687,29 @@ function renderDashboard() {
   // Reminder card
   var reminderCard = '';
   if (S.showReminderCard) {
+    var intentSelected = S.returnIntent;
+    var intentOptions = [
+      { val:'yes', label:'Yes — I\'ll set a reminder', color:'var(--green)', dim:'var(--green-dim)', border:'var(--green-b)' },
+      { val:'maybe', label:'Maybe', color:'var(--gold)', dim:'var(--gold-dim)', border:'var(--gold-b)' },
+      { val:'no', label:'Probably not', color:'var(--red)', dim:'var(--red-dim)', border:'var(--red-b)' },
+    ];
+
+    var intentHTML = '<div style="margin-bottom:16px">' +
+      '<div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">Will you come back tomorrow?</div>';
+    intentOptions.forEach(function(opt) {
+      var sel = intentSelected === opt.val;
+      intentHTML += '<div onclick="setReturnIntent(\'' + opt.val + '\')" style="padding:10px 14px;border-radius:10px;border:2px solid ' + (sel ? opt.border : 'var(--border)') + ';background:' + (sel ? opt.dim : 'var(--surf2)') + ';cursor:pointer;margin-bottom:6px;font-size:13px;font-weight:' + (sel?'700':'400') + ';color:' + (sel?opt.color:'var(--muted)') + '">' + opt.label + '</div>';
+    });
+    intentHTML += '</div>';
+
     reminderCard = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.92);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">' +
       '<div style="background:var(--surf);border:2px solid var(--gold-b);border-radius:20px;padding:28px 24px;text-align:center;max-width:340px;width:100%">' +
       '<div style="font-size:40px;margin-bottom:12px">⏰</div>' +
       '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px">Set your alarm now.</div>' +
-      '<div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px">Same time tomorrow. The streak only works if you come back. Set the alarm before you close this app.</div>' +
+      '<div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px">Same time tomorrow. The streak only works if you come back.</div>' +
+      intentHTML +
       '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;padding:10px;background:var(--surf2);border-radius:8px">Clock app → Alarms → Add → Set for tomorrow morning.</div>' +
-      '<button onclick="dismissReminderCard()" class="btn btn-gold" style="margin-bottom:10px">I set my alarm ✓</button>' +
+      '<button onclick="dismissReminderCard()" class="btn btn-gold" style="margin-bottom:10px">Done ✓</button>' +
       '<button onclick="dismissReminderCard()" class="btn btn-ghost" style="font-size:12px;padding:10px">Skip for now</button>' +
       '</div></div>';
   }
@@ -738,6 +756,24 @@ function renderToday() {
   var plan = S.plans[S.viewDay];
 
   var html = '';
+
+  // Day 2+ return trigger question — shown once per session on Day 2+
+  if (!isDay1 && isCurrentDay && !S.returnTriggerShown && S.day >= 2) {
+    var triggerOptions = [
+      { val:'self', label:'🧠 I just remembered / wanted to', color:'var(--green)' },
+      { val:'alarm', label:'⏰ My alarm went off', color:'var(--gold)' },
+      { val:'accidental', label:'🔀 I stumbled on it / bookmark', color:'var(--muted)' },
+      { val:'prompted', label:'💬 Someone reminded me', color:'var(--orange)' },
+    ];
+    html += '<div class="card card-gold" style="margin-bottom:10px">' +
+      '<div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:10px">WHAT BROUGHT YOU BACK TODAY?</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Tap one — takes 2 seconds. This helps us understand what actually works.</div>';
+    triggerOptions.forEach(function(opt) {
+      html += '<div onclick="logReturnTrigger(\'' + opt.val + '\')" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;margin-bottom:6px;font-size:13px;color:var(--text)">' + opt.label + '</div>';
+    });
+    html += '<button onclick="skipReturnTrigger()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;margin-top:4px">Skip</button>' +
+      '</div>';
+  }
 
   html += '<div class="card card-gold">' +
     '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -1497,6 +1533,26 @@ function dismissCompletion() {
   render();
 }
 
+function setReturnIntent(val) {
+  S.returnIntent = val;
+  trackEvent('return_intent', { intent: val, day: S.day });
+  render();
+}
+
+function logReturnTrigger(val) {
+  S.returnTriggerShown = true;
+  trackEvent('return_trigger', { trigger: val, day: S.day });
+  save();
+  render();
+}
+
+function skipReturnTrigger() {
+  S.returnTriggerShown = true;
+  trackEvent('return_trigger_skipped', { day: S.day });
+  save();
+  render();
+}
+
 function dismissReminderCard() {
   S.showReminderCard = false;
   render();
@@ -1638,6 +1694,8 @@ function resetAll() {
     completionInput:'',
     completionInput2:'',
     showReminderCard:false,
+    returnIntent:null,
+    returnTriggerShown:false,
   };
   render();
 }
