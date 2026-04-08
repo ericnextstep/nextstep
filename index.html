@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -10,14 +9,13 @@
 <meta name="apple-mobile-web-app-title" content="NextStep">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>NextStep</title>
-<!-- Google tag (gtag.js) -->
+<title>NextStep v2.4</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FVSC7VZMQW"></script>
 <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-FVSC7VZMQW');
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-FVSC7VZMQW');
 </script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -32,30 +30,20 @@
 }
 body{background:var(--bg) !important;color:var(--text);font-family:system-ui,-apple-system,sans-serif;min-height:100vh;overflow-x:hidden;color-scheme:dark;}
 html{background:var(--bg) !important;}
-
 #app{min-height:100vh;}
-#app > div {max-width:var(--max);margin:0 auto;position:relative;}
-
+#app > div{max-width:var(--max);margin:0 auto;position:relative;}
 @media(min-width:520px){
-body{background:#040810;}
-#app > div {
-box-shadow:0 0 80px rgba(0,0,0,0.8);
-background:var(--bg);
-min-height:100vh;
+  body{background:#040810;}
+  #app > div{box-shadow:0 0 80px rgba(0,0,0,0.8);background:var(--bg);min-height:100vh;}
+  .header{border-radius:0;}
+  .footer{max-width:var(--max);left:50%;transform:translateX(-50%);}
+  .card{padding:18px;font-size:14px;}
+  .plan-body{font-size:15px;}
+  .tab-btn{font-size:9px;}
+  .content{padding:18px 18px 90px;}
+  input,textarea{font-size:14px;}
+  .btn{font-size:16px;}
 }
-.header{border-radius:0;}
-.footer{max-width:var(--max);left:50%;transform:translateX(-50%);}
-}
-
-@media(min-width:520px){
-.card{padding:18px;font-size:14px;}
-.plan-body{font-size:15px;}
-.tab-btn{font-size:9px;}
-.content{padding:18px 18px 90px;}
-input,textarea{font-size:14px;}
-.btn{font-size:16px;}
-}
-
 .card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
 .card-gold{background:var(--gold-dim);border:2px solid var(--gold-b);}
 .card-green{background:var(--green-dim);border:2px solid var(--green-b);}
@@ -121,1633 +109,1453 @@ textarea{resize:vertical;min-height:72px;}
 @media(min-width:520px){.install-banner{display:none;}}
 .bmc-btn{display:inline-flex;align-items:center;gap:8px;background:#FFDD00;color:#000000;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;font-family:inherit;}
 .bmc-btn:hover{background:#f5d400;}
-
-/* Completion overlay animation */
-@keyframes completionPop {
-  0%{transform:scale(0.8);opacity:0;}
-  60%{transform:scale(1.05);}
-  100%{transform:scale(1);opacity:1;}
-}
-.completion-overlay{
-  position:fixed;top:0;left:0;right:0;bottom:0;
-  background:rgba(16,185,129,0.97);
-  z-index:9999;
-  display:flex;flex-direction:column;
-  align-items:center;justify-content:center;
-  text-align:center;padding:40px;
-  animation:completionPop 0.4s ease-out;
-  cursor:pointer;
-}
+/* v2.0 adaptive badge */
+.adaptive-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+.badge-escalate{background:rgba(16,185,129,0.15);border:1px solid var(--green-b);color:var(--green);}
+.badge-deescalate{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:var(--orange);}
+/* completion overlay */
+@keyframes completionPop{0%{transform:scale(0.8);opacity:0;}60%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
+.completion-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(16,185,129,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;animation:completionPop 0.4s ease-out;}
+/* v2.1 overwhelmed overlay */
+@keyframes slideUp{0%{transform:translateY(40px);opacity:0;}100%{transform:translateY(0);opacity:1;}}
+.overwhelmed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.97);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.overwhelmed-card{background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:28px 24px;max-width:360px;width:100%;margin:auto;animation:slideUp 0.3s ease-out;}
 </style>
-
 </head>
 <body>
 <div id="app">Loading...</div>
 <div id="errbox" style="display:none;position:fixed;top:0;left:0;right:0;background:red;color:white;padding:20px;font-size:12px;z-index:9999;word-break:break-all"></div>
-
 <script>
-window.onerror = function(msg, src, line, col, err) {
-  var box = document.getElementById('errbox');
-  if (box) { box.style.display='block'; box.textContent = 'ERROR: ' + msg + ' (line ' + line + ')'; }
+window.onerror = function(msg,src,line,col,err){
+  var box=document.getElementById('errbox');
+  if(box){box.style.display='block';box.textContent='ERROR: '+msg+' (line '+line+')';}
   return false;
 };
 
-// --- State ------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// STATE
+// ---------------------------------------------------------------------------
 var S = {
-  screen: 'loading',
-  step: 0,
-  diagStep: 0,
-  answers: {},
-  profile: null,
-  tab: 'today',
-  checked: {},
-  subChecked: {},
-  dayChecked: {},
-  day: 1,
-  viewDay: 1,
-  plans: {},
-  feedback: [],
-  energy: null,
-  notifPrefs: {},
-  planGenerated: false,
-  editing: false,
-  editText: '',
-  calAdded: {},
-  expandedStep: null,
-  expandedScript: null,
-  fbScreen: 'view',
-  fbDidIt: 'yes',
-  fbBlocker: '',
-  fbEasier: '',
-  fbSubmitted: false,
-  todayAnswers: { completed: '', avoided: '', blocked: '' },
-  editingMoney: false,
-  completionMsg: false,
-  completionInput: '',
-  completionInput2: '',
-  showReminderCard: false,
-  returnIntent: null,
-  returnTriggerShown: false,
+  screen:'loading', step:0, diagStep:0, answers:{}, profile:null,
+  tab:'today', checked:{}, subChecked:{}, dayChecked:{},
+  day:1, viewDay:1, plans:{}, feedback:[],
+  energy:null, notifPrefs:{}, planGenerated:false,
+  editing:false, editText:'', calAdded:{},
+  expandedStep:null, expandedScript:null,
+  fbScreen:'view', fbDidIt:'yes', fbBlocker:'', fbEasier:'', fbSubmitted:false,
+  todayAnswers:{completed:'',avoided:'',blocked:''},
+  editingMoney:false,
+  // v1.3+ completion
+  completionMsg:false, completionInput:'', completionInput2:'',
+  showReminderCard:false, returnIntent:null, returnTriggerShown:false, returnTimeChoice:null,
+  // v2.0 adaptive
+  completionConfidence:null,
+  adaptiveLevel:'maintain',
+  // v2.1 overwhelmed
+  overwhelmedMode:false,
+  crisisCategory:null,
 };
 
-var KEY = 'nextstep-pwa-v1';
-var DAY_KEY = 'nextstep-pwa-day';
-var PLAN_KEY = 'nextstep-pwa-plans';
-var FB_KEY = 'nextstep-pwa-feedback';
+var KEY='nextstep-pwa-v1';
+var DAY_KEY='nextstep-pwa-day';
+var PLAN_KEY='nextstep-pwa-plans';
+var FB_KEY='nextstep-pwa-feedback';
 
-function save() {
-  try {
-    localStorage.setItem(KEY, JSON.stringify({
-      profile: S.profile, checked: S.checked, subChecked: S.subChecked,
-      notifPrefs: S.notifPrefs, calAdded: S.calAdded, dayChecked: S.dayChecked || {},
+function save(){
+  try{
+    localStorage.setItem(KEY,JSON.stringify({
+      profile:S.profile,checked:S.checked,subChecked:S.subChecked,
+      notifPrefs:S.notifPrefs,calAdded:S.calAdded,dayChecked:S.dayChecked||{},
     }));
-    localStorage.setItem(DAY_KEY, String(S.day));
-    localStorage.setItem(PLAN_KEY, JSON.stringify(S.plans));
-    localStorage.setItem(FB_KEY, JSON.stringify(S.feedback));
-  } catch(e) {}
+    localStorage.setItem(DAY_KEY,String(S.day));
+    localStorage.setItem(PLAN_KEY,JSON.stringify(S.plans));
+    localStorage.setItem(FB_KEY,JSON.stringify(S.feedback));
+  }catch(e){}
 }
 
-function load() {
-  try {
-    var raw = localStorage.getItem(KEY);
-    if (raw) {
-      var d = JSON.parse(raw);
-      S.profile = d.profile || null;
-      S.checked = d.checked || {};
-      S.subChecked = d.subChecked || {};
-      S.notifPrefs = d.notifPrefs || {};
-      S.calAdded = d.calAdded || {};
-      S.dayChecked = d.dayChecked || {};
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY);
+    if(raw){
+      var d=JSON.parse(raw);
+      S.profile=d.profile||null;
+      S.checked=d.checked||{};
+      S.subChecked=d.subChecked||{};
+      S.notifPrefs=d.notifPrefs||{};
+      S.calAdded=d.calAdded||{};
+      S.dayChecked=d.dayChecked||{};
     }
-    S.day = parseInt(localStorage.getItem(DAY_KEY) || '1');
-    S.viewDay = S.day;
-    var plans = localStorage.getItem(PLAN_KEY);
-    S.plans = plans ? JSON.parse(plans) : {};
-    var fb = localStorage.getItem(FB_KEY);
-    S.feedback = fb ? JSON.parse(fb) : [];
-  } catch(e) {}
+    S.day=parseInt(localStorage.getItem(DAY_KEY)||'1');
+    S.viewDay=S.day;
+    var plans=localStorage.getItem(PLAN_KEY);
+    S.plans=plans?JSON.parse(plans):{};
+    var fb=localStorage.getItem(FB_KEY);
+    S.feedback=fb?JSON.parse(fb):[];
+  }catch(e){}
 }
 
-// --- Data -------------------------------------------------------------------
-var QUESTIONS = [
-  { id:'name',     e:'👋', q:"What's your first name?",            type:'text',   ph:'First name', sub:'' },
-  { id:'takehome', e:'💰', q:'What money do you have coming in each month?', type:'dollar', ph:'e.g. 5000', sub:'Enter the numbers you actually manage — just you or your household.' },
-  { id:'carddebt', e:'💳', q:'Total credit card debt?',            type:'dollar', ph:'0 if none',  sub:'' },
-  { id:'checking', e:'🏦', q:'Available cash — what you can use today?', type:'dollar', ph:'e.g. 2500', sub:'Include checking, savings, or anything you\'d actually use right now.' },
+// ---------------------------------------------------------------------------
+// DATA
+// ---------------------------------------------------------------------------
+var QUESTIONS=[
+  {id:'name',e:'👋',q:"What's your first name?",type:'text',ph:'First name',sub:''},
+  {id:'takehome',e:'💰',q:'What money do you have coming in each month?',type:'dollar',ph:'e.g. 5000',sub:'Enter the numbers you actually manage — just you or your household.'},
+  {id:'carddebt',e:'💳',q:'Total credit card debt?',type:'dollar',ph:'0 if none',sub:''},
+  {id:'checking',e:'🏦',q:'Available cash — what you can use today?',type:'dollar',ph:'e.g. 2500',sub:"Include checking, savings, or anything you'd actually use right now."},
 ];
 
-var DIAG = [
-  { id:'goal', e:'🎯', q:'What is the main thing you want to fix right now?', type:'choice',
-    opts:['Get out of debt','Stop living paycheck to paycheck','Build my savings','Just get control of my money'] },
-  { id:'blocker', e:'🧱', q:'What has been getting in the way?', type:'text', ph:'Be honest - this shapes your plan' },
-  { id:'savings', e:'💵', q:'About how much do you have in savings right now?', type:'choice',
-    opts:['$0 - nothing saved','Less than $500','$500 to $2,000','More than $2,000'] },
-  { id:'rent', e:'🏡', q:'Monthly rent or biggest fixed expense?', type:'dollar', ph:'e.g. 1500' },
+var DIAG=[
+  {id:'goal',e:'🎯',q:'What is the main thing you want to fix right now?',type:'choice',
+    opts:['Get out of debt','Stop living paycheck to paycheck','Build my savings','Just get control of my money']},
+  {id:'blocker',e:'🧱',q:'What has been getting in the way?',type:'text',ph:'Be honest - this shapes your plan'},
+  {id:'savings',e:'💵',q:'About how much do you have in savings right now?',type:'choice',
+    opts:['$0 - nothing saved','Less than $500','$500 to $2,000','More than $2,000']},
+  {id:'rent',e:'🏡',q:'Monthly rent or biggest fixed expense?',type:'dollar',ph:'e.g. 1500'},
 ];
 
-var STEPS = [
-  { id:'s1',  week:'Monday',  e:'🔒', label:'Remove all cards from Apple/Google Pay',    detail:'Go to Settings right now. Remove every credit card from Apple Pay or Google Pay. Debit only from this point. 3 minutes. Every tap you block is money you keep.' },
-  { id:'s2',  week:'Monday',  e:'💳', label:'Call highest-rate card - ask for rate cut',  detail:'Call the number on the back of your card. Say this: "I have been a customer for X years and I always pay on time. I am calling to request a lower interest rate." Takes 10 minutes. Works 70% of the time.' },
-  { id:'s3',  week:'Monday',  e:'📋', label:'List every subscription you pay',            detail:'Open your bank statement right now. Find every recurring charge. Write them down. Cancel anything you forgot about or have not used in 30 days. Do it today.' },
-  { id:'s4',  week:'Monday',  e:'🏦', label:'Open a dedicated savings account',           detail:'Open a separate account today. Name it after your goal. The name is the point — when you see it, you think twice before touching it.' },
-  { id:'s5',  week:'Week 2',  e:'💼', label:'Define your side income idea',               detail:'Write down 3 things you know that someone would pay for. Pick the one you could start this week. Write one name next to it — someone who might pay you. That is your first call.' },
-  { id:'s6',  week:'Week 2',  e:'📞', label:'Reach out to 5 potential clients',           detail:'Do not pitch. Just reconnect. Ask what challenges they are facing. Let them describe the problem. Then listen. Your product is in their answer.' },
-  { id:'s7',  week:'Week 3',  e:'📈', label:'Track your net worth for the first time',    detail:'Assets minus debts. Write the number down today. Do not judge it. Just write it. That number is your starting line — and you cannot run a race without one.' },
-  { id:'s8',  week:'Week 4',  e:'🎯', label:'Write your 3 non-negotiable exit criteria',  detail:'Three numbers: income target, cash reserve, debt threshold. Write them down. These define what free looks like for you. Without them you are running without a finish line.' },
-  { id:'s9',  week:'Month 2', e:'💰', label:'Land your first side income',                detail:'Even $50 from someone you know counts. The goal is not the money yet — it is starting the clock and proving to yourself it is possible.' },
-  { id:'s10', week:'Month 2', e:'🚀', label:'Set up business checking account',           detail:'Open a separate account for your side income today. The moment money goes into a dedicated account, it becomes real. That is the shift.' },
+var STEPS=[
+  {id:'s1',week:'Monday',e:'🔒',label:'Remove all cards from Apple/Google Pay',detail:'Go to Settings right now. Remove every credit card from Apple Pay or Google Pay. Debit only from this point. 3 minutes. Every tap you block is money you keep.'},
+  {id:'s2',week:'Monday',e:'💳',label:'Call highest-rate card - ask for rate cut',detail:'Call the number on the back of your card. Say this: "I have been a customer for X years and I always pay on time. I am calling to request a lower interest rate." Takes 10 minutes. Works 70% of the time.'},
+  {id:'s3',week:'Monday',e:'📋',label:'List every subscription you pay',detail:'Open your bank statement right now. Find every recurring charge. Write them down. Cancel anything you forgot about or have not used in 30 days. Do it today.'},
+  {id:'s4',week:'Monday',e:'🏦',label:'Open a dedicated savings account',detail:'Open a separate account today. Name it after your goal. The name is the point — when you see it, you think twice before touching it.'},
+  {id:'s5',week:'Week 2',e:'💼',label:'Define your side income idea',detail:'Write down 3 things you know that someone would pay for. Pick the one you could start this week. Write one name next to it — someone who might pay you. That is your first call.'},
+  {id:'s6',week:'Week 2',e:'📞',label:'Reach out to 5 potential clients',detail:'Do not pitch. Just reconnect. Ask what challenges they are facing. Let them describe the problem. Then listen. Your product is in their answer.'},
+  {id:'s7',week:'Week 3',e:'📈',label:'Track your net worth for the first time',detail:'Assets minus debts. Write the number down today. Do not judge it. Just write it. That number is your starting line — and you cannot run a race without one.'},
+  {id:'s8',week:'Week 4',e:'🎯',label:'Write your 3 non-negotiable exit criteria',detail:'Three numbers: income target, cash reserve, debt threshold. Write them down. These define what free looks like for you. Without them you are running without a finish line.'},
+  {id:'s9',week:'Month 2',e:'💰',label:'Land your first side income',detail:'Even $50 from someone you know counts. The goal is not the money yet — it is starting the clock and proving to yourself it is possible.'},
+  {id:'s10',week:'Month 2',e:'🚀',label:'Set up business checking account',detail:'Open a separate account for your side income today. The moment money goes into a dedicated account, it becomes real. That is the shift.'},
 ];
 
-var REMINDERS = [
-  { id:'r1',  group:'Today',     time:'Do it now', e:'🔒', label:'Remove cards from Apple Pay',        step:'s1', urgent:true  },
-  { id:'r2',  group:'Today',     time:'Do it now', e:'💳', label:'Call credit card - ask for rate cut', step:'s2', urgent:true  },
-  { id:'r3',  group:'Tomorrow',  time:'Morning',   e:'📅', label:'Day 2 check-in - open NextStep',      step:null, urgent:false },
-  { id:'r4',  group:'Monday',    time:'Monday',    e:'📋', label:'Cancel unused subscriptions',          step:'s3', urgent:false },
-  { id:'r5',  group:'Monday',    time:'Monday',    e:'🏦', label:'Open dedicated savings account',       step:'s4', urgent:false },
-  { id:'r6',  group:'Next Week', time:'Week 2',    e:'💼', label:'Define your side income idea',         step:'s5', urgent:false },
-  { id:'r7',  group:'Next Week', time:'Week 2',    e:'📞', label:'Reach out to 5 potential clients',    step:'s6', urgent:false },
-  { id:'r8',  group:'Month 1',   time:'Week 3',    e:'📈', label:'Track net worth',                      step:'s7', urgent:false },
-  { id:'r9',  group:'Month 1',   time:'Week 4',    e:'🎯', label:'Write your 3 exit criteria',           step:'s8', urgent:false },
-  { id:'r10', group:'Month 2',   time:'Month 2',   e:'💰', label:'Land first side income',               step:'s9', urgent:false },
+var REMINDERS=[
+  {id:'r1',group:'Today',time:'Do it now',e:'🔒',label:'Remove cards from Apple Pay',step:'s1',urgent:true},
+  {id:'r2',group:'Today',time:'Do it now',e:'💳',label:'Call credit card - ask for rate cut',step:'s2',urgent:true},
+  {id:'r3',group:'Tomorrow',time:'Morning',e:'📅',label:'Day 2 check-in - open NextStep',step:null,urgent:false},
+  {id:'r4',group:'Monday',time:'Monday',e:'📋',label:'Cancel unused subscriptions',step:'s3',urgent:false},
+  {id:'r5',group:'Monday',time:'Monday',e:'🏦',label:'Open dedicated savings account',step:'s4',urgent:false},
+  {id:'r6',group:'Next Week',time:'Week 2',e:'💼',label:'Define your side income idea',step:'s5',urgent:false},
+  {id:'r7',group:'Next Week',time:'Week 2',e:'📞',label:'Reach out to 5 potential clients',step:'s6',urgent:false},
+  {id:'r8',group:'Month 1',time:'Week 3',e:'📈',label:'Track net worth',step:'s7',urgent:false},
+  {id:'r9',group:'Month 1',time:'Week 4',e:'🎯',label:'Write your 3 exit criteria',step:'s8',urgent:false},
+  {id:'r10',group:'Month 2',time:'Month 2',e:'💰',label:'Land first side income',step:'s9',urgent:false},
 ];
 
-var GROUPS = ['Today','Tomorrow','Monday','Next Week','Month 1','Month 2'];
+var GROUPS=['Today','Tomorrow','Monday','Next Week','Month 1','Month 2'];
 
-var SUBS = [
-  'Netflix','Hulu','Disney+','HBO Max','Apple TV+',
-  'Spotify','Apple Music','Amazon Prime','Gym membership',
-  'Adobe Creative','Microsoft 365','iCloud Storage',
-  'DoorDash DashPass','Instacart+','Peloton',
-  'Magazine subscriptions','Dating apps','Gaming subscriptions',
+var SUBS=['Netflix','Hulu','Disney+','HBO Max','Apple TV+','Spotify','Apple Music','Amazon Prime','Gym membership','Adobe Creative','Microsoft 365','iCloud Storage','DoorDash DashPass','Instacart+','Peloton','Magazine subscriptions','Dating apps','Gaming subscriptions'];
+
+var BILL_SCRIPTS=[
+  {name:'Cable / Internet',script:"Hi, I am calling because I noticed my bill has gone up and I am thinking about switching providers. I have been a customer for [X] years and I would like to see if there is anything you can do to lower my rate before I make any decisions."},
+  {name:'Cell Phone',script:"Hi, I want to review my plan. I am currently paying [amount] and I have seen lower prices from competitors. I would like to stay with you but I need a better rate. What promotions do you currently have available?"},
+  {name:'Insurance',script:"I am calling to do an annual review of my policy. My situation has changed and I want to make sure I am not overpaying. Can you walk me through my current coverage and any discounts I might qualify for?"},
+  {name:'Credit Card',script:"I have been a customer for [X] years and I always pay on time. I would like to request a lower interest rate and possibly a higher credit limit. Can you connect me with someone who can help with that?"},
 ];
 
-var BILL_SCRIPTS = [
-  { name:'Cable / Internet', script:'Hi, I am calling because I noticed my bill has gone up and I am thinking about switching providers. I have been a customer for [X] years and I would like to see if there is anything you can do to lower my rate before I make any decisions.' },
-  { name:'Cell Phone',       script:'Hi, I want to review my plan. I am currently paying [amount] and I have seen lower prices from competitors. I would like to stay with you but I need a better rate. What promotions do you currently have available?' },
-  { name:'Insurance',        script:'I am calling to do an annual review of my policy. My situation has changed and I want to make sure I am not overpaying. Can you walk me through my current coverage and any discounts I might qualify for?' },
-  { name:'Credit Card',      script:'I have been a customer for [X] years and I always pay on time. I would like to request a lower interest rate and possibly a higher credit limit. Can you connect me with someone who can help with that?' },
+var COMPLETION_MSGS=[
+  {head:"Breathe. You moved.",sub:"Most people stay stuck right where you were. You didn't. That's the difference."},
+  {head:"That just happened.",sub:"Not tomorrow. Not someday. Right now. You're the type that actually does it."},
+  {head:"You didn't wait.",sub:"The hardest part of every action is starting. You're past it. That changes things."},
+  {head:"One real step.",sub:"Not a plan. Not an intention. An action. That's what separates the people who get out from the people who don't."},
+  {head:"Most people stall here.",sub:"You didn't. That's rare. And it compounds — every action makes the next one easier."},
+  {head:"The gap just got smaller.",sub:"Between where you are and where you need to be. One action at a time. You're doing it."},
+  {head:"That's the move.",sub:"You showed up and executed. That's the whole game. Keep going tomorrow."},
 ];
 
-var COMPLETION_MSGS = [
-  { head:"Done. That's the move.", sub:"Set your alarm. Same time tomorrow. Don't break it." },
-  { head:"You did it.", sub:"One action. That's all it takes. Come back tomorrow — don't let this be a one-time thing." },
-  { head:"Action taken.", sub:"Most people stop at thinking. You didn't. Now set a reminder and come back tomorrow." },
-  { head:"One step closer.", sub:"Tomorrow you go again. Set an alarm now while you're thinking about it." },
-  { head:"Most people think about it.", sub:"You just did it. That's the whole game. Same time tomorrow." },
-  { head:"You showed up and did the thing.", sub:"Don't break the streak. Set your alarm. See you tomorrow." },
-  { head:"That's real progress.", sub:"One more tomorrow and it starts becoming a pattern." },
-];
-
-var IDENTITY_MSGS = {
-  2: "You're building a streak.",
-  3: "This is becoming a pattern.",
-  5: "This is who you are now.",
-  7: "Seven days. That's discipline, not luck.",
-  10: "Ten days. You're in the top 1% of people who start this."
+var IDENTITY_MSGS={
+  2:"You're building a streak.",
+  3:"This is becoming a pattern.",
+  5:"This is who you are now.",
+  7:"Seven days. That's discipline, not luck.",
+  10:"Ten days. You're in the top 1% of people who start this."
 };
 
-// --- Plan Generation --------------------------------------------------------
-function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, blocked) {
-  var name = profile.name || 'Friend';
-  var hasDebt = (profile.cd || 0) > 0;
-  var tight = (profile.surplus || 0) < 500;
-  var noIncome = (profile.th || 0) === 0;
-  var badCredit = (profile.credit || '').indexOf('580') >= 0 || (profile.credit || '').indexOf('Under') >= 0;
-  var didSomething = completed && completed.trim().length > 3;
-  var gotBlocked = blocked && blocked.trim().length > 3;
-  var goal = profile.goal || 'get organized';
-  var stress = profile.stress || '';
+// v2.1 crisis categories — one action each, forward hook at end
+var CRISIS_CATEGORIES=[
+  {
+    id:'home',
+    e:'🏠',
+    label:'Home emergency',
+    sub:'Burst pipe, water heater, flooding, major damage',
+    action:'Call your insurance company right now — before you spend a single dollar. File the claim first. Then search "water restoration" or "emergency repair" + your zip code. Screenshot every receipt.',
+    hook:"This hurt because there was no cushion. That changes when you come back tomorrow — we'll start building one."
+  },
+  {
+    id:'bill',
+    e:'💸',
+    label:'Unexpected bill or expense',
+    sub:'Medical, car, repair, something you didn\'t see coming',
+    action:'Do not pay it today if you can wait 24 hours. Call and ask: "Is there a payment plan?" Most providers have one. Buying time is a financial move.',
+    hook:"Unexpected bills expose the gap. Tomorrow we start closing it."
+  },
+  {
+    id:'income',
+    e:'💼',
+    label:'Income hit',
+    sub:'Lost a job, hours cut, income dropped',
+    action:'Write down your three non-negotiable expenses — rent, utilities, food. Everything else is negotiable right now. Call each creditor and say: "My income changed. What options do I have?" Most will work with you.',
+    hook:"Income changes are survivable. A plan makes the difference. Come back tomorrow."
+  },
+  {
+    id:'general',
+    e:'😤',
+    label:'Just overwhelmed',
+    sub:'Too much at once, not sure where to start',
+    action:'Write down the one thing that is taking up the most space in your head right now. Just that one thing. Then write one action you could take on it today — even a 5-minute action. That is your only job right now.',
+    hook:"Overwhelm is a signal, not a verdict. Come back tomorrow and we'll turn it into a step."
+  },
+];
 
-  // $0 income path — completely separate plan
-  if (noIncome) {
-    var energyLine0 = '';
-    if (energy === 'high') energyLine0 = 'Your energy is high. Good. You are going to need it. Let\'s move.';
-    else if (energy === 'medium') energyLine0 = 'Your energy is moderate. One focused action today. That is enough.';
-    else if (energy === 'low') energyLine0 = 'Your energy is low. That is okay. One small step still counts.';
+// ---------------------------------------------------------------------------
+// v2.0 ADAPTIVE PLAN LOGIC
+// ---------------------------------------------------------------------------
+function assessConfidence(input){
+  if(!input||input.trim().length<3) return 'none';
+  var lower=input.toLowerCase().trim();
+  var specific=['paid','moved','canceled','cancelled','called','removed','applied','opened','signed','transferred','set','sent','deleted','switched','deposited','closed','logged','downloaded','unsubscribed','scheduled','booked','enrolled','registered','automated','cut'];
+  var vague=['thought','looked','reviewed','checked','maybe','kind of','sort of','tried','almost','going to','plan to','will','might','want to','thinking','should'];
+  for(var i=0;i<specific.length;i++){if(lower.indexOf(specific[i])>=0) return 'high';}
+  for(var j=0;j<vague.length;j++){if(lower.indexOf(vague[j])>=0) return 'low';}
+  return lower.length>12?'high':'low';
+}
 
-    var actions0 = [];
-    if (energy === 'low') {
-      actions0.push('Write down 3 things you could do this week to make $50 or more. Do not filter. Do not judge. Just write them. 5 minutes.');
-      actions0.push('Set a reminder for tomorrow at 8am. Label it "Pick one." You will choose from your list then.');
-    } else if (energy === 'medium') {
-      actions0.push('Write down 3 ways you could make $50 this week. Skill, time, or something you own. Pick the fastest one.');
-      actions0.push('Text one person right now — someone who might hire you, buy something from you, or know someone who needs your skill. Just say you are available.');
-      actions0.push('Check your phone. Find one thing you own that you could sell this week. List it on Facebook Marketplace or OfferUp today.');
-    } else {
-      actions0.push('Write down 3 ways you could make $50 this week. Pick the fastest one. Take one action on it before you close this app.');
-      actions0.push('Text one person right now who might pay you for something — a skill, a service, something you own. Send the text before you overthink it.');
-      actions0.push('Open one gig app right now — Uber, TaskRabbit, Fiverr, Instacart, whatever fits your situation. Start the signup. Takes 10 minutes.');
+function getAdaptiveLevel(){
+  var prevDay=S.day-1;
+  if(prevDay<1) return 'maintain';
+  var prev=S.plans[prevDay];
+  if(!prev||typeof prev!=='object') return 'maintain';
+  var conf=prev.confidence;
+  if(conf==='high') return 'escalate';
+  if(conf==='low'||conf==='none') return 'deescalate';
+  return 'maintain';
+}
+
+// ---------------------------------------------------------------------------
+// PLAN GENERATION — updated with adaptiveLevel
+// ---------------------------------------------------------------------------
+function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,adaptiveLevel){
+  var name=profile.name||'Friend';
+  var hasDebt=(profile.cd||0)>0;
+  var tight=(profile.surplus||0)<500;
+  var noIncome=(profile.th||0)===0;
+  var badCredit=(profile.credit||'').indexOf('580')>=0||(profile.credit||'').indexOf('Under')>=0;
+  var didSomething=completed&&completed.trim().length>3;
+  var gotBlocked=blocked&&blocked.trim().length>3;
+  var goal=profile.goal||'get organized';
+  var stress=profile.stress||'';
+  var adaptive=adaptiveLevel||'maintain';
+
+  // $0 income path
+  if(noIncome){
+    var el0=energy==='high'?"Your energy is high. Good. Let's move.":energy==='medium'?'Your energy is moderate. One focused action today.':'Your energy is low. One small step still counts.';
+    var a0=[];
+    if(energy==='low'){
+      a0.push('Write down 3 things you could do this week to make $50 or more. Do not filter. Just write them. 5 minutes.');
+      a0.push('Write "I am available for [what you do]" and send it to one person right now. One text. That is the first move.');
+    }else if(energy==='medium'){
+      a0.push('Write down 3 ways you could make $50 this week. Pick the fastest one.');
+      a0.push('Text one person right now who might hire you or buy something from you. Just say you are available.');
+      a0.push('Find one thing you own that you could sell this week. List it on Facebook Marketplace or OfferUp today.');
+    }else{
+      a0.push('Write down 3 ways you could make $50 this week. Pick the fastest one. Take one action before you close this app.');
+      a0.push('Text one person right now who might pay you for something. Send the text before you overthink it.');
+      a0.push('Open one gig app — Uber, TaskRabbit, Fiverr, Instacart. Start the signup. Takes 10 minutes.');
     }
-
-    return {
-      name: name, day: dayNum,
-      energyLine: energyLine0,
-      priority: name + ', before anything else — we need income. Debt, savings, budgets — none of that matters until money is coming in. That is the only move right now.',
-      actions: actions0,
-      momentum: 'No income is a temporary situation. The first dollar you earn changes everything. One action today starts the clock.',
-      avoid: ['Spending any money you do not have — every dollar matters right now', 'Waiting for the perfect opportunity — any income beats no income'],
-      hasDebt: hasDebt,
-      noIncome: true
-    };
+    return{name:name,day:dayNum,energyLine:el0,priority:name+', before anything else — we need income. That is the only move right now.',actions:a0,momentum:'No income is a temporary situation. The first dollar you earn changes everything.',avoid:['Spending any money you do not have','Waiting for the perfect opportunity — any income beats no income'],hasDebt:hasDebt,noIncome:true,adaptiveLevel:'maintain'};
   }
 
-  var energyLine = '';
-  if (energy === 'high') energyLine = 'Your energy is high today. Starting with the hardest thing on your list.';
-  else if (energy === 'medium') energyLine = 'Your energy is moderate. Picking the most important thing you can actually do.';
-  else if (energy === 'low') energyLine = 'Your energy is low today. One small win. That is all you need. Small is real progress.';
+  var energyLine='';
+  if(energy==='high') energyLine='Your energy is high today. Starting with the hardest thing on your list.';
+  else if(energy==='medium') energyLine='Your energy is moderate. Picking the most important thing you can actually do.';
+  else if(energy==='low') energyLine='Your energy is low today. One small win. That is all you need.';
 
-  var priority = '';
-  if (isDay1) {
-    if (hasDebt && badCredit) priority = name + ', your credit and debt are both bleeding. We stop the bleeding first.';
-    else if (hasDebt) priority = name + ', your highest-rate card is costing you money every single day. Today we fight back.';
-    else if (tight) priority = name + ', your margin is thin. One cut today creates breathing room for everything else.';
-    else priority = name + ', you want to ' + goal.toLowerCase() + '. Today we build the first step of that road.';
-  } else if (didSomething) {
-    priority = name + ', you completed: ' + completed.slice(0,50) + '. That is momentum. Build on it today.';
-  } else if (gotBlocked) {
-    priority = name + ', ' + blocked.slice(0,50) + ' got in the way. Today we work around it with one smaller step.';
-  } else {
-    priority = name + ', you came back. That is already more than most people do. One thing today.';
+  var priority='';
+  if(isDay1){
+    if(hasDebt&&badCredit) priority=name+', your credit and debt are both bleeding. We stop the bleeding first.';
+    else if(hasDebt) priority=name+', your highest-rate card is costing you money every single day. Today we fight back.';
+    else if(tight) priority=name+', your margin is thin. One cut today creates breathing room for everything else.';
+    else priority=name+', you want to '+goal.toLowerCase()+'. Today we build the first step of that road.';
+  }else if(adaptive==='escalate'){
+    if(didSomething) priority=name+', you did it yesterday. That changes things. Today we raise the bar.';
+    else priority=name+', yesterday built momentum. Today we push further.';
+  }else if(adaptive==='deescalate'){
+    if(gotBlocked) priority=name+', something got in the way. Today we make the step smaller and the path clearer.';
+    else priority=name+', yesterday was tough. That is okay. Smaller step today — still forward.';
+  }else{
+    if(didSomething) priority=name+', you completed: '+completed.slice(0,50)+'. That is momentum. Build on it today.';
+    else if(gotBlocked) priority=name+', '+blocked.slice(0,50)+' got in the way. Today we work around it.';
+    else priority=name+', you came back. That is already more than most people do. One thing today.';
   }
 
-  var actions = [];
-  if (isDay1) {
-    if (energy === 'low') {
-      actions.push('Open your bank app right now. Screenshot your checking balance. 30 seconds. That number is your starting line.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow that number becomes a plan.');
-    } else if (energy === 'medium') {
-      if (hasDebt) actions.push('Open your bank app right now. Find your highest-rate credit card. Screenshot the balance. 60 seconds. That card is the first target.');
-      actions.push('Go to phone Settings right now. Remove Apple Pay or Google Pay access from one credit card. 2 minutes. Every tap you block is money you keep.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow we attack that number.');
-    } else {
-      if (hasDebt) actions.push('Open your bank app right now. Find your highest-rate credit card. Screenshot the balance. 60 seconds. That card is the first target.');
-      actions.push('Go to phone Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point. 3 minutes. This is the move.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep." Tomorrow we attack that number.');
+  var actions=[];
+  if(isDay1){
+    if(energy==='low'){
+      actions.push('Open your bank app right now. Look at your checking balance. Write that number down — on paper, in your notes, anywhere. That number is your starting line. Do not close the app yet.');
+      actions.push('Find the one bill or card that bothers you most. Look at the balance. Just look at it. That is today\'s job — know the number.');
+    }else if(energy==='medium'){
+      if(hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Look at the balance. Write it down. Do not close the app yet — that number is what we\'re attacking.');
+      actions.push('Go to Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point forward. Every tap you block is money you keep. 3 minutes.');
+      actions.push('Take that card out of your wallet. Put it in a drawer, a bag, anywhere that is not your pocket. Physical friction is real friction.');
+    }else{
+      if(hasDebt) actions.push('Open your bank app. Find every credit card balance. Write them down in order from highest rate to lowest. That list is your target list. We work from the top.');
+      actions.push('Go to Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point forward. 3 minutes.');
+      actions.push('Take every credit card out of your wallet. Put them somewhere inconvenient. You are not canceling them — just removing the impulse path.');
     }
-  } else if (didSomething) {
-    if (energy === 'low') {
-      actions.push('Write down the single next step after what you completed. Just write it. Do not do it yet. Writing it is the win today.');
-    } else {
-      actions.push('Pick the exact next step after what you completed. Do it today. Not tomorrow. Today.');
-      if (avoided && avoided.trim().length > 3) actions.push('The thing you avoided yesterday: ' + avoided.slice(0,40) + '. Do it in the next 2 hours. The longer it waits the heavier it gets.');
-      if (hasDebt) actions.push('Put one extra payment toward your highest-rate card today. Even $25. Every dollar chips away the interest.');
+  }else if(adaptive==='escalate'){
+    // Did it yesterday with confidence — push harder
+    if(energy==='low'){
+      actions.push('Write the single next step after what you completed yesterday. Just write it. Writing locks it in.');
+      if(hasDebt) actions.push('Add $10 more to your debt payment than you planned. Small extras compound fast.');
+    }else if(energy==='medium'){
+      if(hasDebt){
+        actions.push('Call your highest-rate card today. Script: "I have been a customer for X years. I want a lower rate." 10 minutes. Works 70% of the time.');
+        actions.push('Set up automatic minimum payments on every card right now. Never miss one again. 5 minutes in your bank app.');
+      }else{
+        actions.push('Open your bank app. Set up an automatic transfer to savings — even $25. Automation beats discipline every time.');
+        actions.push('List every subscription you pay. Find one to cancel today.');
+      }
+      actions.push('Write a stretch goal for this week. One number you want to hit by Friday.');
+    }else{
+      if(hasDebt){
+        actions.push('Call your highest-rate card right now. Ask for a rate cut. Script: "I always pay on time. I want a lower rate or I will transfer the balance."');
+        actions.push('Make an extra payment on your highest-rate card today. Even $50. Every dollar stops earning interest against you.');
+        actions.push('Set up automatic payments on all cards. Take human error out of it. Do it now.');
+      }else{
+        actions.push('Open your bank app. Set up an automatic transfer to a dedicated savings account — name it after your goal.');
+        actions.push('Call your insurance provider and ask for a rate review. You have been a customer — ask what discounts you qualify for.');
+        actions.push('Write your net worth right now. Assets minus debt. This number is your starting line for everything that comes next.');
+      }
     }
-  } else {
-    if (energy === 'low') {
-      actions.push('Pick the smallest possible version of the next step. The version that takes 5 minutes or less. Do that one thing.');
-    } else {
-      actions.push('Pull up your plan. Pick the single next step. Do only that one thing today. One thing done beats five things started.');
-      if (gotBlocked) actions.push('What blocked you yesterday: ' + blocked.slice(0,40) + '. Address that first. Everything else is noise until that is cleared.');
-      actions.push('Set a 20-minute timer right now. Work on the plan only during that window. When it goes off you are done for today.');
+  }else if(adaptive==='deescalate'){
+    // Did not do it or was vague — make it smaller
+    if(energy==='low'){
+      actions.push('One thing. The smallest possible version of what you were supposed to do. Three minutes or less. That is all today asks.');
+      actions.push('Write down the one thing that stopped you yesterday. Just write it. That is your target tomorrow. Leave it somewhere you will see it.');
+    }else if(energy==='medium'){
+      actions.push('Take the step that blocked you and break it in half. Do only the first half today. Half a step is still forward.');
+      if(hasDebt) actions.push('Open your bank app. Look at your highest-rate balance. Write the number down. Do not close the app until you have written it.');
+      actions.push('Tell one person what you are trying to do this week. Say it out loud or send a text. Accountability does not need a coach — just one honest sentence.');
+    }else{
+      actions.push('Go back to what blocked you. Do the smallest version of it right now. Any forward motion beats the perfect move you never make.');
+      if(hasDebt) actions.push('Make the minimum payment on your highest-rate card if you have not already. Floor, not ceiling. Do not let it slip.');
+      actions.push('Open this app again tomorrow at the same time you opened it today. That is the only commitment you are making right now.');
+    }
+  }else{
+    // maintain
+    if(didSomething){
+      if(energy==='low'){
+        actions.push('Write down the single next step after what you completed. Just write it. Do not do it yet. Writing it is the win today.');
+      }else{
+        actions.push('Pick the exact next step after what you completed. Do it today. Not tomorrow. Today.');
+        if(avoided&&avoided.trim().length>3) actions.push('The thing you avoided: '+avoided.slice(0,40)+'. Do it in the next 2 hours.');
+        if(hasDebt) actions.push('Put one extra payment toward your highest-rate card today. Even $25.');
+      }
+    }else{
+      if(energy==='low'){
+        actions.push('Pick the smallest possible version of the next step. Five minutes or less. Do that one thing.');
+      }else{
+        actions.push('Pull up your plan. Pick the single next step. One thing done beats five things started.');
+        if(gotBlocked) actions.push('What blocked you: '+blocked.slice(0,40)+'. Address that first. Everything else is noise until it is cleared.');
+        actions.push('Set a 20-minute timer. Work on only the plan during that window. When it goes off — you are done for today.');
+      }
     }
   }
 
-  var momentum = '';
-  if (isDay1) {
-    momentum = stress ? 'Most people feel exactly what you are feeling and never open an app to fix it. You did. That is different.' : 'Day 1 is always the hardest. You showed up. Everything from here is easier than this moment.';
-  } else if (didSomething) {
-    momentum = 'You did the work yesterday. The plan advances. Keep the streak alive.';
-  } else if (gotBlocked) {
-    momentum = 'Getting blocked is not failure. Failure is not coming back. You came back.';
-  } else {
-    momentum = 'The plan does not care about yesterday. It only cares about the next step. Go get it.';
+  var momentum='';
+  if(isDay1){
+    momentum=stress?'Most people feel exactly what you are feeling and never do anything about it. You opened an app and made a move. That is already different.':'Day 1 is always the hardest. You showed up and executed. Everything from here builds on this. Do not let it sit.';
+  }else if(adaptive==='escalate'){
+    momentum='You proved yesterday that you can do it. Today you go further. That is how the gap closes.';
+  }else if(adaptive==='deescalate'){
+    momentum='Getting blocked is not failure. Failure is not coming back. You came back. That counts.';
+  }else if(didSomething){
+    momentum='You did the work yesterday. The plan advances. Keep the streak alive.';
+  }else if(gotBlocked){
+    momentum='Getting blocked is not failure. Failure is not coming back. You came back.';
+  }else{
+    momentum='The plan does not care about yesterday. It only cares about the next step. Go get it.';
   }
 
-  var avoid = [];
-  if (hasDebt) avoid.push('Using any credit card today - cash or debit only');
-  if (tight) avoid.push('Any unplanned purchase over $20 - every dollar matters right now');
+  var avoid=[];
+  if(hasDebt) avoid.push('Using any credit card today - cash or debit only');
+  if(tight) avoid.push('Any unplanned purchase over $20 - every dollar matters right now');
   avoid.push('Waiting until you feel motivated - action creates motivation, not the other way around');
 
-  return { name:name, day:dayNum, priority:priority, energyLine:energyLine, actions:actions.slice(0,3), momentum:momentum, avoid:avoid.slice(0,2), hasDebt:hasDebt };
+  return{name:name,day:dayNum,priority:priority,energyLine:energyLine,actions:actions.slice(0,3),momentum:momentum,avoid:avoid.slice(0,2),hasDebt:hasDebt,adaptiveLevel:adaptive};
 }
 
-// --- Calendar Export --------------------------------------------------------
-function makeICS(step) {
-  var now = new Date();
-  var start = new Date(now);
-  start.setDate(start.getDate() + 1);
-  start.setHours(9,0,0,0);
-  var end = new Date(start);
-  end.setHours(9,30,0,0);
-  var fmt = function(d) { return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); };
-  return [
-    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NextStep//EN',
-    'BEGIN:VEVENT',
-    'UID:nextstep-' + step.id + '-' + Date.now() + '@nextstep.app',
-    'DTSTAMP:' + fmt(now),
-    'DTSTART:' + fmt(start),
-    'DTEND:' + fmt(end),
-    'SUMMARY:NextStep: ' + step.label,
-    'DESCRIPTION:' + step.detail,
+// ---------------------------------------------------------------------------
+// NEXT STEP PREVIEW — anticipation hook for completion overlay
+// ---------------------------------------------------------------------------
+function getNextStepPreview(plan){
+  if(!plan||typeof plan!=='object') return null;
+  var hasDebt=plan.hasDebt;
+  var goal=S.profile?S.profile.goal:'';
+  var day=S.day||1;
+  if(day===1){
+    if(hasDebt) return "Tomorrow: call the number on the back of that card. Ask for a lower rate. Every day this waits, you pay more. Takes 10 minutes. We'll handle it.";
+    return "Tomorrow: find the one expense that's bleeding you and cut it. We know where to look. Come back and we'll go straight to it.";
+  }
+  if(day===2){
+    if(hasDebt) return "Tomorrow: set up automatic minimum payments so you never miss one. Takes 5 minutes. Protects your credit automatically. Don't let this sit.";
+    return "Tomorrow: we look at what's actually coming in vs. going out. One number will change how you see this. Come back.";
+  }
+  if(day===3){
+    return "Tomorrow: Day 3 is where most people quit. You're still here. That already makes you different. Don't let that go.";
+  }
+  if(goal==='Get out of debt') return "Tomorrow: one more action toward zero. You already started — stopping now means starting over. Don't let this sit.";
+  if(goal==='Stop living paycheck to paycheck') return "Tomorrow: we find your first $50 of breathing room. It exists in your numbers right now. Come back and we'll find it.";
+  if(goal==='Build my savings') return "Tomorrow: we automate one small transfer. Savings that happen automatically don't require willpower. Come back.";
+  return "Tomorrow: one more step. You started something. Don't let it sit.";
+}
+
+// ---------------------------------------------------------------------------
+// CALENDAR EXPORT
+// ---------------------------------------------------------------------------
+function makeICS(step){
+  var now=new Date();
+  var start=new Date(now);start.setDate(start.getDate()+1);start.setHours(9,0,0,0);
+  var end=new Date(start);end.setHours(9,30,0,0);
+  var fmt=function(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');};
+  return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NextStep//EN','BEGIN:VEVENT',
+    'UID:nextstep-'+step.id+'-'+Date.now()+'@nextstep.app','DTSTAMP:'+fmt(now),
+    'DTSTART:'+fmt(start),'DTEND:'+fmt(end),
+    'SUMMARY:NextStep: '+step.label,'DESCRIPTION:'+step.detail,
     'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:NextStep reminder','TRIGGER:-PT15M','END:VALARM',
-    'END:VEVENT','END:VCALENDAR'
-  ].join('\r\n');
+    'END:VEVENT','END:VCALENDAR'].join('\r\n');
+}
+function downloadICS(stepId){
+  var step=STEPS.find(function(s){return s.id===stepId;});
+  if(!step) return;
+  var blob=new Blob([makeICS(step)],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download=step.id+'.ics';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  S.calAdded[stepId]='ics';save();render();
+}
+function googleCal(stepId){
+  var step=STEPS.find(function(s){return s.id===stepId;});
+  if(!step) return;
+  var now=new Date();
+  var start=new Date(now);start.setDate(start.getDate()+1);start.setHours(9,0,0,0);
+  var end=new Date(start);end.setHours(9,30,0,0);
+  var fmt=function(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');};
+  var url='https://calendar.google.com/calendar/r/eventedit?text='+encodeURIComponent('NextStep: '+step.label)+'&dates='+fmt(start)+'/'+fmt(end)+'&details='+encodeURIComponent(step.detail);
+  window.open(url,'_blank');
+  S.calAdded[stepId]='google';save();render();
 }
 
-function downloadICS(stepId) {
-  var step = STEPS.find(function(s) { return s.id === stepId; });
-  if (!step) return;
-  var blob = new Blob([makeICS(step)], { type:'text/calendar;charset=utf-8' });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement('a');
-  a.href = url; a.download = step.id + '.ics';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  S.calAdded[stepId] = 'ics';
-  save(); render();
-}
-
-function googleCal(stepId) {
-  var step = STEPS.find(function(s) { return s.id === stepId; });
-  if (!step) return;
-  var now = new Date();
-  var start = new Date(now); start.setDate(start.getDate() + 1); start.setHours(9,0,0,0);
-  var end = new Date(start); end.setHours(9,30,0,0);
-  var fmt = function(d) { return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,''); };
-  var url = 'https://calendar.google.com/calendar/r/eventedit?text=' + encodeURIComponent('NextStep: ' + step.label) + '&dates=' + fmt(start) + '/' + fmt(end) + '&details=' + encodeURIComponent(step.detail);
-  window.open(url, '_blank');
-  S.calAdded[stepId] = 'google';
-  save(); render();
-}
-
-// --- Notifications ----------------------------------------------------------
-function requestNativeNotif() {
-  if ('Notification' in window) {
-    Notification.requestPermission().then(function(perm) {
-      if (perm === 'granted') {
-        new Notification('NextStep', { body:'Notifications enabled. See you tomorrow morning.' });
-      }
-      render();
-    });
-  }
-}
-
-function scheduleReminder() {
-  // Push notifications temporarily disabled - service worker removed for stability
-}
-
-// --- Profile Builder --------------------------------------------------------
-function buildProfile(a) {
-  var n = function(id) { return parseInt(a[id]) || 0; };
-  var th = n('takehome'), ch = n('checking'), cd = n('carddebt');
-  var mg = n('rent') || 0;
-
-  var sv = 0;
-  if (a.savings === 'Less than $500') sv = 250;
-  else if (a.savings === '$500 to $2,000') sv = 1000;
-  else if (a.savings === 'More than $2,000') sv = 2000;
-
-  var liquid = ch + sv;
-  var minCard = Math.round(cd * 0.025);
-  var oblig = mg + minCard + 500;
-  var surplus = th - oblig - 400;
-
-  var goal = a.goal || 'Get control of my money';
-  var stress = a.blocker || '';
-
-  var credit = '';
-  if (th === 0) credit = 'Income needed first';
-  else if (cd > th * 6) credit = 'Under 580 - needs work';
-  else if (cd > th * 3) credit = '580-669 - fair';
-  else if (cd > 0) credit = '670-739 - good';
-  else credit = '740+ - great';
-
-  return {
-    name: a.name||'Friend', goal: goal, stress: stress, credit: credit,
-    timeline: 'I need help NOW', savings: a.savings || '$0',
-    th: th, ch: ch, sv: sv, mg: mg, cd: cd,
-    minCard: minCard, liquid: liquid, oblig: oblig, surplus: surplus
-  };
-}
-
-// --- Format helpers ---------------------------------------------------------
-function fmt(v) { return '$' + Math.round(Math.max(0, parseInt(v)||0)).toLocaleString(); }
-function fmtSigned(v) { var n = Math.round(parseInt(v)||0); return (n<0?'-':'') + '$' + Math.abs(n).toLocaleString(); }
-
-// --- Render ------------------------------------------------------------------
-function render() {
-  var app = document.getElementById('app');
-  if (!app) return;
-  if (S.screen === 'loading') { app.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:20px;color:var(--muted);">Loading...</div>'; return; }
-  if (S.screen === 'landing') { app.innerHTML = renderLanding(); return; }
-  if (S.screen === 'onboarding') { app.innerHTML = renderOnboarding(); return; }
-  if (S.screen === 'chat') { app.innerHTML = renderChat(); scrollChat(); return; }
-  if (S.screen === 'notif') { app.innerHTML = renderNotif(); return; }
-  if (S.screen === 'dashboard') { app.innerHTML = renderDashboard(); return; }
-}
-
-function renderLanding() {
-  var isInstalled = false;
-  try { isInstalled = window.matchMedia && window.matchMedia('(display-mode: standalone)').matches; } catch(e) {}
-  return '<div class="screen"><div class="screen-center">' +
-    '<div style="font-size:68px;margin-bottom:16px">🌴</div>' +
-    '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">NextStep</div>' +
-    '<div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:8px">Your plan adjusts daily until you win.</div>' +
-    '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 4 questions. Have a quick conversation. Get your personalized plan. Takes 3 minutes.</div>' +
-    (!isInstalled ? '<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience including notifications.</div>' : '') +
-    '<button class="btn btn-gold" onclick="startOnboarding()">Build My Plan</button>' +
-    '<div style="color:var(--muted);font-size:11px;margin-top:8px;margin-bottom:24px">Takes 2 minutes. Stays on your device.</div>' +
-    '<a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" class="bmc-btn">☕ Buy me a coffee</a>' +
-    '<div style="color:var(--muted);font-size:10px;margin-top:8px">If this app helped you, consider supporting it.</div>' +
-    '</div></div>';
-}
-
-function renderOnboarding() {
-  if (S.screen === 'chat') return renderChat();
-
-  var q = QUESTIONS[S.step];
-  var pct = Math.round(((S.step + 1) / (QUESTIONS.length + 1)) * 100);
-  var val = S.answers[q.id] || '';
-
-  var html = '<div class="screen">' +
-    '<div style="padding-top:52px;margin-bottom:36px">' +
-    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">' +
-    '<span>Step ' + (S.step+1) + ' of 4 &mdash; Numbers first</span>' +
-    '<span style="color:var(--gold);font-weight:700">' + pct + '%</span></div>' +
-    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:' + pct + '%;background:var(--gold)"></div></div>' +
-    '</div>' +
-    '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">' +
-    '<div style="font-size:52px;margin-bottom:14px;text-align:center">' + q.e + '</div>' +
-    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:' + (q.sub?'10':'28') + 'px">' + q.q + '</div>' +
-    (q.sub ? '<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.6;padding:0 8px">' + q.sub + '</div>' : '');
-
-  html += '<input id="qinput" type="' + (q.type==='dollar'?'tel':q.type) + '" inputmode="' + (q.type==='dollar'?'numeric':'text') + '" placeholder="' + q.ph + '" value="' + val + '" oninput="onInput(this.value)" onkeydown="if(event.key===\'Enter\')nextStep()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
-  if (q.type === 'dollar' && val) html += '<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$' + parseInt(val.replace(/[^0-9]/g,'')).toLocaleString() + '</div>';
-  html += '<button class="btn btn-gold" style="margin-top:12px" onclick="nextStep()">' + (S.step < QUESTIONS.length-1 ? 'Next' : 'Next &rarr; Tell us your story') + '</button>';
-  if (q.type === 'dollar') html += '<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
-
-  html += '</div>';
-  if (S.step > 0) html += '<button style="background:none;border:none;color:var(--muted);font-size:12px;padding:16px 0 32px;cursor:pointer;font-family:inherit" onclick="prevStep()">Back</button>';
-  html += '</div>';
-  return html;
-}
-
-function renderChat() {
-  var dstep = S.diagStep || 0;
-  var q = DIAG[dstep];
-  var val = S.answers[q.id] || '';
-  var pct = Math.round(((QUESTIONS.length + dstep + 1) / (QUESTIONS.length + DIAG.length + 1)) * 100);
-
-  var html = '<div class="screen">' +
-    '<div style="padding-top:52px;margin-bottom:36px">' +
-    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">' +
-    '<span>Step ' + (QUESTIONS.length + dstep + 1) + ' of ' + (QUESTIONS.length + DIAG.length) + ' &mdash; Your situation</span>' +
-    '<span style="color:var(--gold);font-weight:700">' + pct + '%</span></div>' +
-    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:' + pct + '%;background:var(--gold)"></div></div>' +
-    '</div>' +
-    '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">' +
-    '<div style="font-size:52px;margin-bottom:14px;text-align:center">' + q.e + '</div>' +
-    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:28px">' + q.q + '</div>';
-
-  if (q.type === 'choice') {
-    html += '<div style="display:flex;flex-direction:column;gap:8px">';
-    q.opts.forEach(function(opt) {
-      var sel = val === opt;
-      html += '<button class="opt-btn' + (sel?' sel':'') + '" onclick="pickDiag(\'' + opt.replace(/'/g,"\\'") + '\')">' + opt + '</button>';
-    });
-    html += '</div>';
-  } else {
-    html += '<input id="diaginput" type="' + (q.type==='dollar'?'tel':'text') + '" inputmode="' + (q.type==='dollar'?'numeric':'text') + '" placeholder="' + q.ph + '" value="' + val + '" oninput="S.answers[\'' + q.id + '\']=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
-    if (q.type === 'dollar' && val) html += '<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$' + parseInt(val.replace(/[^0-9]/g,'')).toLocaleString() + '</div>';
-    html += '<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">' + (dstep < DIAG.length-1 ? 'Next' : 'Build My Plan') + '</button>';
-    if (q.type === 'dollar') html += '<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
-  }
-
-  html += '</div>';
-  html += '<button style="background:none;border:none;color:var(--muted);font-size:12px;padding:16px 0 32px;cursor:pointer;font-family:inherit" onclick="prevDiag()">Back</button>';
-  html += '</div>';
-  return html;
-}
-
-function renderNotif() {
-  var prefs = S.notifPrefs;
-  var items = [
-    { id:'calendar', icon:'📅', title:'Add steps to my Calendar', desc:"We'll create calendar events for each action item." },
-    { id:'checkin',  icon:'⏰', title:'Daily check-in reminders', desc:'A quick nudge each morning to stay on plan.' },
-    { id:'budget',   icon:'🚨', title:'Budget limit alerts',      desc:"Get notified when you're approaching a limit." },
-    { id:'milestone',icon:'🎉', title:'Milestone celebrations',   desc:"We'll celebrate every win with you." },
-  ];
-  var html = '<div class="screen"><div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 8px">' +
-    '<div class="center" style="margin-bottom:32px">' +
-    '<div style="font-size:64px;margin-bottom:16px">🔔</div>' +
-    '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;margin-bottom:10px">Can we help keep you on track?</div>' +
-    '<div style="font-size:13px;color:var(--muted);line-height:1.7">These features help you stay accountable. You control everything. Turn off anytime.</div>' +
-    '</div>';
-  items.forEach(function(item) {
-    var on = !!prefs[item.id];
-    html += '<div class="notif-row' + (on?' on':'') + '" onclick="toggleNotif(\'' + item.id + '\')">' +
-      '<div style="font-size:32px;flex-shrink:0">' + item.icon + '</div>' +
-      '<div style="flex:1"><div style="font-size:14px;font-weight:800;margin-bottom:3px">' + item.title + '</div>' +
-      '<div style="font-size:12px;color:var(--muted);line-height:1.5">' + item.desc + '</div></div>' +
-      '<div class="toggle' + (on?' on':'') + '">' + (on?'&#10003;':'') + '</div></div>';
+// ---------------------------------------------------------------------------
+// NOTIFICATIONS
+// ---------------------------------------------------------------------------
+function fireReminder(){
+  if(!('Notification' in window)) return;
+  Notification.requestPermission().then(function(perm){
+    if(perm!=='granted') return;
+    var now=new Date();
+    var tomorrow8am=new Date(now);
+    tomorrow8am.setDate(tomorrow8am.getDate()+1);
+    tomorrow8am.setHours(8,0,0,0);
+    var msUntil=tomorrow8am.getTime()-now.getTime();
+    var action=S.profile&&S.profile.cd>0
+      ?'Call the number on your card. Ask for a lower rate. 10 minutes.'
+      :'Open NextStep. One action. Keep going.';
+    setTimeout(function(){
+      try{new Notification('NextStep',{body:action,icon:'icon.svg'});}catch(e){}
+    },msUntil);
+    trackEvent('reminder_set',{day:S.day});
   });
-  html += '<button class="btn btn-gold" style="font-size:17px;margin-top:8px" onclick="finishNotif()">Continue &rarr;</button>' +
+}
+
+function requestNativeNotif(){
+  fireReminder();
+}
+function scheduleReminder(){}
+
+// ---------------------------------------------------------------------------
+// PROFILE BUILDER
+// ---------------------------------------------------------------------------
+function buildProfile(a){
+  var n=function(id){return parseInt(a[id])||0;};
+  var th=n('takehome'),ch=n('checking'),cd=n('carddebt'),mg=n('rent')||0;
+  var sv=0;
+  if(a.savings==='Less than $500') sv=250;
+  else if(a.savings==='$500 to $2,000') sv=1000;
+  else if(a.savings==='More than $2,000') sv=2000;
+  var liquid=ch+sv;
+  var minCard=Math.round(cd*0.025);
+  var oblig=mg+minCard+500;
+  var surplus=th-oblig-400;
+  var goal=a.goal||'Get control of my money';
+  var stress=a.blocker||'';
+  var credit='';
+  if(th===0) credit='Income needed first';
+  else if(cd>th*6) credit='Under 580 - needs work';
+  else if(cd>th*3) credit='580-669 - fair';
+  else if(cd>0) credit='670-739 - good';
+  else credit='740+ - great';
+  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus};
+}
+
+function fmt(v){return'$'+Math.round(Math.max(0,parseInt(v)||0)).toLocaleString();}
+function fmtSigned(v){var n=Math.round(parseInt(v)||0);return(n<0?'-':'')+'$'+Math.abs(n).toLocaleString();}
+
+// ---------------------------------------------------------------------------
+// RENDER
+// ---------------------------------------------------------------------------
+function render(){
+  var app=document.getElementById('app');
+  if(!app) return;
+  if(S.screen==='loading'){app.innerHTML='<div style="display:flex;align-items:center;justify-content:center;min-height:100vh;font-size:20px;color:var(--muted);">Loading...</div>';return;}
+  if(S.screen==='landing'){app.innerHTML=renderLanding();return;}
+  if(S.screen==='onboarding'){app.innerHTML=renderOnboarding();return;}
+  if(S.screen==='chat'){app.innerHTML=renderChat();return;}
+  if(S.screen==='notif'){app.innerHTML=renderNotif();return;}
+  if(S.screen==='dashboard'){app.innerHTML=renderDashboard();return;}
+}
+
+function renderLanding(){
+  var isInstalled=false;
+  try{isInstalled=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
+  return '<div class="screen"><div class="screen-center">'+
+    '<div style="font-size:68px;margin-bottom:16px">🌴</div>'+
+    '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">NextStep</div>'+
+    '<div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:8px">Your plan adjusts daily until you win.</div>'+
+    '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 4 questions. Have a quick conversation. Get your personalized plan. Takes 3 minutes.</div>'+
+    (!isInstalled?'<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience.</div>':'')+
+    '<button class="btn btn-gold" onclick="startOnboarding()">Build My Plan</button>'+
+    '<div style="color:var(--muted);font-size:11px;margin-top:8px;margin-bottom:24px">Takes 2 minutes. Stays on your device.</div>'+
+    '<a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" class="bmc-btn">☕ Buy me a coffee</a>'+
+    '<div style="color:var(--muted);font-size:10px;margin-top:8px">If this app helped you, consider supporting it.</div>'+
     '</div></div>';
+}
+
+function renderOnboarding(){
+  if(S.screen==='chat') return renderChat();
+  var q=QUESTIONS[S.step];
+  var pct=Math.round(((S.step+1)/(QUESTIONS.length+1))*100);
+  var val=S.answers[q.id]||'';
+  var html='<div class="screen">'+
+    '<div style="padding-top:52px;margin-bottom:36px">'+
+    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">'+
+    '<span>Step '+(S.step+1)+' of 4 &mdash; Numbers first</span>'+
+    '<span style="color:var(--gold);font-weight:700">'+pct+'%</span></div>'+
+    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '</div>'+
+    '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'+
+    '<div style="font-size:52px;margin-bottom:14px;text-align:center">'+q.e+'</div>'+
+    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:'+(q.sub?'10':'28')+'px">'+q.q+'</div>'+
+    (q.sub?'<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.6;padding:0 8px">'+q.sub+'</div>':'');
+  html+='<input id="qinput" type="'+(q.type==='dollar'?'tel':q.type)+'" inputmode="'+(q.type==='dollar'?'numeric':'text')+'" placeholder="'+q.ph+'" value="'+val+'" oninput="onInput(this.value)" onkeydown="if(event.key===\'Enter\')nextStep()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
+  if(q.type==='dollar'&&val) html+='<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$'+parseInt(val.replace(/[^0-9]/g,'')).toLocaleString()+'</div>';
+  html+='<button class="btn btn-gold" style="margin-top:12px" onclick="nextStep()">'+(S.step<QUESTIONS.length-1?'Next':'Next &rarr; Tell us your story')+'</button>';
+  if(q.type==='dollar') html+='<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
+  html+='</div>';
+  if(S.step>0) html+='<button style="background:none;border:none;color:var(--muted);font-size:12px;padding:16px 0 32px;cursor:pointer;font-family:inherit" onclick="prevStep()">Back</button>';
+  html+='</div>';
   return html;
 }
 
-function renderDashboard() {
-  var p = S.profile;
-  var done = STEPS.filter(function(s){ return S.checked[s.id]; }).length;
-  var pct = Math.round((done / STEPS.length) * 100);
-
-  // Identity message based on completion count
-  var totalChecked = Object.keys(S.checked).length;
-  var identityMsg = '';
-  var identityKeys = Object.keys(IDENTITY_MSGS).map(Number).sort(function(a,b){return b-a;});
-  for (var ii = 0; ii < identityKeys.length; ii++) {
-    if (totalChecked >= identityKeys[ii]) { identityMsg = IDENTITY_MSGS[identityKeys[ii]]; break; }
+function renderChat(){
+  var dstep=S.diagStep||0;
+  var q=DIAG[dstep];
+  var val=S.answers[q.id]||'';
+  var pct=Math.round(((QUESTIONS.length+dstep+1)/(QUESTIONS.length+DIAG.length+1))*100);
+  var html='<div class="screen">'+
+    '<div style="padding-top:52px;margin-bottom:36px">'+
+    '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">'+
+    '<span>Step '+(QUESTIONS.length+dstep+1)+' of '+(QUESTIONS.length+DIAG.length)+' &mdash; Your situation</span>'+
+    '<span style="color:var(--gold);font-weight:700">'+pct+'%</span></div>'+
+    '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '</div>'+
+    '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'+
+    '<div style="font-size:52px;margin-bottom:14px;text-align:center">'+q.e+'</div>'+
+    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:28px">'+q.q+'</div>';
+  if(q.type==='choice'){
+    html+='<div style="display:flex;flex-direction:column;gap:8px">';
+    q.opts.forEach(function(opt){
+      var sel=val===opt;
+      html+='<button class="opt-btn'+(sel?' sel':'')+'" onclick="pickDiag(\''+opt.replace(/'/g,"\\'")+'\')">'+opt+'</button>';
+    });
+    html+='</div>';
+  }else{
+    html+='<input id="diaginput" type="'+(q.type==='dollar'?'tel':'text')+'" inputmode="'+(q.type==='dollar'?'numeric':'text')+'" placeholder="'+q.ph+'" value="'+val+'" oninput="S.answers[\''+q.id+'\']=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
+    if(q.type==='dollar'&&val) html+='<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$'+parseInt(val.replace(/[^0-9]/g,'')).toLocaleString()+'</div>';
+    html+='<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">'+(dstep<DIAG.length-1?'Next':'Build My Plan')+'</button>';
+    if(q.type==='dollar') html+='<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
   }
+  html+='</div>';
+  html+='<button style="background:none;border:none;color:var(--muted);font-size:12px;padding:16px 0 32px;cursor:pointer;font-family:inherit" onclick="prevDiag()">Back</button>';
+  html+='</div>';
+  return html;
+}
+
+function renderNotif(){
+  var prefs=S.notifPrefs;
+  var items=[
+    {id:'calendar',icon:'📅',title:'Add steps to my Calendar',desc:"We'll create calendar events for each action item."},
+    {id:'checkin',icon:'⏰',title:'Daily check-in reminders',desc:'A quick nudge each morning to stay on plan.'},
+    {id:'budget',icon:'🚨',title:'Budget limit alerts',desc:"Get notified when you're approaching a limit."},
+    {id:'milestone',icon:'🎉',title:'Milestone celebrations',desc:"We'll celebrate every win with you."},
+  ];
+  var html='<div class="screen"><div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 8px">'+
+    '<div class="center" style="margin-bottom:32px">'+
+    '<div style="font-size:64px;margin-bottom:16px">🔔</div>'+
+    '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;margin-bottom:10px">Can we help keep you on track?</div>'+
+    '<div style="font-size:13px;color:var(--muted);line-height:1.7">These features help you stay accountable. You control everything. Turn off anytime.</div>'+
+    '</div>';
+  items.forEach(function(item){
+    var on=!!prefs[item.id];
+    html+='<div class="notif-row'+(on?' on':'')+'" onclick="toggleNotif(\''+item.id+'\')">'+
+      '<div style="font-size:32px;flex-shrink:0">'+item.icon+'</div>'+
+      '<div style="flex:1"><div style="font-size:14px;font-weight:800;margin-bottom:3px">'+item.title+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);line-height:1.5">'+item.desc+'</div></div>'+
+      '<div class="toggle'+(on?' on':'')+'>'+(on?'&#10003;':'')+'</div></div>';
+  });
+  html+='<button class="btn btn-gold" style="font-size:17px;margin-top:8px" onclick="finishNotif()">Continue &rarr;</button></div></div>';
+  return html;
+}
+
+function renderDashboard(){
+  var p=S.profile;
+  var done=STEPS.filter(function(s){return S.checked[s.id];}).length;
+  var pct=Math.round((done/STEPS.length)*100);
+
+  var totalChecked=Object.keys(S.checked).length;
+  var identityMsg='';
+  var identityKeys=Object.keys(IDENTITY_MSGS).map(Number).sort(function(a,b){return b-a;});
+  for(var ii=0;ii<identityKeys.length;ii++){if(totalChecked>=identityKeys[ii]){identityMsg=IDENTITY_MSGS[identityKeys[ii]];break;}}
 
   // Completion overlay
-  var completionOverlay = '';
-  if (S.completionMsg) {
-    var msgObj = COMPLETION_MSGS[Math.floor(Math.random() * COMPLETION_MSGS.length)];
-    completionOverlay = '<div class="completion-overlay" style="cursor:default">' +
-      '<div style="font-size:72px;margin-bottom:16px">✓</div>' +
-      (identityMsg ? '<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:10px">' + identityMsg + '</div>' : '') +
-      '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3">' + msgObj.head + '</div>' +
-      '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:24px;line-height:1.5">' + msgObj.sub + '</div>' +
-      '<div style="width:100%;max-width:320px;margin-bottom:12px">' +
-      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT DID YOU ACTUALLY DO? <span style="font-weight:400;opacity:0.7">(optional)</span></div>' +
-      '<input id="completion-input" type="text" placeholder="e.g. removed card from Apple Pay, paid $50..." ' +
-      'oninput="S.completionInput=this.value" ' +
-      'style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;" />' +
-      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT ALMOST STOPPED YOU? <span style="font-weight:400;opacity:0.7">(optional)</span></div>' +
-      '<input id="completion-input2" type="text" placeholder="e.g. felt lazy, wasn\'t sure how, got distracted..." ' +
-      'oninput="S.completionInput2=this.value" ' +
-      'style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;" />' +
-      '</div>' +
-      '<button onclick="dismissCompletion()" style="background:#fff;color:var(--green);border:none;border-radius:12px;padding:14px 40px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">Done</button>' +
+  var completionOverlay='';
+  if(S.completionMsg){
+    var msgObj=COMPLETION_MSGS[Math.floor(Math.random()*COMPLETION_MSGS.length)];
+    var currentPlanDay=S.day-1;
+    var currentPlan=S.plans[currentPlanDay]||S.plans[S.day];
+    var nextPreview=getNextStepPreview(currentPlan);
+    completionOverlay='<div class="completion-overlay">'+
+      '<div style="font-size:72px;margin-bottom:16px">✓</div>'+
+      (identityMsg?'<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:10px">'+identityMsg+'</div>':'')+
+      '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3">'+msgObj.head+'</div>'+
+      '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:20px;line-height:1.5">'+msgObj.sub+'</div>'+
+      (nextPreview?
+        '<div style="width:100%;max-width:320px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.2);border-radius:14px;padding:16px 18px;margin-bottom:20px;text-align:left">'+
+        '<div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.6);text-transform:uppercase;margin-bottom:8px">WHAT\'S NEXT</div>'+
+        '<div style="font-size:13px;color:#fff;line-height:1.7">'+nextPreview+'</div>'+
+        '</div>'
+      :'')+
+      '<div style="width:100%;max-width:320px;margin-bottom:12px">'+
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT DID YOU ACTUALLY DO? <span style="font-weight:400;opacity:0.7">(optional)</span></div>'+
+      '<input id="completion-input" type="text" placeholder="e.g. removed card from Apple Pay, paid $50..." oninput="S.completionInput=this.value" style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;" />'+
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT ALMOST STOPPED YOU? <span style="font-weight:400;opacity:0.7">(optional)</span></div>'+
+      '<input id="completion-input2" type="text" placeholder="e.g. felt lazy, wasn\'t sure how..." oninput="S.completionInput2=this.value" style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;" />'+
+      '</div>'+
+      '<button onclick="dismissCompletion()" style="background:#fff;color:var(--green);border:none;border-radius:12px;padding:14px 40px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">Done — I\'ll be back</button>'+
       '</div>';
   }
 
-  // Reminder card
-  var reminderCard = '';
-  if (S.showReminderCard) {
-    var intentSelected = S.returnIntent;
-    var intentOptions = [
-      { val:'yes', label:'Yes — I\'ll set a reminder', color:'var(--green)', dim:'var(--green-dim)', border:'var(--green-b)' },
-      { val:'maybe', label:'Maybe', color:'var(--gold)', dim:'var(--gold-dim)', border:'var(--gold-b)' },
-      { val:'no', label:'Probably not', color:'var(--red)', dim:'var(--red-dim)', border:'var(--red-b)' },
-    ];
-
-    var intentHTML = '<div style="margin-bottom:16px">' +
-      '<div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase">Will you come back tomorrow?</div>';
-    intentOptions.forEach(function(opt) {
-      var sel = intentSelected === opt.val;
-      intentHTML += '<div onclick="setReturnIntent(\'' + opt.val + '\')" style="padding:10px 14px;border-radius:10px;border:2px solid ' + (sel ? opt.border : 'var(--border)') + ';background:' + (sel ? opt.dim : 'var(--surf2)') + ';cursor:pointer;margin-bottom:6px;font-size:13px;font-weight:' + (sel?'700':'400') + ';color:' + (sel?opt.color:'var(--muted)') + '">' + opt.label + '</div>';
-    });
-    intentHTML += '</div>';
-
-    reminderCard = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.92);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">' +
-      '<div style="background:var(--surf);border:2px solid var(--gold-b);border-radius:20px;padding:28px 24px;text-align:center;max-width:340px;width:100%">' +
-      '<div style="font-size:40px;margin-bottom:12px">⏰</div>' +
-      '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px">Set your alarm now.</div>' +
-      '<div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px">Same time tomorrow. The streak only works if you come back.</div>' +
-      intentHTML +
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;padding:10px;background:var(--surf2);border-radius:8px">Clock app → Alarms → Add → Set for tomorrow morning.</div>' +
-      '<button onclick="dismissReminderCard()" class="btn btn-gold" style="margin-bottom:10px">Done ✓</button>' +
-      '<button onclick="dismissReminderCard()" class="btn btn-ghost" style="font-size:12px;padding:10px">Skip for now</button>' +
+  // Reminder card — one reminder, no options, auto-fire
+  var reminderCard='';
+  if(S.showReminderCard){
+    var nextAction=S.profile&&S.profile.cd>0
+      ?'Call the number on your card. Ask for a lower rate. 10 minutes.'
+      :'Open your bank app. Look at what changed. 5 minutes.';
+    reminderCard='<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.92);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;">'+
+      '<div style="background:var(--surf);border:2px solid var(--gold-b);border-radius:20px;padding:32px 24px;max-width:340px;width:100%;text-align:center;">'+
+      '<div style="font-size:40px;margin-bottom:16px">⏰</div>'+
+      '<div style="font-family:Georgia,serif;font-size:22px;font-weight:900;color:var(--gold);margin-bottom:12px">We\'ll remind you at 8am.</div>'+
+      '<div style="font-size:14px;color:var(--text);background:rgba(240,180,41,0.1);border:1px solid var(--gold-b);border-radius:12px;padding:14px 16px;line-height:1.7;margin-bottom:24px;font-weight:700">'+nextAction+'</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.6">Tomorrow we go further. Don\'t let this sit.</div>'+
+      '<button onclick="fireReminder();dismissReminderCard();" class="btn btn-gold" style="margin-bottom:10px;font-size:15px;">Got it.</button>'+
       '</div></div>';
   }
 
-  var html = '<div>' + completionOverlay + reminderCard +
-    '<div class="header">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>' +
-    '<div style="font-size:10px;color:var(--muted)">' + p.name + ' &middot; Day ' + S.day + ' &middot; ' + p.goal + '</div></div>' +
-    '<div style="display:flex;align-items:center;gap:10px">' +
-    '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>' +
-    '<button onclick="resetAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Reset</button>' +
-    '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">' + pct + '%</div>' +
-    '<div style="font-size:9px;color:var(--muted)">complete</div></div>' +
-    '</div></div>' +
-    '<div class="track-wrap" style="height:6px"><div class="track-fill" style="height:6px;width:' + pct + '%;background:linear-gradient(90deg,var(--gold),var(--gold))"></div></div>' +
-    '</div>' +
+  // v2.1 overwhelmed overlay
+  var overwhelmedOverlay='';
+  if(S.overwhelmedMode){
+    if(!S.crisisCategory){
+      // Step 1 — "What hit you?"
+      overwhelmedOverlay='<div class="overwhelmed-overlay">'+
+        '<div class="overwhelmed-card">'+
+        '<div style="font-family:Georgia,serif;font-size:26px;font-weight:900;color:var(--text);margin-bottom:6px">What hit you?</div>'+
+        '<div style="font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6">Tap what\'s closest to your situation. We\'ll tell you exactly what to do right now.</div>';
+      CRISIS_CATEGORIES.forEach(function(cat){
+        overwhelmedOverlay+='<div onclick="setCrisisCategory(\''+cat.id+'\')" style="display:flex;align-items:flex-start;gap:14px;padding:14px;border-radius:12px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;margin-bottom:8px">'+
+          '<div style="font-size:28px;flex-shrink:0">'+cat.e+'</div>'+
+          '<div><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px">'+cat.label+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);line-height:1.5">'+cat.sub+'</div></div>'+
+          '</div>';
+      });
+      overwhelmedOverlay+='<button onclick="dismissOverwhelmed()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;margin-top:8px;padding:8px 0;">Never mind — take me to my plan</button>'+
+        '</div></div>';
+    }else{
+      // Step 2 — show the one action + forward hook
+      var cat=CRISIS_CATEGORIES.find(function(c){return c.id===S.crisisCategory;});
+      if(cat){
+        overwhelmedOverlay='<div class="overwhelmed-overlay">'+
+          '<div class="overwhelmed-card">'+
+          '<div style="font-size:40px;margin-bottom:12px;text-align:center">'+cat.e+'</div>'+
+          '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--text);margin-bottom:16px;text-align:center">Right now — do this.</div>'+
+          '<div style="background:var(--gold-dim);border:1px solid var(--gold-b);border-radius:12px;padding:16px 18px;font-size:14px;color:var(--text);line-height:1.8;margin-bottom:20px">'+cat.action+'</div>'+
+          '<div style="background:var(--surf2);border-radius:10px;padding:14px 16px;font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px;font-style:italic">'+cat.hook+'</div>'+
+          '<button onclick="dismissOverwhelmed()" class="btn btn-gold" style="margin-bottom:10px">Got it — take me to my plan</button>'+
+          '</div></div>';
+      }
+    }
+  }
+
+  var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+
+    '<div class="header">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>'+
+    '<div style="font-size:10px;color:var(--muted)">'+p.name+' &middot; Day '+S.day+' &middot; '+p.goal+'</div></div>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
+    '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>'+
+    '<button onclick="resetAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Reset</button>'+
+    '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">'+pct+'%</div>'+
+    '<div style="font-size:9px;color:var(--muted)">complete</div></div>'+
+    '</div></div>'+
+    '<div class="track-wrap" style="height:6px"><div class="track-fill" style="height:6px;width:'+pct+'%;background:linear-gradient(90deg,var(--gold),var(--gold))"></div></div>'+
+    '</div>'+
     '<div class="tabs">';
 
-  var TABS = [
-    { id:'today', label:'TODAY' },{ id:'plan', label:'PLAN' },{ id:'money', label:'MONEY' },
-    { id:'calendar', label:'CALENDAR' },{ id:'feedback', label:'FEEDBACK' },{ id:'protect', label:'PROTECT' },
-  ];
-  TABS.forEach(function(t) {
-    html += '<button class="tab-btn' + (S.tab===t.id?' active':'') + '" onclick="setTab(\'' + t.id + '\')">' + t.label + '</button>';
+  var TABS=[{id:'today',label:'TODAY'},{id:'plan',label:'PLAN'},{id:'money',label:'MONEY'},{id:'calendar',label:'CALENDAR'},{id:'feedback',label:'FEEDBACK'},{id:'protect',label:'PROTECT'}];
+  TABS.forEach(function(t){
+    html+='<button class="tab-btn'+(S.tab===t.id?' active':'')+'" onclick="setTab(\''+t.id+'\')">'+t.label+'</button>';
   });
-  html += '</div><div class="content">';
+  html+='</div><div class="content">';
 
-  if (S.tab === 'today') html += renderToday();
-  else if (S.tab === 'plan') html += renderPlan();
-  else if (S.tab === 'money') html += renderMoney();
-  else if (S.tab === 'calendar') html += renderCalendar();
-  else if (S.tab === 'feedback') html += renderFeedback();
-  else if (S.tab === 'protect') html += renderProtect();
+  if(S.tab==='today') html+=renderToday();
+  else if(S.tab==='plan') html+=renderPlan();
+  else if(S.tab==='money') html+=renderMoney();
+  else if(S.tab==='calendar') html+=renderCalendar();
+  else if(S.tab==='feedback') html+=renderFeedback();
+  else if(S.tab==='protect') html+=renderProtect();
 
-  html += '</div><div class="footer">Not financial advice &middot; For execution support only &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support NextStep</a></div></div>';
+  html+='</div><div class="footer">Not financial advice &middot; For execution support only &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support NextStep</a></div></div>';
   return html;
 }
 
-function renderToday() {
-  var isDay1 = S.day === 1;
-  var isCurrentDay = S.viewDay === S.day;
-  var streak = S.day - 1;
-  var plan = S.plans[S.viewDay];
+function renderToday(){
+  var isDay1=S.day===1;
+  var isCurrentDay=S.viewDay===S.day;
+  var streak=S.day-1;
+  var plan=S.plans[S.viewDay];
+  var html='';
 
-  var html = '';
-
-  // Day 2+ return trigger question — shown once per session on Day 2+
-  if (!isDay1 && isCurrentDay && !S.returnTriggerShown && S.day >= 2) {
-    var triggerOptions = [
-      { val:'self', label:'🧠 I just remembered / wanted to', color:'var(--green)' },
-      { val:'alarm', label:'⏰ My alarm went off', color:'var(--gold)' },
-      { val:'accidental', label:'🔀 I stumbled on it / bookmark', color:'var(--muted)' },
-      { val:'prompted', label:'💬 Someone reminded me', color:'var(--orange)' },
-    ];
-    html += '<div class="card card-gold" style="margin-bottom:10px">' +
-      '<div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:10px">WHAT BROUGHT YOU BACK TODAY?</div>' +
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Tap one — takes 2 seconds. This helps us understand what actually works.</div>';
-    triggerOptions.forEach(function(opt) {
-      html += '<div onclick="logReturnTrigger(\'' + opt.val + '\')" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;margin-bottom:6px;font-size:13px;color:var(--text)">' + opt.label + '</div>';
-    });
-    html += '<button onclick="skipReturnTrigger()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;margin-top:4px">Skip</button>' +
-      '</div>';
+  // Day 3+ tension trigger — return hook
+  if(!isDay1&&isCurrentDay&&S.day===3&&!S.returnTriggerShown){
+    html='<div class="card" style="background:rgba(239,68,68,0.1);border:2px solid var(--red-b);margin-bottom:10px">'+
+      '<div style="font-size:11px;color:var(--red);font-weight:700;letter-spacing:2px;margin-bottom:8px">DAY 3</div>'+
+      '<div style="font-family:Georgia,serif;font-size:18px;font-weight:900;color:var(--text);margin-bottom:8px">This is where most people quit.</div>'+
+      '<div style="font-size:13px;color:var(--muted);line-height:1.7">Day 1 is motivation. Day 2 is momentum. Day 3 is the first real test. The fact that you opened this app today means you\'re already different. Now prove it.</div>'+
+      '</div>'+html;
   }
 
-  html += '<div class="card card-gold">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center">' +
-    '<button onclick="navDay(-1)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:' + (S.viewDay>1?'var(--gold)':'var(--border)') + ';font-size:16px;cursor:pointer;font-family:inherit">&lt;</button>' +
-    '<div class="center">' +
-    '<div class="big">Day ' + S.viewDay + '</div>' +
-    '<div style="font-size:11px;color:var(--muted)">' +
-    (isCurrentDay ? (isDay1 ? 'Your first plan. Come back tomorrow.' : streak + ' day' + (streak!==1?'s':'') + ' in. Keep going.') : 'Viewing Day ' + S.viewDay + ' &mdash; Day ' + S.day + ' is current') +
-    '</div>' +
-    '</div>' +
-    '<button onclick="navDay(1)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:' + (S.viewDay<S.day?'var(--gold)':'var(--border)') + ';font-size:16px;cursor:pointer;font-family:inherit">&gt;</button>' +
+  // Return trigger question (Day 2+)
+  if(!isDay1&&isCurrentDay&&!S.returnTriggerShown&&S.day>=2){
+    var triggerOptions=[
+      {val:'self',label:'🧠 I just remembered / wanted to',color:'var(--green)'},
+      {val:'alarm',label:'⏰ My alarm went off',color:'var(--gold)'},
+      {val:'accidental',label:'🔀 I stumbled on it / bookmark',color:'var(--muted)'},
+      {val:'prompted',label:'💬 Someone reminded me',color:'var(--orange)'},
+    ];
+    html+='<div class="card card-gold" style="margin-bottom:10px">'+
+      '<div style="font-size:11px;color:var(--gold);font-weight:700;letter-spacing:2px;margin-bottom:10px">WHAT BROUGHT YOU BACK TODAY?</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Tap one — takes 2 seconds.</div>';
+    triggerOptions.forEach(function(opt){
+      html+='<div onclick="logReturnTrigger(\''+opt.val+'\')" style="padding:10px 14px;border-radius:10px;border:1px solid var(--border);background:var(--surf2);cursor:pointer;margin-bottom:6px;font-size:13px;color:var(--text)">'+opt.label+'</div>';
+    });
+    html+='<button onclick="skipReturnTrigger()" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:inherit;margin-top:4px">Skip</button></div>';
+  }
+
+  // Day header
+  html+='<div class="card card-gold">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center">'+
+    '<button onclick="navDay(-1)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:'+(S.viewDay>1?'var(--gold)':'var(--border)')+';font-size:16px;cursor:pointer;font-family:inherit">&lt;</button>'+
+    '<div class="center">'+
+    '<div class="big">Day '+S.viewDay+'</div>'+
+    '<div style="font-size:11px;color:var(--muted)">'+
+    (isCurrentDay?(isDay1?'Your first plan. Come back tomorrow.':streak+' day'+(streak!==1?'s':'')+' in. Keep going.'):'Viewing Day '+S.viewDay+' &mdash; Day '+S.day+' is current')+
+    '</div></div>'+
+    '<button onclick="navDay(1)" style="background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;color:'+(S.viewDay<S.day?'var(--gold)':'var(--border)')+';font-size:16px;cursor:pointer;font-family:inherit">&gt;</button>'+
     '</div>';
 
-  if (S.day > 1) {
-    html += '<div style="display:flex;justify-content:center;gap:4px;margin-top:10px;flex-wrap:wrap">';
-    for (var i = 1; i < Math.min(S.day, 15); i++) {
-      html += '<div class="dot' + (S.plans[i]?' done':'') + '" onclick="S.viewDay=' + i + ';render()"></div>';
-    }
-    html += '</div>';
+  if(S.day>1){
+    html+='<div style="display:flex;justify-content:center;gap:4px;margin-top:10px;flex-wrap:wrap">';
+    for(var i=1;i<Math.min(S.day,15);i++) html+='<div class="dot'+(S.plans[i]?' done':'')+'" onclick="S.viewDay='+i+';render()"></div>';
+    html+='</div>';
   }
-  if (streak > 0) {
-    var streakMsg = '';
-    var streakColor = 'var(--gold)';
-    if (streak >= 10) { streakMsg = streak + ' days. You are in the top 1% of people who start this.'; streakColor = 'var(--green)'; }
-    else if (streak >= 7) { streakMsg = streak + ' day streak. That is discipline, not luck.'; streakColor = 'var(--green)'; }
-    else if (streak >= 5) { streakMsg = streak + ' days. This is who you are now. Keep going.'; streakColor = 'var(--green)'; }
-    else if (streak >= 3) { streakMsg = streak + ' days. This is becoming a pattern. Don\'t break it.'; }
-    else if (streak === 2) { streakMsg = '2 days in. Most people quit here. You\'re still here.'; }
-    else { streakMsg = 'Day 1 done. Come back tomorrow or the streak dies.'; }
 
-    // Streak dots — loss aversion
-    var streakDots = '<div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">';
-    var maxDots = Math.min(streak + 3, 14);
-    for (var sd = 1; sd <= maxDots; sd++) {
-      if (sd <= streak) {
-        streakDots += '<div style="width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(240,180,41,0.5)"></div>';
-      } else {
-        streakDots += '<div style="width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid var(--border)"></div>';
-      }
+  if(streak>0){
+    var streakMsg='';var streakColor='var(--gold)';
+    if(streak>=10){streakMsg=streak+' days. You are in the top 1% of people who start this.';streakColor='var(--green)';}
+    else if(streak>=7){streakMsg=streak+' day streak. That is discipline, not luck.';streakColor='var(--green)';}
+    else if(streak>=5){streakMsg=streak+' days. This is who you are now. Keep going.';streakColor='var(--green)';}
+    else if(streak>=3){streakMsg=streak+' days. This is becoming a pattern. Don\'t break it.';}
+    else if(streak===2){streakMsg='2 days in. Most people quit here. You\'re still here.';}
+    else{streakMsg='Day 1 done. Come back tomorrow or the streak dies.';}
+    var streakDots='<div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">';
+    var maxDots=Math.min(streak+3,14);
+    for(var sd=1;sd<=maxDots;sd++){
+      if(sd<=streak) streakDots+='<div style="width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(240,180,41,0.5)"></div>';
+      else streakDots+='<div style="width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid var(--border)"></div>';
     }
-    streakDots += '</div>';
-
-    html += '<div class="center" style="margin-top:8px;padding:10px 12px;background:rgba(240,180,41,0.08);border-radius:10px;border:1px solid rgba(240,180,41,0.15)">' +
-      '<span class="streak-fire">🔥</span> <span style="color:' + streakColor + ';font-weight:700;font-size:12px">' + streakMsg + '</span>' +
-      streakDots +
-      '<div style="font-size:10px;color:var(--muted);margin-top:6px">Miss a day and you start over.</div>' +
-      '</div>';
+    streakDots+='</div>';
+    html+='<div class="center" style="margin-top:8px;padding:10px 12px;background:rgba(240,180,41,0.08);border-radius:10px;border:1px solid rgba(240,180,41,0.15)">'+
+      '<span class="streak-fire">🔥</span> <span style="color:'+streakColor+';font-weight:700;font-size:12px">'+streakMsg+'</span>'+
+      streakDots+
+      '<div style="font-size:10px;color:var(--muted);margin-top:6px">Miss a day and you start over.</div></div>';
   }
-  html += '</div>';
+  html+='</div>';
 
-  if (!isCurrentDay) {
-    if (plan) {
-      if (S.editing) {
-        html += '<div class="card">' +
-          '<div style="font-size:9px;color:var(--gold);letter-spacing:2px;margin-bottom:8px">DAY ' + S.viewDay + ' PLAN &mdash; EDITING</div>' +
-          '<textarea id="editbox" style="min-height:200px">' + S.editText + '</textarea>' +
-          '<div style="display:flex;gap:8px;margin-top:10px">' +
-          '<button class="btn btn-green" style="flex:2;padding:10px;font-size:13px" onclick="saveEdit()">Save Changes</button>' +
-          '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:13px" onclick="cancelEdit()">Cancel</button>' +
+  if(!isCurrentDay){
+    if(plan){
+      if(S.editing){
+        html+='<div class="card"><div style="font-size:9px;color:var(--gold);letter-spacing:2px;margin-bottom:8px">DAY '+S.viewDay+' PLAN &mdash; EDITING</div>'+
+          '<textarea id="editbox" style="min-height:200px">'+S.editText+'</textarea>'+
+          '<div style="display:flex;gap:8px;margin-top:10px">'+
+          '<button class="btn btn-green" style="flex:2;padding:10px;font-size:13px" onclick="saveEdit()">Save Changes</button>'+
+          '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:13px" onclick="cancelEdit()">Cancel</button>'+
           '</div></div>';
-      } else {
-        html += '<div class="card">' +
-          '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
-          '<div style="font-size:9px;color:var(--gold);letter-spacing:2px">DAY ' + S.viewDay + ' PLAN</div>' +
-          '<button class="cal-btn" onclick="startEdit()">Edit</button>' +
-          '</div>' +
-          '<div style="font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap">' + (typeof plan === 'string' ? plan : formatPlanText(plan)) + '</div>';
-
-        var dayKey2 = 'day' + S.viewDay;
-        if (!S.dayChecked) S.dayChecked = {};
-        if (!S.dayChecked[dayKey2]) S.dayChecked[dayKey2] = {};
-        html += '<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
-        html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY</div>';
-        STEPS.slice(0, 4).forEach(function(step) {
-          var d = !!S.dayChecked[dayKey2][step.id];
-          html += '<div onclick="toggleDayCheck(\'' + dayKey2 + '\',\'' + step.id + '\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">' +
-            '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">' + (d?'&#10003;':'') + '</div>' +
-            '<div style="font-size:12px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
-            '</div>';
+      }else{
+        html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
+          '<div style="font-size:9px;color:var(--gold);letter-spacing:2px">DAY '+S.viewDay+' PLAN</div>'+
+          '<button class="cal-btn" onclick="startEdit()">Edit</button></div>'+
+          '<div style="font-size:13px;color:var(--text);line-height:1.9;white-space:pre-wrap">'+(typeof plan==='string'?plan:formatPlanText(plan))+'</div>';
+        var dayKey2='day'+S.viewDay;
+        if(!S.dayChecked) S.dayChecked={};
+        if(!S.dayChecked[dayKey2]) S.dayChecked[dayKey2]={};
+        html+='<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
+        html+='<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY</div>';
+        STEPS.slice(0,4).forEach(function(step){
+          var d=!!S.dayChecked[dayKey2][step.id];
+          html+='<div onclick="toggleDayCheck(\''+dayKey2+'\',\''+step.id+'\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">'+
+            '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid '+(d?'var(--green)':'var(--border)')+';background:'+(d?'var(--green)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">'+(d?'&#10003;':'')+'</div>'+
+            '<div style="font-size:12px;color:'+(d?'var(--muted)':'var(--text)')+';text-decoration:'+(d?'line-through':'none')+'">'+step.e+' '+step.label+'</div></div>';
         });
-
-        html += '<button class="btn btn-gold" style="margin-top:12px;font-size:13px" onclick="S.viewDay=S.day;render()">Back to Today (Day ' + S.day + ')</button>' +
-          '</div>';
+        html+='<button class="btn btn-gold" style="margin-top:12px;font-size:13px" onclick="S.viewDay=S.day;render()">Back to Today (Day '+S.day+')</button></div>';
       }
-    } else {
-      html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">No plan saved for Day ' + S.viewDay + ' yet.</div></div>';
+    }else{
+      html+='<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">No plan saved for Day '+S.viewDay+' yet.</div></div>';
     }
     return html;
   }
 
-  if (!plan && !isDay1) {
-    html += '<div class="card">' +
-      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">How is your energy today?</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">This shapes your plan. Be honest.</div>' +
+  // Current day — energy selector + overwhelmed button
+  if(!plan&&!isDay1){
+    html+='<div class="card">'+
+      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">How is your energy today?</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">This shapes your plan. Be honest.</div>'+
       '<div style="display:flex;gap:8px;margin-bottom:4px">';
-    var energyOpts = [['high','🔥 High','sel-high'],['medium','⚡ Medium','sel-medium'],['low','😴 Low','sel-low']];
-    energyOpts.forEach(function(e) {
-      html += '<button class="energy-btn ' + (S.energy===e[0]?e[2]:'') + '" onclick="setEnergy(\'' + e[0] + '\')">' +
-        '<div style="font-size:16px;margin-bottom:3px">' + e[1].split(' ')[0] + '</div>' +
-        '<div style="font-size:11px;font-weight:700;color:' + (S.energy===e[0]?'var(--text)':'var(--muted)') + '">' + e[1].split(' ')[1] + '</div>' +
+    var energyOpts=[['high','🔥 High','sel-high'],['medium','⚡ Medium','sel-medium'],['low','😴 Low','sel-low']];
+    energyOpts.forEach(function(e){
+      html+='<button class="energy-btn '+(S.energy===e[0]?e[2]:'')+'" onclick="setEnergy(\''+e[0]+'\')">'+
+        '<div style="font-size:16px;margin-bottom:3px">'+e[1].split(' ')[0]+'</div>'+
+        '<div style="font-size:11px;font-weight:700;color:'+(S.energy===e[0]?'var(--text)':'var(--muted)')+'">'+e[1].split(' ')[1]+'</div>'+
         '</button>';
     });
-    html += '</div></div>';
+    html+='</div></div>';
+
+    // v2.1 overwhelmed button — equal weight, just below energy selector
+    html+='<div onclick="openOverwhelmed()" style="display:flex;align-items:center;justify-content:center;gap:10px;padding:14px 18px;border-radius:12px;border:2px solid var(--red-b);background:var(--red-dim);cursor:pointer;margin-bottom:10px">'+
+      '<div style="font-size:22px">😤</div>'+
+      '<div style="text-align:left">'+
+      '<div style="font-size:14px;font-weight:700;color:var(--red)">Feeling overwhelmed?</div>'+
+      '<div style="font-size:11px;color:var(--muted);margin-top:2px">Tap here — we\'ll tell you exactly what to do right now.</div>'+
+      '</div></div>';
   }
 
-  if (!isDay1 && !plan) {
-    html += '<div class="card">' +
-      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">Before your Day ' + S.day + ' plan — what happened yesterday?</div>';
-    var fields = [
-      ['completed','What did you complete?','e.g. called the doctor, paid $100 toward card…'],
-      ['avoided','What did you avoid?','e.g. avoided calling insurance…'],
-      ['blocked','What got in the way?','e.g. work was crazy, felt overwhelmed…'],
-    ];
-    fields.forEach(function(f) {
-      html += '<div style="margin-bottom:10px">' +
-        '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">' + f[1] + '</div>' +
-        '<input type="text" placeholder="' + f[2] + '" value="' + (S.todayAnswers[f[0]]||'') + '" oninput="S.todayAnswers[\'' + f[0] + '\']=this.value" >' +
-        '</div>';
+  if(!isDay1&&!plan){
+    html+='<div class="card">'+
+      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">Before your Day '+S.day+' plan — what happened yesterday?</div>';
+    var fields=[['completed','What did you complete?','e.g. called the doctor, paid $100 toward card…'],['avoided','What did you avoid?','e.g. avoided calling insurance…'],['blocked','What got in the way?','e.g. work was crazy, felt overwhelmed…']];
+    fields.forEach(function(f){
+      html+='<div style="margin-bottom:10px">'+
+        '<div style="font-size:11px;color:var(--muted);margin-bottom:4px">'+f[1]+'</div>'+
+        '<input type="text" placeholder="'+f[2]+'" value="'+(S.todayAnswers[f[0]]||'')+'" oninput="S.todayAnswers[\''+f[0]+'\']=this.value"></div>';
     });
-    html += '</div>';
+    html+='</div>';
   }
 
-  if (!plan && !isDay1) {
-    html += '<button class="btn btn-gold" style="border-radius:14px;padding:18px;font-size:16px;margin-bottom:10px" onclick="genPlan()">' +
-      'Get Day ' + S.day + ' Plan' + '</button>';
+  if(!plan&&!isDay1){
+    html+='<button class="btn btn-gold" style="border-radius:14px;padding:18px;font-size:16px;margin-bottom:10px" onclick="genPlan()">Get Day '+S.day+' Plan</button>';
   }
 
-  if (!plan && isDay1) {
-    html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">Building your Day 1 plan…</div></div>';
+  if(!plan&&isDay1){
+    html+='<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">Building your Day 1 plan…</div></div>';
   }
 
-  if (plan) {
-    html += '<div class="card card-green">';
-    if (typeof plan === 'object') {
-      if (plan.noIncome) {
-        html += '<div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:700;color:var(--red)">⚠️ INCOME FIRST — All other steps unlock once you have money coming in.</div>';
-      }
-      if (plan.energyLine) html += '<div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:10px;padding:8px 12px;background:rgba(249,115,22,0.1);border-radius:8px">' + plan.energyLine + '</div>';
-      html += '<div class="plan-section"><div class="plan-title">TODAY\'S PRIORITY</div><div class="plan-body">' + plan.priority + '</div></div>';
-      html += '<div class="plan-section"><div class="plan-title">DO THIS TODAY</div>';
-      plan.actions.forEach(function(a, i) {
-        html += '<div class="action-item"><div class="action-num">' + (i+1) + '.</div><div class="plan-body">' + a + '</div></div>';
-      });
-      html += '</div>';
-
-      if (plan.hasDebt) {
-        html += '<div style="margin-bottom:14px">' +
-          '<div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1px;margin-bottom:8px">ONE-TAP ACTIONS</div>' +
-          '<div style="display:flex;flex-direction:column;gap:8px">';
-
-        html += '<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">' +
-          '<div onclick="toggleScript(\'callscript\')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--surf)">' +
-          '<div style="display:flex;align-items:center;gap:10px">' +
-          '<span style="font-size:20px">📞</span>' +
-          '<div><div style="font-size:13px;font-weight:700">Call your credit card</div><div style="font-size:11px;color:var(--muted)">Script ready. Tap to see it first.</div></div>' +
-          '</div>' +
-          '<span id="callscript-arrow" style="color:var(--gold);font-size:14px">&#9660;</span>' +
-          '</div>' +
-          '<div id="callscript" style="display:none;padding:12px 14px;background:rgba(240,180,41,0.08);border-top:1px solid var(--border)">' +
-          '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700">READ THIS WORD FOR WORD:</div>' +
-          '<div style="font-size:14px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:12px">"Hi, I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate on my account. Can you help me with that?"</div>' +
-          '<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Open Dialer &mdash; Script is above</a>' +
-          '</div></div>';
-
-        html += '</div></div>';
-      }
-      html += '<div class="plan-section"><div class="plan-title">MOMENTUM NOTE</div><div class="plan-body" style="font-style:italic">' + plan.momentum + '</div></div>';
-      html += '<div class="plan-section"><div class="plan-title">AVOID TODAY</div>';
-      plan.avoid.forEach(function(a) {
-        html += '<div style="font-size:13px;color:var(--text);padding:4px 0;line-height:1.6">&#8212; ' + a + '</div>';
-      });
-      html += '</div>';
-    } else {
-      html += '<div style="font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap">' + plan + '</div>';
+  if(plan){
+    // v2.0 adaptive badge
+    var planAdaptive=typeof plan==='object'?plan.adaptiveLevel:'maintain';
+    var adaptiveBadgeHTML='';
+    if(planAdaptive==='escalate'){
+      adaptiveBadgeHTML='<div class="adaptive-badge badge-escalate">↑ Stepping it up — you earned this</div>';
+    }else if(planAdaptive==='deescalate'){
+      adaptiveBadgeHTML='<div class="adaptive-badge badge-deescalate">↓ Scaled back — still moving forward</div>';
     }
 
-    var dayKey = 'day' + (S.day - 1);
-    if (!S.dayChecked) S.dayChecked = {};
-    if (!S.dayChecked[dayKey]) S.dayChecked[dayKey] = {};
-    html += '<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
-    html += '<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY &mdash; fresh each day</div>';
-    STEPS.slice(0, 4).forEach(function(step) {
-      var d = !!S.dayChecked[dayKey][step.id];
-      html += '<div onclick="toggleDayCheck(\'' + dayKey + '\',\'' + step.id + '\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">' +
-        '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">' + (d?'&#10003;':'') + '</div>' +
-        '<div style="font-size:12px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
-        '</div>';
+    html+='<div class="card card-green">';
+    if(adaptiveBadgeHTML) html+=adaptiveBadgeHTML;
+    if(typeof plan==='object'){
+      if(plan.energyLine) html+='<div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:10px;padding:8px 12px;background:rgba(249,115,22,0.1);border-radius:8px">'+plan.energyLine+'</div>';
+      html+='<div class="plan-section"><div class="plan-title">TODAY\'S PRIORITY</div><div class="plan-body">'+plan.priority+'</div></div>';
+      html+='<div class="plan-section"><div class="plan-title">DO THIS TODAY</div>';
+      plan.actions.forEach(function(a,i){
+        html+='<div class="action-item"><div class="action-num">'+(i+1)+'.</div><div class="plan-body">'+a+'</div></div>';
+      });
+      html+='</div>';
+
+      if(plan.hasDebt){
+        html+='<div style="margin-bottom:14px"><div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1px;margin-bottom:8px">ONE-TAP ACTIONS</div>'+
+          '<div style="border:1px solid var(--border);border-radius:12px;overflow:hidden">'+
+          '<div onclick="toggleScript(\'callscript\')" style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;cursor:pointer;background:var(--surf)">'+
+          '<div style="display:flex;align-items:center;gap:10px"><span style="font-size:20px">📞</span>'+
+          '<div><div style="font-size:13px;font-weight:700">Call your credit card</div><div style="font-size:11px;color:var(--muted)">Script ready. Tap to see it first.</div></div></div>'+
+          '<span id="callscript-arrow" style="color:var(--gold);font-size:14px">&#9660;</span></div>'+
+          '<div id="callscript" style="display:none;padding:12px 14px;background:rgba(240,180,41,0.08);border-top:1px solid var(--border)">'+
+          '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700">READ THIS WORD FOR WORD:</div>'+
+          '<div style="font-size:14px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:12px">"Hi, I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate on my account. Can you help me with that?"</div>'+
+          '<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Open Dialer &mdash; Script is above</a>'+
+          '</div></div></div>';
+      }
+
+      html+='<div class="plan-section"><div class="plan-title">MOMENTUM NOTE</div><div class="plan-body" style="font-style:italic">'+plan.momentum+'</div></div>';
+      html+='<div class="plan-section"><div class="plan-title">AVOID TODAY</div>';
+      plan.avoid.forEach(function(a){html+='<div style="font-size:13px;color:var(--text);padding:4px 0;line-height:1.6">&#8212; '+a+'</div>';});
+      html+='</div>';
+    }else{
+      html+='<div style="font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap">'+plan+'</div>';
+    }
+
+    var dayKey='day'+(S.day-1);
+    if(!S.dayChecked) S.dayChecked={};
+    if(!S.dayChecked[dayKey]) S.dayChecked[dayKey]={};
+    html+='<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
+    html+='<div style="font-size:10px;color:var(--green);font-weight:700;letter-spacing:1px;margin-bottom:8px">MARK DONE TODAY &mdash; fresh each day</div>';
+    STEPS.slice(0,4).forEach(function(step){
+      var d=!!S.dayChecked[dayKey][step.id];
+      html+='<div onclick="toggleDayCheck(\''+dayKey+'\',\''+step.id+'\')" style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;align-items:center">'+
+        '<div style="width:20px;height:20px;border-radius:5px;flex-shrink:0;border:2px solid '+(d?'var(--green)':'var(--border)')+';background:'+(d?'var(--green)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:var(--bg)">'+(d?'&#10003;':'')+'</div>'+
+        '<div style="font-size:12px;color:'+(d?'var(--muted)':'var(--text)')+';text-decoration:'+(d?'line-through':'none')+'">'+step.e+' '+step.label+'</div></div>';
     });
-
-    html += '<div style="display:flex;gap:8px;margin-top:14px">';
-    html += '<button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="copyPlan()">Copy</button>';
-    html += '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="resetPlan()">Reset Day</button>';
-    html += '</div></div>';
+    html+='<div style="display:flex;gap:8px;margin-top:14px">'+
+      '<button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="copyPlan()">Copy</button>'+
+      '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="resetPlan()">Reset Day</button>'+
+      '</div></div>';
   }
 
-  if (!plan && !isDay1) {
-    html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:10px 0">You came back. That is 90% of it.</div></div>';
-  }
+  if(!plan&&!isDay1) html+='<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:10px 0">You came back. That is 90% of it.</div></div>';
 
   return html;
 }
 
-function formatPlanText(plan) {
-  if (typeof plan === 'string') return plan;
-  var t = plan.name + "'s Plan - Day " + plan.day + '\n\n';
-  t += "TODAY'S PRIORITY\n" + plan.priority + '\n\n';
-  t += 'DO THIS TODAY\n' + plan.actions.map(function(a,i){ return (i+1)+'. '+a; }).join('\n') + '\n\n';
-  t += 'MOMENTUM NOTE\n' + plan.momentum + '\n\n';
-  t += 'AVOID TODAY\n' + plan.avoid.map(function(a){ return '- '+a; }).join('\n');
+function formatPlanText(plan){
+  if(typeof plan==='string') return plan;
+  var t=plan.name+"'s Plan - Day "+plan.day+'\n\n';
+  t+="TODAY'S PRIORITY\n"+plan.priority+'\n\n';
+  t+='DO THIS TODAY\n'+plan.actions.map(function(a,i){return(i+1)+'. '+a;}).join('\n')+'\n\n';
+  t+='MOMENTUM NOTE\n'+plan.momentum+'\n\n';
+  t+='AVOID TODAY\n'+plan.avoid.map(function(a){return'- '+a;}).join('\n');
   return t;
 }
 
-function renderPlan() {
-  var done = STEPS.filter(function(s){ return S.checked[s.id]; }).length;
-  var pct = Math.round((done / STEPS.length) * 100);
-  var next = STEPS.find(function(s){ return !S.checked[s.id]; });
-  var weeks = [];
-  STEPS.forEach(function(s){ if (weeks.indexOf(s.week)<0) weeks.push(s.week); });
-
-  var html = '<div class="card card-gold center">' +
-    '<div class="label">YOUR PROGRESS</div>' +
-    '<div style="font-family:Georgia,serif;font-size:60px;color:var(--gold);line-height:1">' + pct + '%</div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">' + done + ' of ' + STEPS.length + ' steps complete</div>' +
-    '<div class="track-wrap" style="height:10px"><div class="track-fill" style="height:10px;width:' + pct + '%;background:var(--gold)"></div></div>' +
-    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;text-align:left;padding:8px;background:rgba(0,0,0,0.2);border-radius:8px">These are starting recommendations for most situations. Your daily TODAY plan is personalized to your numbers. Use these as a guide, not a prescription.</div>';
-
-  if (next) {
-    html += '<div style="background:var(--surf);border-radius:10px;padding:12px;margin-top:12px;text-align:left">' +
-      '<div style="font-size:9px;color:var(--gold);letter-spacing:1.5px;margin-bottom:4px;font-weight:700">UP NEXT</div>' +
-      '<div style="font-size:13px;font-weight:700;margin-bottom:3px">' + next.e + ' ' + next.label + '</div>' +
-      '<div style="font-size:11px;color:var(--muted)">' + next.detail.slice(0,80) + '</div>' +
-      '</div>';
-  }
-  html += '</div>';
-
-  weeks.forEach(function(week) {
-    html += '<div class="label" style="margin:14px 0 8px">' + week.toUpperCase() + '</div>';
-    STEPS.filter(function(s){ return s.week===week; }).forEach(function(step) {
-      var d = !!S.checked[step.id];
-      var exp = S.expandedStep === step.id;
-      var calDone = !!S.calAdded[step.id];
-      html += '<div class="step-row' + (d?' done':'') + '" onclick="toggleCheck(\'' + step.id + '\')">' +
-        '<div class="check-box' + (d?' done':'') + '">' + (d?'✓':'') + '</div>' +
-        '<div style="flex:1">' +
-        '<div style="font-size:13px;font-weight:700;margin-bottom:3px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
-        '<div class="expand-detail' + (exp&&!d?' open':'') + '">' + step.detail + '</div>' +
-        (!d ? '<div style="display:flex;gap:6px;margin-top:6px" onclick="event.stopPropagation()">' +
-        '<button class="cal-btn' + (calDone?' added':'') + '" onclick="downloadICS(\'' + step.id + '\')">' + (calDone?'Added ✓':'📅 .ics') + '</button>' +
-        '<button class="cal-btn" onclick="googleCal(\'' + step.id + '\')">🔗 Google Cal</button>' +
-        '<button class="cal-btn" onclick="toggleExpand(\'' + step.id + '\')">' + (exp?'Less':'Why?') + '</button>' +
-        '</div>' : '') +
+function renderPlan(){
+  var done=STEPS.filter(function(s){return S.checked[s.id];}).length;
+  var pct=Math.round((done/STEPS.length)*100);
+  var next=STEPS.find(function(s){return!S.checked[s.id];});
+  var weeks=[];
+  STEPS.forEach(function(s){if(weeks.indexOf(s.week)<0) weeks.push(s.week);});
+  var html='<div class="card card-gold center">'+
+    '<div class="label">YOUR PROGRESS</div>'+
+    '<div style="font-family:Georgia,serif;font-size:60px;color:var(--gold);line-height:1">'+pct+'%</div>'+
+    '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">'+done+' of '+STEPS.length+' steps complete</div>'+
+    '<div class="track-wrap" style="height:10px"><div class="track-fill" style="height:10px;width:'+pct+'%;background:var(--gold)"></div></div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6;text-align:left;padding:8px;background:rgba(0,0,0,0.2);border-radius:8px">These are starting recommendations. Your daily TODAY plan is personalized to your numbers. Use these as a guide, not a prescription.</div>';
+  if(next) html+='<div style="background:var(--surf);border-radius:10px;padding:12px;margin-top:12px;text-align:left">'+
+    '<div style="font-size:9px;color:var(--gold);letter-spacing:1.5px;margin-bottom:4px;font-weight:700">UP NEXT</div>'+
+    '<div style="font-size:13px;font-weight:700;margin-bottom:3px">'+next.e+' '+next.label+'</div>'+
+    '<div style="font-size:11px;color:var(--muted)">'+next.detail.slice(0,80)+'</div></div>';
+  html+='</div>';
+  weeks.forEach(function(week){
+    html+='<div class="label" style="margin:14px 0 8px">'+week.toUpperCase()+'</div>';
+    STEPS.filter(function(s){return s.week===week;}).forEach(function(step){
+      var d=!!S.checked[step.id];
+      var exp=S.expandedStep===step.id;
+      var calDone=!!S.calAdded[step.id];
+      html+='<div class="step-row'+(d?' done':'')+'" onclick="toggleCheck(\''+step.id+'\')">'+
+        '<div class="check-box'+(d?' done':'\">'+(d?'✓':'')+'</div>')+
+        '<div style="flex:1">'+
+        '<div style="font-size:13px;font-weight:700;margin-bottom:3px;color:'+(d?'var(--muted)':'var(--text)')+';text-decoration:'+(d?'line-through':'none')+'">'+step.e+' '+step.label+'</div>'+
+        '<div class="expand-detail'+(exp&&!d?' open':'')+'">'+step.detail+'</div>'+
+        (!d?'<div style="display:flex;gap:6px;margin-top:6px" onclick="event.stopPropagation()">'+
+        '<button class="cal-btn'+(calDone?' added':'')+'" onclick="downloadICS(\''+step.id+'\')">'+(calDone?'Added ✓':'📅 .ics')+'</button>'+
+        '<button class="cal-btn" onclick="googleCal(\''+step.id+'\')">🔗 Google Cal</button>'+
+        '<button class="cal-btn" onclick="toggleExpand(\''+step.id+'\')">'+(exp?'Less':'Why?')+'</button>'+
+        '</div>':'')+
         '</div></div>';
     });
   });
   return html;
 }
 
-function renderMoney() {
-  var p = S.profile;
-  var remaining = p.liquid - p.oblig;
-  var html = '';
-
-  if ((p.th || 0) === 0) {
-    html += '<div class="card card-red">' +
-      '<div style="font-weight:800;font-size:15px;color:var(--red);margin-bottom:8px">⚠️ No Income On Record</div>' +
-      '<div style="font-size:13px;color:var(--text);line-height:1.8;margin-bottom:14px">Your plan is currently focused on generating income first. Once you have money coming in, update your numbers here and the full picture unlocks.</div>' +
-      '<button class="btn btn-ghost" onclick="S.editingMoney=true;render()">Update My Numbers</button>' +
-      '</div>';
-
-    if (S.editingMoney) {
-      html += '<div class="card" style="background:var(--gold-dim);border:1px solid var(--gold-b)">' +
-        '<div style="font-weight:800;font-size:14px;margin-bottom:14px;color:var(--gold)">Update My Numbers</div>' +
-        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div>' +
-        '<input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 3000" value="' + (p.th||'') + '"></div>' +
-        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div>' +
-        '<input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 500" value="' + (p.ch||'') + '"></div>' +
-        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div>' +
-        '<input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 2000" value="' + (p.cd||'') + '"></div>' +
-        '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div>' +
-        '<input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1000" value="' + (p.mg||'') + '"></div>' +
-        '<div style="display:flex;gap:8px">' +
-        '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>' +
-        '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>' +
-        '</div></div>';
-    }
-    return html;
-  }
-
-  html += '<div class="card card-red">' +
-    '<div class="label">CASH RIGHT NOW</div>' +
-    '<div class="row"><span class="row-label">Checking</span><span style="font-weight:700">' + fmt(p.ch) + '</span></div>' +
-    '<div class="row"><span class="row-label">Savings</span><span style="font-weight:700">' + fmt(p.sv) + '</span></div>' +
-    '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">' +
-    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-    '<span style="font-weight:800;color:var(--red);font-size:14px">Cash In Hand</span>' +
-    '<span style="font-weight:900;font-size:20px;color:var(--red)">' + fmt(p.liquid) + '</span>' +
-    '</div>' +
-    '<div class="row"><span class="row-label">Est. monthly obligations</span><span style="font-weight:700;color:var(--red)">' + fmt(p.oblig) + '</span></div>' +
-    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:900"><span>Remaining</span><span style="color:' + (remaining>=0?'var(--green)':'var(--red)') + '">' + fmtSigned(remaining) + '</span></div>' +
+function renderMoney(){
+  var p=S.profile;
+  var remaining=p.liquid-p.oblig;
+  var html='';
+  html+='<div class="card card-red">'+
+    '<div class="label">CASH RIGHT NOW</div>'+
+    '<div class="row"><span class="row-label">Checking</span><span style="font-weight:700">'+fmt(p.ch)+'</span></div>'+
+    '<div class="row"><span class="row-label">Savings</span><span style="font-weight:700">'+fmt(p.sv)+'</span></div>'+
+    '<div style="border-top:1px solid var(--border);margin-top:10px;padding-top:10px">'+
+    '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+    '<span style="font-weight:800;color:var(--red);font-size:14px">Cash In Hand</span>'+
+    '<span style="font-weight:900;font-size:20px;color:var(--red)">'+fmt(p.liquid)+'</span></div>'+
+    '<div class="row"><span class="row-label">Est. monthly obligations</span><span style="font-weight:700;color:var(--red)">'+fmt(p.oblig)+'</span></div>'+
+    '<div style="display:flex;justify-content:space-between;padding:8px 0;font-size:15px;font-weight:900"><span>Remaining</span><span style="color:'+(remaining>=0?'var(--green)':'var(--red)')+'">'+fmtSigned(remaining)+'</span></div>'+
     '</div></div>';
-
-  html += '<div class="card">' +
-    '<div style="font-weight:800;font-size:14px;margin-bottom:10px;color:var(--gold)">Monthly Snapshot</div>' +
-    '<div class="row"><span class="row-label">Take-home</span><span style="font-weight:700;color:var(--green)">' + fmt(p.th) + '</span></div>' +
-    '<div class="row"><span class="row-label">Rent / Mortgage</span><span style="font-weight:700">' + fmt(p.mg) + '</span></div>' +
-    '<div class="row"><span class="row-label">Card minimum</span><span style="font-weight:700;color:var(--orange)">' + fmt(p.minCard) + '</span></div>' +
-    '<div class="row"><span class="row-label">Buffer</span><span style="font-weight:700">~$500</span></div>' +
-    '<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-size:15px;font-weight:900">' +
-    '<span>Est. Monthly Surplus</span><span style="color:' + (p.surplus>=0?'var(--green)':'var(--red)') + '">' + fmtSigned(p.surplus) + '</span></div></div>';
-
-  html += '<div class="card">' +
-    '<div style="font-weight:800;font-size:14px;margin-bottom:10px">Credit Card Debt</div>' +
-    '<div class="row"><span class="row-label">Total balance</span><span style="font-weight:700;color:var(--red)">' + fmt(p.cd) + '</span></div>' +
-    '<div class="row"><span class="row-label">Min. payment</span><span style="font-weight:700;color:var(--orange)">' + fmt(p.minCard) + '</span></div>' +
-    '<div class="row"><span class="row-label">Credit range</span><span style="font-weight:700">' + (p.credit||'Unknown') + '</span></div>' +
-    '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">Every surplus dollar attacks the highest-rate card first. No exceptions.</div>' +
-    '</div>';
-
-  if (p.th > 0 && p.surplus > 0) {
-    var debtExtra = Math.round(p.surplus * 0.5);
-    var savings = Math.round(p.surplus * 0.3);
-    var buffer = p.surplus - debtExtra - savings;
-    html += '<div class="card" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">' +
-      '<div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--blue)">Paycheck Allocation Plan</div>' +
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">When your paycheck arrives, allocate in this order. Non-negotiable.</div>' +
-      '<div class="row"><span class="row-label">#1 Obligations first</span><span style="font-weight:700;color:var(--blue)">' + fmt(p.oblig) + '</span></div>' +
-      '<div class="row"><span class="row-label">#2 Extra toward debt</span><span style="font-weight:700;color:var(--orange)">' + fmt(debtExtra) + '</span></div>' +
-      '<div class="row"><span class="row-label">#3 Savings</span><span style="font-weight:700;color:var(--green)">' + fmt(savings) + '</span></div>' +
-      '<div class="row"><span class="row-label">#4 Personal buffer</span><span style="font-weight:700">' + fmt(buffer) + '</span></div>' +
-      '</div>';
+  html+='<div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:10px;color:var(--gold)">Monthly Snapshot</div>'+
+    '<div class="row"><span class="row-label">Take-home</span><span style="font-weight:700;color:var(--green)">'+fmt(p.th)+'</span></div>'+
+    '<div class="row"><span class="row-label">Rent / Mortgage</span><span style="font-weight:700">'+fmt(p.mg)+'</span></div>'+
+    '<div class="row"><span class="row-label">Card minimum</span><span style="font-weight:700;color:var(--orange)">'+fmt(p.minCard)+'</span></div>'+
+    '<div class="row"><span class="row-label">Buffer</span><span style="font-weight:700">~$500</span></div>'+
+    '<div style="border-top:1px solid var(--border);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;font-size:15px;font-weight:900">'+
+    '<span>Est. Monthly Surplus</span><span style="color:'+(p.surplus>=0?'var(--green)':'var(--red)')+'">'+fmtSigned(p.surplus)+'</span></div></div>';
+  html+='<div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:10px">Credit Card Debt</div>'+
+    '<div class="row"><span class="row-label">Total balance</span><span style="font-weight:700;color:var(--red)">'+fmt(p.cd)+'</span></div>'+
+    '<div class="row"><span class="row-label">Min. payment</span><span style="font-weight:700;color:var(--orange)">'+fmt(p.minCard)+'</span></div>'+
+    '<div class="row"><span class="row-label">Credit range</span><span style="font-weight:700">'+(p.credit||'Unknown')+'</span></div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">Every surplus dollar attacks the highest-rate card first. No exceptions.</div></div>';
+  if(p.th>0&&p.surplus>0){
+    var debtExtra=Math.round(p.surplus*0.5);
+    var savings=Math.round(p.surplus*0.3);
+    var buffer=p.surplus-debtExtra-savings;
+    html+='<div class="card" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">'+
+      '<div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--blue)">Paycheck Allocation Plan</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">When your paycheck arrives, allocate in this order.</div>'+
+      '<div class="row"><span class="row-label">#1 Obligations first</span><span style="font-weight:700;color:var(--blue)">'+fmt(p.oblig)+'</span></div>'+
+      '<div class="row"><span class="row-label">#2 Extra toward debt</span><span style="font-weight:700;color:var(--orange)">'+fmt(debtExtra)+'</span></div>'+
+      '<div class="row"><span class="row-label">#3 Savings</span><span style="font-weight:700;color:var(--green)">'+fmt(savings)+'</span></div>'+
+      '<div class="row"><span class="row-label">#4 Personal buffer</span><span style="font-weight:700">'+fmt(buffer)+'</span></div></div>';
   }
-
-  if (S.editingMoney) {
-    html += '<div class="card" style="background:var(--gold-dim);border:1px solid var(--gold-b)">' +
-      '<div style="font-weight:800;font-size:14px;margin-bottom:14px;color:var(--gold)">Update My Numbers</div>' +
-      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div>' +
-      '<input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 2500" value="' + (p.ch||'') + '"></div>' +
-      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div>' +
-      '<input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 8000" value="' + (p.cd||'') + '"></div>' +
-      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div>' +
-      '<input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 5000" value="' + (p.th||'') + '"></div>' +
-      '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div>' +
-      '<input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1500" value="' + (p.mg||'') + '"></div>' +
-      '<div style="display:flex;gap:8px">' +
-      '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>' +
-      '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>' +
+  if(S.editingMoney){
+    html+='<div class="card" style="background:var(--gold-dim);border:1px solid var(--gold-b)">'+
+      '<div style="font-weight:800;font-size:14px;margin-bottom:14px;color:var(--gold)">Update My Numbers</div>'+
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div><input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 2500" value="'+(p.ch||'')+'"></div>'+
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div><input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 8000" value="'+(p.cd||'')+'"></div>'+
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div><input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 5000" value="'+(p.th||'')+'"></div>'+
+      '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div><input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1500" value="'+(p.mg||'')+'"></div>'+
+      '<div style="display:flex;gap:8px">'+
+      '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>'+
+      '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>'+
       '</div></div>';
-  } else {
-    html += '<div class="card card-dark" style="text-align:center">' +
-      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Numbers changed? Paid down debt, got paid, moved money around?</div>' +
-      '<button class="btn btn-ghost" onclick="S.editingMoney=true;render()">Update My Numbers</button>' +
-      '</div>';
+  }else{
+    html+='<div class="card card-dark" style="text-align:center">'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">Numbers changed? Paid down debt, got paid, moved money around?</div>'+
+      '<button class="btn btn-ghost" onclick="S.editingMoney=true;render()">Update My Numbers</button></div>';
   }
-
   return html;
 }
 
-function renderCalendar() {
-  var today = new Date();
-  var dayName = today.toLocaleDateString('en-US', { weekday:'long' });
-  var dateStr = today.toLocaleDateString('en-US', { month:'long', day:'numeric' });
-
-  var html = '<div class="card" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">' +
-    '<div class="label">YOUR SCHEDULE</div>' +
-    '<div style="font-family:Georgia,serif;font-size:22px;font-weight:900">' + dayName + '</div>' +
-    '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">' + dateStr + '</div>' +
-    '<div style="font-size:12px;color:var(--muted);line-height:1.7">Tap <strong style="color:var(--gold)">.ics</strong> to add to Apple Calendar. Tap <strong style="color:var(--gold)">Google Cal</strong> for Google Calendar. Steps you complete are marked Done automatically.</div>' +
-    '</div>';
-
-  GROUPS.forEach(function(group) {
-    var items = REMINDERS.filter(function(r){ return r.group===group; });
-    if (!items.length) return;
-    html += '<div class="label" style="margin:16px 0 8px">' + group.toUpperCase() + '</div>';
-    items.forEach(function(r) {
-      var isDone = r.step && !!S.checked[r.step];
-      var isAdded = !!S.calAdded[r.id];
-      html += '<div class="cal-row' + (isDone?' done':r.urgent?' urgent':'') + '">' +
-        '<div style="font-size:22px;flex-shrink:0">' + r.e + '</div>' +
-        '<div style="flex:1">' +
-        '<div style="font-size:13px;font-weight:700;color:' + (isDone?'var(--muted)':'var(--text)') + ';text-decoration:' + (isDone?'line-through':'none') + ';margin-bottom:2px">' + r.label + '</div>' +
-        '<div style="font-size:11px;color:' + (r.urgent?'var(--red)':'var(--muted)') + '">' + r.time + (r.urgent?' — Do this now':'') + '</div>' +
-        '</div>';
-      if (!isDone) {
-        if (r.step) {
-          html += '<div style="display:flex;gap:4px;flex-shrink:0">' +
-            '<button class="cal-btn' + (isAdded?' added':'') + '" onclick="downloadICS(\'' + r.step + '\')">.ics</button>' +
-            '<button class="cal-btn" onclick="googleCal(\'' + r.step + '\')">Gcal</button>' +
-            '</div>';
-        }
-      } else {
-        html += '<div style="font-size:11px;color:var(--green);font-weight:700;flex-shrink:0">Done</div>';
+function renderCalendar(){
+  var today=new Date();
+  var dayName=today.toLocaleDateString('en-US',{weekday:'long'});
+  var dateStr=today.toLocaleDateString('en-US',{month:'long',day:'numeric'});
+  var html='<div class="card" style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3)">'+
+    '<div class="label">YOUR SCHEDULE</div>'+
+    '<div style="font-family:Georgia,serif;font-size:22px;font-weight:900">'+dayName+'</div>'+
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:8px">'+dateStr+'</div>'+
+    '<div style="font-size:12px;color:var(--muted);line-height:1.7">Tap <strong style="color:var(--gold)">.ics</strong> to add to Apple Calendar. Tap <strong style="color:var(--gold)">Google Cal</strong> for Google Calendar.</div></div>';
+  GROUPS.forEach(function(group){
+    var items=REMINDERS.filter(function(r){return r.group===group;});
+    if(!items.length) return;
+    html+='<div class="label" style="margin:16px 0 8px">'+group.toUpperCase()+'</div>';
+    items.forEach(function(r){
+      var isDone=r.step&&!!S.checked[r.step];
+      var isAdded=!!S.calAdded[r.id];
+      html+='<div class="cal-row'+(isDone?' done':r.urgent?' urgent':'')+'">'+
+        '<div style="font-size:22px;flex-shrink:0">'+r.e+'</div>'+
+        '<div style="flex:1"><div style="font-size:13px;font-weight:700;color:'+(isDone?'var(--muted)':'var(--text)')+';text-decoration:'+(isDone?'line-through':'none')+';margin-bottom:2px">'+r.label+'</div>'+
+        '<div style="font-size:11px;color:'+(r.urgent?'var(--red)':'var(--muted)')+'">'+r.time+(r.urgent?' — Do this now':'')+'</div></div>';
+      if(!isDone){
+        if(r.step) html+='<div style="display:flex;gap:4px;flex-shrink:0"><button class="cal-btn'+(isAdded?' added':'')+'" onclick="downloadICS(\''+r.step+'\')">.ics</button><button class="cal-btn" onclick="googleCal(\''+r.step+'\')">Gcal</button></div>';
+      }else{
+        html+='<div style="font-size:11px;color:var(--green);font-weight:700;flex-shrink:0">Done</div>';
       }
-      html += '</div>';
+      html+='</div>';
     });
   });
-
-  html += '<div class="card card-dark center" style="margin-top:8px">' +
-    '<div style="font-size:13px;color:var(--muted);line-height:1.8">The most important reminder is Day 2.</div>' +
-    '<div style="font-size:13px;color:var(--gold);font-weight:700;margin-top:4px">Set it before you close this app.</div>' +
-    '</div>';
-
+  html+='<div class="card card-dark center" style="margin-top:8px">'+
+    '<div style="font-size:13px;color:var(--muted);line-height:1.8">The most important reminder is Day 2.</div>'+
+    '<div style="font-size:13px;color:var(--gold);font-weight:700;margin-top:4px">Set it before you close this app.</div></div>';
   return html;
 }
 
-function renderFeedback() {
-  var html = '';
-
-  if (S.fbScreen === 'log') {
-    html += '<div class="card card-gold">' +
-      '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:4px">Day ' + S.day + ' Check-in</div>' +
-      '<div style="font-size:12px;color:var(--muted)">Honest answers only. Nobody is judging.</div></div>';
-
-    html += '<div class="card">' +
-      '<div style="font-size:13px;font-weight:700;margin-bottom:12px">Did you do what the app told you today?</div>';
+function renderFeedback(){
+  var html='';
+  if(S.fbScreen==='log'){
+    html+='<div class="card card-gold"><div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:4px">Day '+S.day+' Check-in</div><div style="font-size:12px;color:var(--muted)">Honest answers only. Nobody is judging.</div></div>';
+    html+='<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:12px">Did you do what the app told you today?</div>';
     [['yes','Yes - I did it','var(--green)','var(--green-dim)','var(--green-b)'],
      ['partial','I did some of it','var(--orange)','rgba(249,115,22,0.1)','rgba(249,115,22,0.3)'],
-     ['no','No - did not do it','var(--red)','var(--red-dim)','var(--red-b)']].forEach(function(item) {
-      var sel = S.fbDidIt === item[0];
-      html += '<div onclick="S.fbDidIt=\'' + item[0] + '\';render()" style="padding:12px 14px;border-radius:12px;border:2px solid ' + (sel?item[4]:'var(--border)') + ';background:' + (sel?item[3]:'var(--surf)') + ';cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px">' +
-        '<div style="width:20px;height:20px;border-radius:50%;border:2px solid ' + (sel?item[2]:'var(--border)') + ';background:' + (sel?item[2]:'transparent') + ';flex-shrink:0"></div>' +
-        '<span style="font-size:14px;font-weight:' + (sel?'700':'400') + ';color:' + (sel?item[2]:'var(--text)') + '">' + item[1] + '</span></div>';
+     ['no','No - did not do it','var(--red)','var(--red-dim)','var(--red-b)']].forEach(function(item){
+      var sel=S.fbDidIt===item[0];
+      html+='<div onclick="S.fbDidIt=\''+item[0]+'\';render()" style="padding:12px 14px;border-radius:12px;border:2px solid '+(sel?item[4]:'var(--border)')+';background:'+(sel?item[3]:'var(--surf)')+';cursor:pointer;display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+        '<div style="width:20px;height:20px;border-radius:50%;border:2px solid '+(sel?item[2]:'var(--border)')+';background:'+(sel?item[2]:'transparent')+';flex-shrink:0"></div>'+
+        '<span style="font-size:14px;font-weight:'+(sel?'700':'400')+';color:'+(sel?item[2]:'var(--text)')+'">'+item[1]+'</span></div>';
     });
-    html += '</div>';
-
-    html += '<div class="card">' +
-      '<div style="font-size:13px;font-weight:700;margin-bottom:4px">What got in the way?</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">Be specific. This is the most valuable data.</div>' +
-      '<textarea id="fb-blocker" placeholder="e.g. I forgot, felt too busy, did not know where to start, felt anxious about the call..." oninput="S.fbBlocker=this.value">' + (S.fbBlocker||'') + '</textarea></div>';
-
-    html += '<div class="card">' +
-      '<div style="font-size:13px;font-weight:700;margin-bottom:4px">What would have made it easier?</div>' +
-      '<div style="font-size:11px;color:var(--muted);margin-bottom:6px">What should the app have done differently?</div>' +
-      '<textarea id="fb-easier" placeholder="e.g. shorter steps, a reminder, a script to read, less scary framing..." oninput="S.fbEasier=this.value">' + (S.fbEasier||'') + '</textarea></div>';
-
-    html += '<div style="display:flex;gap:8px">' +
-      '<button class="btn btn-gold" style="flex:2;padding:14px;font-size:15px" onclick="submitFeedback()">Submit Feedback</button>' +
-      '<button class="btn btn-ghost" style="flex:1;padding:14px;font-size:13px" onclick="S.fbScreen=\'view\';render()">Cancel</button>' +
-      '</div>';
+    html+='</div>';
+    html+='<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:4px">What got in the way?</div><div style="font-size:11px;color:var(--muted);margin-bottom:6px">Be specific. This is the most valuable data.</div><textarea id="fb-blocker" placeholder="e.g. I forgot, felt too busy, did not know where to start..." oninput="S.fbBlocker=this.value">'+(S.fbBlocker||'')+'</textarea></div>';
+    html+='<div class="card"><div style="font-size:13px;font-weight:700;margin-bottom:4px">What would have made it easier?</div><div style="font-size:11px;color:var(--muted);margin-bottom:6px">What should the app have done differently?</div><textarea id="fb-easier" placeholder="e.g. shorter steps, a reminder, a script..." oninput="S.fbEasier=this.value">'+(S.fbEasier||'')+'</textarea></div>';
+    html+='<div style="display:flex;gap:8px"><button class="btn btn-gold" style="flex:2;padding:14px;font-size:15px" onclick="submitFeedback()">Submit Feedback</button><button class="btn btn-ghost" style="flex:1;padding:14px;font-size:13px" onclick="S.fbScreen=\'view\';render()">Cancel</button></div>';
     return html;
   }
-
-  html += '<div class="card card-dark">' +
-    '<div class="label">DAILY FEEDBACK LOG</div>' +
-    '<div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:12px">Log what you actually did each day. Be honest. Your feedback is what separates a good idea from a real product.</div>' +
-    '<button class="btn btn-gold" onclick="S.fbScreen=\'log\';S.fbDidIt=\'yes\';S.fbBlocker=\'\';S.fbEasier=\'\';render()">+ Log Day ' + S.day + ' Feedback</button>' +
-    '<div style="margin-top:10px;text-align:center">' +
-    '<a href="mailto:mynextstepapp@gmail.com?subject=NextStep Feedback - Day ' + S.day + '&body=Did you do the step? (Yes / Partial / No):%0A%0AWhat got in the way?%0A%0AWhat would have made it easier?%0A%0AAnything else?" style="display:block;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;text-align:center;">📧 Email your feedback instead</a>' +
-    '</div></div>';
-
-  if (S.fbSubmitted) {
-    html += '<div class="card card-green center">' +
-      '<div style="font-size:22px;margin-bottom:6px">✓</div>' +
-      '<div style="font-size:14px;color:var(--green);font-weight:700">Feedback logged for Day ' + S.day + '</div>' +
-      '<div style="font-size:12px;color:var(--muted);margin-top:4px">Come back tomorrow. Keep going.</div></div>';
+  html+='<div class="card card-dark"><div class="label">DAILY FEEDBACK LOG</div><div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:12px">Log what you actually did each day. Be honest. Your feedback is what separates a good idea from a real product.</div>'+
+    '<button class="btn btn-gold" onclick="S.fbScreen=\'log\';S.fbDidIt=\'yes\';S.fbBlocker=\'\';S.fbEasier=\'\';render()">+ Log Day '+S.day+' Feedback</button>'+
+    '<div style="margin-top:10px;text-align:center"><a href="mailto:mynextstepapp@gmail.com?subject=NextStep Feedback - Day '+S.day+'&body=Did you do the step? (Yes / Partial / No):%0A%0AWhat got in the way?%0A%0AWhat would have made it easier?%0A%0AAnything else?" style="display:block;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;text-align:center;">📧 Email your feedback instead</a></div></div>';
+  if(S.fbSubmitted){
+    html+='<div class="card card-green center"><div style="font-size:22px;margin-bottom:6px">✓</div><div style="font-size:14px;color:var(--green);font-weight:700">Feedback logged for Day '+S.day+'</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Come back tomorrow. Keep going.</div></div>';
   }
-
-  if (S.feedback.length > 0) {
-    var yesCount = S.feedback.filter(function(e){ return e.didIt==='yes'; }).length;
-    var partCount = S.feedback.filter(function(e){ return e.didIt==='partial'; }).length;
-    var noCount = S.feedback.filter(function(e){ return e.didIt==='no'; }).length;
-    html += '<div class="card">' +
-      '<div class="label" style="margin-bottom:8px">SUMMARY (' + S.feedback.length + ' day' + (S.feedback.length!==1?'s':'') + ')</div>' +
-      '<div class="row"><span class="row-label">Completed</span><span style="font-weight:700;color:var(--green)">' + yesCount + ' day' + (yesCount!==1?'s':'') + '</span></div>' +
-      '<div class="row"><span class="row-label">Partial</span><span style="font-weight:700;color:var(--orange)">' + partCount + ' day' + (partCount!==1?'s':'') + '</span></div>' +
-      '<div class="row"><span class="row-label">Skipped</span><span style="font-weight:700;color:var(--red)">' + noCount + ' day' + (noCount!==1?'s':'') + '</span></div>' +
-      '</div>';
-
-    html += '<div class="label" style="margin:16px 0 8px">FEEDBACK HISTORY</div>';
-    S.feedback.slice().reverse().forEach(function(entry) {
-      var dc = entry.didIt==='yes'?'var(--green)':entry.didIt==='partial'?'var(--orange)':'var(--red)';
-      var dl = entry.didIt==='yes'?'Yes':entry.didIt==='partial'?'Partial':'No';
-      html += '<div class="card">' +
-        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
-        '<div style="font-weight:800;font-size:13px">Day ' + entry.day + ' &mdash; ' + entry.date + '</div>' +
-        '<div class="chip" style="background:rgba(16,185,129,0.15);color:' + dc + '">' + dl + '</div>' +
-        '</div>';
-      if (entry.blocker) html += '<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">GOT IN THE WAY</div><div style="font-size:12px">' + entry.blocker + '</div></div>';
-      if (entry.easier) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">WOULD HAVE HELPED</div><div style="font-size:12px">' + entry.easier + '</div></div>';
-      html += '</div>';
+  if(S.feedback.length>0){
+    var yesCount=S.feedback.filter(function(e){return e.didIt==='yes';}).length;
+    var partCount=S.feedback.filter(function(e){return e.didIt==='partial';}).length;
+    var noCount=S.feedback.filter(function(e){return e.didIt==='no';}).length;
+    html+='<div class="card"><div class="label" style="margin-bottom:8px">SUMMARY ('+S.feedback.length+' day'+(S.feedback.length!==1?'s':'')+')</div>'+
+      '<div class="row"><span class="row-label">Completed</span><span style="font-weight:700;color:var(--green)">'+yesCount+' day'+(yesCount!==1?'s':'')+'</span></div>'+
+      '<div class="row"><span class="row-label">Partial</span><span style="font-weight:700;color:var(--orange)">'+partCount+' day'+(partCount!==1?'s':'')+'</span></div>'+
+      '<div class="row"><span class="row-label">Skipped</span><span style="font-weight:700;color:var(--red)">'+noCount+' day'+(noCount!==1?'s':'')+'</span></div></div>';
+    html+='<div class="label" style="margin:16px 0 8px">FEEDBACK HISTORY</div>';
+    S.feedback.slice().reverse().forEach(function(entry){
+      var dc=entry.didIt==='yes'?'var(--green)':entry.didIt==='partial'?'var(--orange)':'var(--red)';
+      var dl=entry.didIt==='yes'?'Yes':entry.didIt==='partial'?'Partial':'No';
+      html+='<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'+
+        '<div style="font-weight:800;font-size:13px">Day '+entry.day+' &mdash; '+entry.date+'</div>'+
+        '<div class="chip" style="background:rgba(0,0,0,0.2);color:'+dc+'">'+dl+'</div></div>';
+      if(entry.blocker) html+='<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">GOT IN THE WAY</div><div style="font-size:12px">'+entry.blocker+'</div></div>';
+      if(entry.easier) html+='<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">WOULD HAVE HELPED</div><div style="font-size:12px">'+entry.easier+'</div></div>';
+      html+='</div>';
     });
-  } else if (!S.fbSubmitted) {
-    html += '<div class="card card-dark center">' +
-      '<div style="font-size:28px;margin-bottom:8px">📋</div>' +
-      '<div style="font-size:13px;color:var(--muted);line-height:1.8">No feedback logged yet. Use the app for a day and come back here. Your honest experience is the product.</div></div>';
+  }else if(!S.fbSubmitted){
+    html+='<div class="card card-dark center"><div style="font-size:28px;margin-bottom:8px">📋</div><div style="font-size:13px;color:var(--muted);line-height:1.8">No feedback logged yet. Use the app for a day and come back here.</div></div>';
   }
-
   return html;
 }
 
-function renderProtect() {
-  var blockers = [
-    { id:'b1', e:'💳', title:'Cards removed from Apple/Google Pay',  why:'Every swipe becomes intentional. Friction = protection.' },
-    { id:'b2', e:'🏦', title:'Savings named after your goal',         why:'When you see the name, you think twice before touching it.' },
-    { id:'b3', e:'📱', title:'Deleted shopping apps',                 why:'Amazon, Target, Instacart - remove the trigger.' },
-    { id:'b4', e:'📧', title:'Unsubscribed from retail emails',       why:'12 retail emails per week = 12 spending triggers.' },
-    { id:'b5', e:'🚫', title:'Paused Buy Now Pay Later',              why:'BNPL disguises debt as affordability. Turn it off.' },
+function renderProtect(){
+  var blockers=[
+    {id:'b1',e:'💳',title:'Cards removed from Apple/Google Pay',why:'Every swipe becomes intentional. Friction = protection.'},
+    {id:'b2',e:'🏦',title:'Savings named after your goal',why:'When you see the name, you think twice before touching it.'},
+    {id:'b3',e:'📱',title:'Deleted shopping apps',why:'Amazon, Target, Instacart — remove the trigger.'},
+    {id:'b4',e:'📧',title:'Unsubscribed from retail emails',why:'12 retail emails per week = 12 spending triggers.'},
+    {id:'b5',e:'🚫',title:'Paused Buy Now Pay Later',why:'BNPL disguises debt as affordability. Turn it off.'},
   ];
-
-  var html = '<div class="card card-red">' +
-    '<div style="font-weight:800;color:var(--red);font-size:14px;margin-bottom:6px">Behavioral Blockers</div>' +
-    '<div style="font-size:12px;color:var(--muted);line-height:1.6">These are not budget items. They are friction before the problem happens.</div></div>';
-
-  blockers.forEach(function(b) {
-    var d = !!S.checked[b.id];
-    html += '<div class="step-row' + (d?' done':'') + '" onclick="toggleCheck(\'' + b.id + '\')">' +
-      '<div style="font-size:22px;flex-shrink:0;margin-top:2px">' + b.e + '</div>' +
-      '<div style="flex:1">' +
-      '<div style="font-size:13px;font-weight:700;margin-bottom:3px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + b.title + '</div>' +
-      (!d?'<div style="font-size:11px;color:var(--muted);line-height:1.5">' + b.why + '</div>':'') +
-      '</div>' +
-      '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--bg)">' + (d?'✓':'') + '</div>' +
+  var html='<div class="card card-red"><div style="font-weight:800;color:var(--red);font-size:14px;margin-bottom:6px">Behavioral Blockers</div><div style="font-size:12px;color:var(--muted);line-height:1.6">These are not budget items. They are friction before the problem happens.</div></div>';
+  blockers.forEach(function(b){
+    var d=!!S.checked[b.id];
+    html+='<div class="step-row'+(d?' done':'')+'" onclick="toggleCheck(\''+b.id+'\')">'+
+      '<div style="font-size:22px;flex-shrink:0;margin-top:2px">'+b.e+'</div>'+
+      '<div style="flex:1"><div style="font-size:13px;font-weight:700;margin-bottom:3px;color:'+(d?'var(--muted)':'var(--text)')+';text-decoration:'+(d?'line-through':'none')+'">'+b.title+'</div>'+
+      (!d?'<div style="font-size:11px;color:var(--muted);line-height:1.5">'+b.why+'</div>':'')+
+      '</div>'+
+      '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;border:2px solid '+(d?'var(--green)':'var(--border)')+';background:'+(d?'var(--green)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--bg)">'+(d?'✓':'')+'</div>'+
       '</div>';
   });
-
-  html += '<div style="height:1px;background:var(--border);margin:20px 0"></div>';
-  html += '<div class="card">' +
-    '<div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--orange)">Subscription Audit</div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Check off every subscription you actually pay for. Then cancel the ones you forgot about.</div>';
-  SUBS.forEach(function(sub, i) {
-    var sid = 'sub_' + i;
-    var checked = !!S.subChecked[sid];
-    html += '<div class="sub-item" onclick="toggleSub(\'' + sid + '\')">' +
-      '<div class="sub-check' + (checked?' done':'') + '">' + (checked?'<div style="color:white;font-size:11px;text-align:center;line-height:18px">✓</div>':'') + '</div>' +
-      '<div style="font-size:13px;color:' + (checked?'var(--muted)':'var(--text)') + ';text-decoration:' + (checked?'line-through':'none') + '">' + sub + '</div>' +
+  html+='<div style="height:1px;background:var(--border);margin:20px 0"></div>';
+  html+='<div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--orange)">Subscription Audit</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Check off every subscription you actually pay for. Then cancel the ones you forgot about.</div>';
+  SUBS.forEach(function(sub,i){
+    var sid='sub_'+i;
+    var checked=!!S.subChecked[sid];
+    html+='<div class="sub-item" onclick="toggleSub(\''+sid+'\')">'+
+      '<div class="sub-check'+(checked?' done':'')+'>'+(checked?'<div style="color:white;font-size:11px;text-align:center;line-height:18px">✓</div>':'')+'</div>'+
+      '<div style="font-size:13px;color:'+(checked?'var(--muted)':'var(--text)')+';text-decoration:'+(checked?'line-through':'none')+'">'+sub+'</div></div>';
+  });
+  html+='</div>';
+  html+='<div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--blue)">Bill Negotiation Scripts</div><div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Read these word for word. They work 70% of the time.</div>';
+  BILL_SCRIPTS.forEach(function(script,i){
+    var open=S.expandedScript===i;
+    html+='<div style="border-bottom:1px solid var(--border);padding:10px 0">'+
+      '<div onclick="S.expandedScript='+(open?'null':i)+';render()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">'+
+      '<div style="font-size:13px;font-weight:700">'+script.name+'</div>'+
+      '<div style="font-size:11px;color:var(--gold)">'+(open?'Hide':'Show script')+'</div></div>'+
+      (open?'<div style="font-size:13px;color:var(--text);line-height:1.8;margin-top:8px;padding:12px;background:var(--surf2);border-radius:8px;font-style:italic">"'+script.script+'"</div>':'')+
       '</div>';
   });
-  html += '</div>';
-
-  html += '<div class="card">' +
-    '<div style="font-weight:800;font-size:14px;margin-bottom:6px;color:var(--blue)">Bill Negotiation Scripts</div>' +
-    '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.6">Read these word for word. They work 70% of the time.</div>';
-  BILL_SCRIPTS.forEach(function(script, i) {
-    var open = S.expandedScript === i;
-    html += '<div style="border-bottom:1px solid var(--border);padding:10px 0">' +
-      '<div onclick="S.expandedScript=' + (open?'null':i) + ';render()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer">' +
-      '<div style="font-size:13px;font-weight:700">' + script.name + '</div>' +
-      '<div style="font-size:11px;color:var(--gold);">' + (open?'Hide':'Show script') + '</div>' +
-      '</div>' +
-      (open?'<div style="font-size:13px;color:var(--text);line-height:1.8;margin-top:8px;padding:12px;background:var(--surf2);border-radius:8px;font-style:italic">"' + script.script + '"</div>':'') +
-      '</div>';
-  });
-  html += '</div>';
-
-  html += '<div class="card card-dark center" style="margin-top:8px">' +
-    '<div style="font-size:13px;color:var(--muted);margin-bottom:12px">Want to start over with new numbers?</div>' +
-    '<button class="btn btn-ghost" onclick="resetAll()">Restart from scratch</button></div>';
-
+  html+='</div>';
+  html+='<div class="card card-dark center" style="margin-top:8px"><div style="font-size:13px;color:var(--muted);margin-bottom:12px">Want to start over with new numbers?</div><button class="btn btn-ghost" onclick="resetAll()">Restart from scratch</button></div>';
   return html;
 }
 
-// --- Event Handlers ---------------------------------------------------------
-function startOnboarding() {
-  S.screen='onboarding'; S.step=0; S.diagStep=0;
-  render();
+// ---------------------------------------------------------------------------
+// EVENT HANDLERS
+// ---------------------------------------------------------------------------
+function startOnboarding(){S.screen='onboarding';S.step=0;S.diagStep=0;render();}
+function onInput(v){S.answers[QUESTIONS[S.step].id]=v;}
+
+function nextStep(){
+  var q=QUESTIONS[S.step];
+  var val=S.answers[q.id]||'';
+  if(q.id==='name'&&!val.trim()){showNudge('qinput','We need your name to personalize your plan.');return;}
+  if(q.type==='dollar'&&(!val||parseInt(val.replace(/[^0-9]/g,''))===0)&&q.id==='takehome'){showNudge('qinput','Your income is required to build your plan.');return;}
+  if(!val) S.answers[q.id]='0';
+  if(S.step<QUESTIONS.length-1){S.step++;render();setTimeout(function(){var el=document.getElementById('qinput');if(el)el.focus();},50);}
+  else{S.screen='chat';S.diagStep=0;render();setTimeout(function(){var el=document.getElementById('diaginput');if(el)el.focus();},50);}
 }
 
-function onInput(v) { S.answers[QUESTIONS[S.step].id] = v; }
+function showNudge(inputId,msg){
+  var el=document.getElementById(inputId);
+  if(el){el.style.border='2px solid var(--red)';el.placeholder=msg;el.focus();setTimeout(function(){el.style.border='2px solid var(--gold)';el.placeholder='';},2500);}
+}
 
-function nextStep() {
-  var q = QUESTIONS[S.step];
-  var val = S.answers[q.id] || '';
+function prevStep(){
+  if(S.screen==='chat'){S.screen='onboarding';S.step=QUESTIONS.length-1;render();return;}
+  if(S.step>0){S.step--;render();}
+}
 
-  if (q.id === 'name' && !val.trim()) {
-    showNudge('qinput', 'We need your name to personalize your plan.'); return;
+function pickDiag(opt){S.answers[DIAG[S.diagStep].id]=opt;setTimeout(function(){nextDiag();},120);}
+
+function nextDiag(){
+  var q=DIAG[S.diagStep];
+  var val=S.answers[q.id]||'';
+  if(q.id==='goal'&&!val){showNudge('diaginput','Please pick your main goal.');return;}
+  if(q.id==='rent'&&(!val||parseInt(val.replace(/[^0-9]/g,''))===0)){showNudge('diaginput','Enter your monthly rent or biggest bill.');return;}
+  if(!val) S.answers[q.id]='';
+  if(S.diagStep<DIAG.length-1){S.diagStep++;render();setTimeout(function(){var el=document.getElementById('diaginput');if(el)el.focus();},50);}
+  else{S.screen='notif';render();}
+}
+
+function prevDiag(){
+  if(S.diagStep>0){S.diagStep--;render();}
+  else{S.screen='onboarding';S.step=QUESTIONS.length-1;render();}
+}
+
+function toggleNotif(id){S.notifPrefs[id]=!S.notifPrefs[id];render();}
+
+function trackEvent(name,params){
+  try{if(typeof gtag==='function') gtag('event',name,params||{});}catch(e){}
+}
+
+function finishNotif(){
+  S.profile=buildProfile(S.answers);
+  if(S.notifPrefs.checkin) requestNativeNotif();
+  S.screen='dashboard';S.tab='today';
+  if(S.day===1&&!S.plans[1]){
+    var plan=generatePlan(S.profile,1,true,'medium','','','','maintain');
+    S.plans[1]=plan;S.viewDay=1;
+    S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
   }
-  if (q.type === 'dollar' && (!val || parseInt(val.replace(/[^0-9]/g,'')) === 0) && q.id === 'takehome') {
-    showNudge('qinput', 'Your income is required to build your plan.'); return;
+  trackEvent('onboarding_complete',{goal:S.profile.goal});
+  save();render();
+}
+
+function setTab(tab){S.tab=tab;render();}
+function navDay(dir){var next=S.viewDay+dir;if(next>=1&&next<=S.day){S.viewDay=next;S.editing=false;render();}}
+function setEnergy(e){S.energy=e;render();}
+
+// v2.0 — updated genPlan with adaptive level
+function genPlan(){
+  if(S.day===1&&S.plans[1]){S.day=2;S.viewDay=2;S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;save();render();return;}
+  var isDay1=S.day===1;
+  if(!isDay1&&!S.energy){alert('Please select your energy level first.');return;}
+  var energy=S.energy||'medium';
+  var adaptive=isDay1?'maintain':getAdaptiveLevel();
+  S.adaptiveLevel=adaptive;
+  var plan=generatePlan(S.profile,S.day,isDay1,energy,S.todayAnswers.completed,S.todayAnswers.avoided,S.todayAnswers.blocked,adaptive);
+  S.plans[S.day]=plan;
+  trackEvent('plan_generated',{day:S.day,adaptive_level:adaptive});
+  if(S.day===2) trackEvent('day2_return',{});
+  var nextDay=S.day+1;
+  S.day=nextDay;S.viewDay=nextDay;
+  S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
+  scheduleReminder();save();
+  S.viewDay=S.day-1;
+  render();
+}
+
+function toggleDayCheck(dayKey,stepId){
+  if(!S.dayChecked) S.dayChecked={};
+  if(!S.dayChecked[dayKey]) S.dayChecked[dayKey]={};
+  var wasChecked=!!S.dayChecked[dayKey][stepId];
+  S.dayChecked[dayKey][stepId]=!wasChecked;
+  if(!wasChecked){
+    S.checked[stepId]=true;
+    trackEvent('step_checked',{step:stepId,day:S.day});
+    S.completionMsg=true;
+    S.completionInput='';
+    S.completionInput2='';
   }
+  save();render();
+}
 
-  if (!val) S.answers[q.id] = '0';
+function toggleScript(id){
+  var el=document.getElementById(id);
+  var arrow=document.getElementById(id+'-arrow');
+  if(!el) return;
+  var showing=el.style.display!=='none';
+  el.style.display=showing?'none':'block';
+  if(arrow) arrow.innerHTML=showing?'▼':'▲';
+}
 
-  if (S.step < QUESTIONS.length - 1) {
-    S.step++;
-    render();
-    setTimeout(function() { var el = document.getElementById('qinput'); if(el) el.focus(); }, 50);
-  } else {
-    S.screen = 'chat';
-    S.diagStep = 0;
-    render();
-    setTimeout(function() { var el = document.getElementById('diaginput'); if(el) el.focus(); }, 50);
+function toggleCheck(id){S.checked[id]=!S.checked[id];save();render();}
+function toggleSub(id){S.subChecked[id]=!S.subChecked[id];save();render();}
+function toggleExpand(id){S.expandedStep=(S.expandedStep===id)?null:id;render();}
+function startEdit(){S.editText=formatPlanText(S.plans[S.viewDay]);S.editing=true;render();}
+function saveEdit(){var box=document.getElementById('editbox');S.plans[S.viewDay]=box?box.value:S.editText;S.editing=false;save();render();}
+function cancelEdit(){S.editing=false;render();}
+
+// v2.0 — updated dismissCompletion assesses confidence + stores with plan
+function dismissCompletion(){
+  var confidence=assessConfidence(S.completionInput);
+  S.completionConfidence=confidence;
+  var currentDay=S.day-1;
+  if(currentDay>=1&&S.plans[currentDay]&&typeof S.plans[currentDay]==='object'){
+    S.plans[currentDay].confidence=confidence;
   }
+  if(confidence==='high') trackEvent('completion_high_confidence',{day:S.day});
+  else if(confidence==='low') trackEvent('completion_low_confidence',{day:S.day});
+  else trackEvent('completion_dismissed_no_input',{day:S.day});
+  S.completionMsg=false;
+  S.completionInput='';
+  S.completionInput2='';
+  S.showReminderCard=true;
+  save();render();
 }
 
-function showNudge(inputId, msg) {
-  var el = document.getElementById(inputId);
-  if (el) {
-    el.style.border = '2px solid var(--red)';
-    el.placeholder = msg;
-    el.focus();
-    setTimeout(function() {
-      el.style.border = '2px solid var(--gold)';
-      el.placeholder = '';
-    }, 2500);
-  }
-}
-
-function prevStep() {
-  if (S.screen === 'chat') { S.screen='onboarding'; S.step=QUESTIONS.length-1; render(); return; }
-  if (S.step > 0) { S.step--; render(); }
-}
-
-function pickDiag(opt) {
-  S.answers[DIAG[S.diagStep].id] = opt;
-  setTimeout(function() { nextDiag(); }, 120);
-}
-
-function nextDiag() {
-  var q = DIAG[S.diagStep];
-  var val = S.answers[q.id] || '';
-
-  if (q.id === 'goal' && !val) {
-    showNudge('diaginput', 'Please pick your main goal.'); return;
-  }
-  if (q.id === 'rent' && (!val || parseInt(val.replace(/[^0-9]/g,'')) === 0)) {
-    showNudge('diaginput', 'Enter your monthly rent or biggest bill.'); return;
-  }
-
-  if (!val) S.answers[q.id] = '';
-
-  if (S.diagStep < DIAG.length - 1) {
-    S.diagStep++;
-    render();
-    setTimeout(function() { var el = document.getElementById('diaginput'); if(el) el.focus(); }, 50);
-  } else {
-    S.screen = 'notif';
-    render();
-  }
-}
-
-function prevDiag() {
-  if (S.diagStep > 0) { S.diagStep--; render(); }
-  else { S.screen='onboarding'; S.step=QUESTIONS.length-1; render(); }
-}
-
-function scrollChat() {}
-
-function toggleNotif(id) {
-  S.notifPrefs[id] = !S.notifPrefs[id];
+function setReturnIntent(val){
+  S.returnIntent=val;
+  trackEvent('return_intent',{intent:val,day:S.day});
   render();
 }
 
-function trackEvent(name, params) {
-  try { if (typeof gtag === 'function') gtag('event', name, params || {}); } catch(e) {}
-}
-
-function finishNotif() {
-  S.profile = buildProfile(S.answers);
-  if (S.notifPrefs.checkin) requestNativeNotif();
-  S.screen = 'dashboard';
-  S.tab = 'today';
-  if (S.day === 1 && !S.plans[1]) {
-    var plan = generatePlan(S.profile, 1, true, 'medium', '', '', '');
-    S.plans[1] = plan;
-    S.viewDay = 1;
-    S.todayAnswers = { completed:'', avoided:'', blocked:'' };
-    S.energy = null;
-  }
-  trackEvent('onboarding_complete', { goal: S.profile.goal });
-  save();
+function setReturnTime(val,time){
+  S.returnTimeChoice=val;
+  trackEvent('return_time_selected',{time:val,day:S.day});
   render();
 }
 
-function setTab(tab) { S.tab=tab; render(); }
+function dismissReminderCard(){S.showReminderCard=false;S.returnIntent=null;S.returnTimeChoice=null;save();render();}
 
-function navDay(dir) {
-  var next = S.viewDay + dir;
-  if (next >= 1 && next <= S.day) { S.viewDay=next; S.editing=false; render(); }
-}
-
-function setEnergy(e) { S.energy=e; render(); }
-
-function genPlan() {
-  if (S.day === 1 && S.plans[1]) {
-    S.day = 2;
-    S.viewDay = 2;
-    S.todayAnswers = { completed:'', avoided:'', blocked:'' };
-    S.energy = null;
-    save();
-    render();
-    return;
-  }
-  var isDay1 = S.day === 1;
-  if (!isDay1 && !S.energy) { alert('Please select your energy level first.'); return; }
-  var energy = S.energy || 'medium';
-  var plan = generatePlan(S.profile, S.day, isDay1, energy, S.todayAnswers.completed, S.todayAnswers.avoided, S.todayAnswers.blocked);
-  S.plans[S.day] = plan;
-  trackEvent('plan_generated', { day: S.day });
-  if (S.day === 2) trackEvent('day2_return', {});
-  var nextDay = S.day + 1;
-  S.day = nextDay;
-  S.viewDay = nextDay;
-  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
-  S.energy = null;
-  scheduleReminder();
-  save();
-  S.viewDay = S.day - 1;
+function logReturnTrigger(val){
+  S.returnTriggerShown=true;
+  trackEvent('return_trigger',{trigger:val,day:S.day});
   render();
 }
 
-function toggleDayCheck(dayKey, stepId) {
-  if (!S.dayChecked) S.dayChecked = {};
-  if (!S.dayChecked[dayKey]) S.dayChecked[dayKey] = {};
-  var wasChecked = !!S.dayChecked[dayKey][stepId];
-  S.dayChecked[dayKey][stepId] = !wasChecked;
-  if (!wasChecked) {
-    S.checked[stepId] = true;
-    S.completionMsg = true;
-    S.completionInput = '';
-    S.completionInput2 = '';
-    S.showReminderCard = false;
-    trackEvent('step_checked', { step_id: stepId, day: S.day });
-  }
-  save();
-  render();
-  if (!wasChecked) {
-    setTimeout(function() {
-      var el = document.getElementById('completion-input');
-      if (el) el.focus();
-    }, 100);
-  }
-}
-
-function dismissCompletion() {
-  var input = S.completionInput || '';
-  var input2 = S.completionInput2 || '';
-  var trimmed = input.trim();
-
-  var actionKeywords = [
-    'paid','called','canceled','cancelled','removed','moved','applied',
-    'opened','transferred','cut','deleted','signed','started','completed',
-    'finished','sent','texted','emailed','scheduled','set up','setup',
-    'closed','stopped','listed','sold','downloaded','installed','registered'
-  ];
-
-  var hasKeyword = actionKeywords.some(function(kw) {
-    return trimmed.toLowerCase().indexOf(kw) >= 0;
-  });
-
-  var isHighConfidence = trimmed.length > 15 && hasKeyword;
-
-  if (isHighConfidence) {
-    trackEvent('completion_high_confidence', { action_text: trimmed.slice(0,100), day: S.day });
-  } else if (trimmed.length > 2) {
-    trackEvent('completion_low_confidence', { action_text: trimmed.slice(0,100), day: S.day });
-  } else {
-    trackEvent('completion_dismissed_no_input', { day: S.day });
-  }
-
-  if (input2.trim().length > 2) {
-    trackEvent('completion_hesitation', { hesitation_text: input2.trim().slice(0,100), day: S.day });
-  }
-
-  S.completionMsg = false;
-  S.completionInput = '';
-  S.completionInput2 = '';
-  S.showReminderCard = true;
+function skipReturnTrigger(){
+  S.returnTriggerShown=true;
+  trackEvent('return_trigger_skipped',{day:S.day});
   render();
 }
 
-function setReturnIntent(val) {
-  S.returnIntent = val;
-  trackEvent('return_intent', { intent: val, day: S.day });
+// v2.1 — overwhelmed mode handlers
+function openOverwhelmed(){
+  S.overwhelmedMode=true;
+  S.crisisCategory=null;
+  trackEvent('overwhelmed_tapped',{day:S.day});
   render();
 }
 
-function logReturnTrigger(val) {
-  S.returnTriggerShown = true;
-  trackEvent('return_trigger', { trigger: val, day: S.day });
-  save();
+function setCrisisCategory(catId){
+  S.crisisCategory=catId;
+  trackEvent('crisis_category_selected',{category:catId,day:S.day});
   render();
 }
 
-function skipReturnTrigger() {
-  S.returnTriggerShown = true;
-  trackEvent('return_trigger_skipped', { day: S.day });
-  save();
+function dismissOverwhelmed(){
+  S.overwhelmedMode=false;
+  S.crisisCategory=null;
   render();
 }
 
-function dismissReminderCard() {
-  S.showReminderCard = false;
-  render();
+function copyPlan(){
+  trackEvent('action_click',{action:'copy_plan',day:S.day});
+  var plan=S.plans[S.viewDay]||S.plans[S.viewDay-1]||S.plans[S.day]||S.plans[S.day-1];
+  if(!plan){alert('No plan to copy yet. Generate your plan first.');return;}
+  var text=typeof plan==='object'?formatPlanText(plan):plan;
+  try{
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');}).catch(function(){fallbackCopy(text);});
+    }else{fallbackCopy(text);}
+  }catch(e){alert('Please long-press and copy the text manually.');}
 }
 
-function toggleScript(id) {
-  var el = document.getElementById(id);
-  var arrow = document.getElementById(id + '-arrow');
-  if (!el) return;
-  var showing = el.style.display !== 'none';
-  el.style.display = showing ? 'none' : 'block';
-  if (arrow) arrow.innerHTML = showing ? '▼' : '▲';
+function fallbackCopy(text){
+  var ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  document.execCommand('copy');document.body.removeChild(ta);
+  alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');
 }
 
-function toggleCheck(id) {
-  S.checked[id] = !S.checked[id];
-  save();
-  render();
+function resetPlan(){
+  if(!confirm('Reset this day? You will need to generate a new plan.')) return;
+  var d=S.day-1;
+  delete S.plans[d];S.day=d;S.viewDay=d;
+  save();render();
 }
 
-function toggleSub(id) {
-  S.subChecked[id] = !S.subChecked[id];
-  save();
-  render();
+function submitFeedback(){
+  var entry={day:S.day-1,name:S.profile.name,date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),didIt:S.fbDidIt||'yes',blocker:S.fbBlocker||'',easier:S.fbEasier||''};
+  S.feedback.push(entry);S.fbSubmitted=true;S.fbScreen='view';save();render();
 }
 
-function toggleExpand(id) {
-  S.expandedStep = (S.expandedStep === id) ? null : id;
-  render();
-}
-
-function startEdit() { S.editText = formatPlanText(S.plans[S.viewDay]); S.editing=true; render(); }
-
-function saveEdit() {
-  var box = document.getElementById('editbox');
-  S.plans[S.viewDay] = box ? box.value : S.editText;
-  S.editing = false;
-  save();
-  render();
-}
-
-function cancelEdit() { S.editing=false; render(); }
-
-function copyPlan() {
-  trackEvent('action_click', { action: 'copy_plan', day: S.day });
-  var plan = S.plans[S.viewDay] || S.plans[S.viewDay-1] || S.plans[S.day] || S.plans[S.day-1];
-  if (!plan) { alert('No plan to copy yet. Generate your plan first.'); return; }
-  var text = typeof plan === 'object' ? formatPlanText(plan) : plan;
-  try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(function(){ alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.'); }).catch(function(){
-        var ta = document.createElement('textarea');
-        ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
-        document.body.appendChild(ta); ta.focus(); ta.select();
-        document.execCommand('copy'); document.body.removeChild(ta);
-        alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');
-      });
-    } else {
-      var ta = document.createElement('textarea');
-      ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
-      document.body.appendChild(ta); ta.focus(); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta);
-      alert('Copied! Paste it in Notes, a text, or anywhere you want to save your plan.');
-    }
-  } catch(e) { alert('Please long-press and copy the text manually.'); }
-}
-
-function resetPlan() {
-  if (!confirm('Reset this day? You will need to generate a new plan.')) return;
-  var d = S.day-1;
-  delete S.plans[d];
-  S.day = d;
-  S.viewDay = d;
-  save();
-  render();
-}
-
-function submitFeedback() {
-  var entry = {
-    day: S.day-1,
-    name: S.profile.name,
-    date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'}),
-    didIt: S.fbDidIt || 'yes',
-    blocker: S.fbBlocker || '',
-    easier: S.fbEasier || '',
-  };
-  S.feedback.push(entry);
-  S.fbSubmitted = true;
-  S.fbScreen = 'view';
-  save();
-  render();
-}
-
-function saveUpdatedNumbers() {
-  var ch = parseInt(document.getElementById('u-checking').value.replace(/[^0-9]/g,'')) || 0;
-  var cd = parseInt(document.getElementById('u-debt').value.replace(/[^0-9]/g,'')) || 0;
-  var th = parseInt(document.getElementById('u-income').value.replace(/[^0-9]/g,'')) || 0;
-  var mg = parseInt(document.getElementById('u-rent').value.replace(/[^0-9]/g,'')) || 0;
-  var minCard = Math.round(cd * 0.025);
-  var oblig = mg + minCard + 500;
-  var surplus = th - oblig - 400;
-  var liquid = ch + (S.profile.sv || 0);
-  S.profile.ch = ch;
-  S.profile.cd = cd;
-  S.profile.th = th;
-  S.profile.mg = mg;
-  S.profile.minCard = minCard;
-  S.profile.oblig = oblig;
-  S.profile.surplus = surplus;
-  S.profile.liquid = liquid;
-  S.editingMoney = false;
-  save();
-  render();
+function saveUpdatedNumbers(){
+  var ch=parseInt(document.getElementById('u-checking').value.replace(/[^0-9]/g,''))||0;
+  var cd=parseInt(document.getElementById('u-debt').value.replace(/[^0-9]/g,''))||0;
+  var th=parseInt(document.getElementById('u-income').value.replace(/[^0-9]/g,''))||0;
+  var mg=parseInt(document.getElementById('u-rent').value.replace(/[^0-9]/g,''))||0;
+  var minCard=Math.round(cd*0.025);
+  var oblig=mg+minCard+500;
+  var surplus=th-oblig-400;
+  var liquid=ch+(S.profile.sv||0);
+  S.profile.ch=ch;S.profile.cd=cd;S.profile.th=th;S.profile.mg=mg;
+  S.profile.minCard=minCard;S.profile.oblig=oblig;S.profile.surplus=surplus;S.profile.liquid=liquid;
+  S.editingMoney=false;save();render();
   alert('Numbers updated!');
 }
 
-function simulateNextDay() {
-  if (!S.plans[S.day - 1] && S.day > 1) { alert('Generate today\'s plan first.'); return; }
-  S.day = S.day + 1;
-  S.viewDay = S.day;
-  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
-  S.energy = null;
-  save();
-  render();
+function simulateNextDay(){
+  if(!S.plans[S.day-1]&&S.day>1){alert("Generate today's plan first.");return;}
+  S.day=S.day+1;S.viewDay=S.day;
+  S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
+  save();render();
 }
 
-function resetAll() {
+function resetAll(){
   localStorage.clear();
-  S = {
-    screen:'landing', step:0, diagStep:0, answers:{}, profile:null, tab:'today',
-    checked:{}, subChecked:{}, dayChecked:{},
-    day:1, viewDay:1, plans:{},
-    feedback:[], fbScreen:'view', fbDidIt:'yes', fbBlocker:'', fbEasier:'', fbSubmitted:false,
-    energy:null, notifPrefs:{}, editing:false, editText:'', calAdded:{},
-    expandedStep:null, expandedScript:null,
-    todayAnswers:{completed:'',avoided:'',blocked:''},
-    editingMoney:false,
-    completionMsg:false,
-    completionInput:'',
-    completionInput2:'',
-    showReminderCard:false,
-    returnIntent:null,
-    returnTriggerShown:false,
-  };
+  S={screen:'landing',step:0,diagStep:0,answers:{},profile:null,tab:'today',checked:{},subChecked:{},dayChecked:{},day:1,viewDay:1,plans:{},feedback:[],fbScreen:'view',fbDidIt:'yes',fbBlocker:'',fbEasier:'',fbSubmitted:false,energy:null,notifPrefs:{},editing:false,editText:'',calAdded:{},expandedStep:null,expandedScript:null,todayAnswers:{completed:'',avoided:'',blocked:''},editingMoney:false,completionMsg:false,completionInput:'',completionInput2:'',showReminderCard:false,returnIntent:null,returnTriggerShown:false,returnTimeChoice:null,completionConfidence:null,adaptiveLevel:'maintain',overwhelmedMode:false,crisisCategory:null};
   render();
 }
 
-// --- Dev Mode ---------------------------------------------------------------
-function loadDevMode() {
-  S.profile = buildProfile({
-    name: 'Dev', takehome: '5000', carddebt: '8000', checking: '1200',
-    goal: 'Get out of debt', blocker: 'Testing dev mode', savings: '$500 to $2,000', rent: '1500'
-  });
-  S.day = 1;
-  S.viewDay = 1;
-  S.plans[1] = generatePlan(S.profile, 1, true, 'medium', '', '', '');
-  S.screen = 'dashboard';
-  S.tab = 'today';
-  S.todayAnswers = { completed:'', avoided:'', blocked:'' };
-  S.energy = null;
+// ---------------------------------------------------------------------------
+// DEV MODE
+// ---------------------------------------------------------------------------
+function loadDevMode(){
+  S.profile=buildProfile({name:'Dev',takehome:'5000',carddebt:'8000',checking:'1200',goal:'Get out of debt',blocker:'Testing dev mode',savings:'$500 to $2,000',rent:'1500'});
+  S.day=1;S.viewDay=1;
+  S.plans[1]=generatePlan(S.profile,1,true,'medium','','','','maintain');
+  S.screen='dashboard';S.tab='today';
+  S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
   render();
 }
 
-// --- Init -------------------------------------------------------------------
-function init() {
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(function(regs) {
-      regs.forEach(function(r) { r.unregister(); });
-    });
+// ---------------------------------------------------------------------------
+// INIT
+// ---------------------------------------------------------------------------
+function init(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){regs.forEach(function(r){r.unregister();});});
   }
-
-  var params = new URLSearchParams(window.location.search);
-  var urlTab = params.get('tab');
-  var devMode = params.get('dev') === 'true';
-
-  if (devMode) {
-    loadDevMode();
-    if (urlTab) { S.tab = urlTab; render(); }
-    return;
-  }
-
+  var params=new URLSearchParams(window.location.search);
+  var urlTab=params.get('tab');
+  var devMode=params.get('dev')==='true';
+  if(devMode){loadDevMode();if(urlTab){S.tab=urlTab;render();}return;}
   load();
-
-  if (S.profile) {
-    S.screen = 'dashboard';
-    if (urlTab) S.tab = urlTab;
-  } else {
-    S.screen = 'landing';
-  }
-
+  if(S.profile){S.screen='dashboard';if(urlTab) S.tab=urlTab;}
+  else{S.screen='landing';}
   render();
 }
 
-document.addEventListener('DOMContentLoaded', function() { init(); });
+document.addEventListener('DOMContentLoaded',function(){init();});
 </script>
-
 </body>
 </html>
