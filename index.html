@@ -9,7 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="NextStep">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>NextStep v2.4</title>
+<title>NextStep v2.5</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FVSC7VZMQW"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -386,20 +386,86 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
   }
 
   var actions=[];
+  // ---------------------------------------------------------------------------
+  // STATE-BASED DAY 1 EXPERIENCE
+  // ---------------------------------------------------------------------------
   if(isDay1){
-    if(energy==='low'){
-      actions.push('Open your bank app right now. Look at your checking balance. Write that number down — on paper, in your notes, anywhere. That number is your starting line. Do not close the app yet.');
-      actions.push('Find the one bill or card that bothers you most. Look at the balance. Just look at it. That is today\'s job — know the number.');
-    }else if(energy==='medium'){
-      if(hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Look at the balance. Write it down. Do not close the app yet — that number is what we\'re attacking.');
-      actions.push('Go to Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point forward. Every tap you block is money you keep. 3 minutes.');
-      actions.push('Take that card out of your wallet. Put it in a drawer, a bag, anywhere that is not your pocket. Physical friction is real friction.');
+    var userState=profile.state||'LEAKAGE';
+
+    if(userState==='CRISIS'){
+      priority=name+', cash is tight and every dollar matters right now. We stop the bleeding first — before anything else.';
+      if(energy==='low'){
+        actions.push('Open your bank app. Look at your checking balance. Write that number down — on paper, your notes, anywhere. That number is what we protect today.');
+        actions.push('Find one recurring charge in your bank statement you forgot about. Even $9.99 matters right now. Cancel it before you close this app.');
+      }else if(energy==='medium'){
+        actions.push('Open your bank app. Look at your checking balance. Write it down. Do not close the app — that number is your starting line and we are going to protect every dollar of it.');
+        actions.push('Take every credit card out of your wallet right now. Put them somewhere inconvenient — drawer, bag, anywhere that is not your pocket. Physical distance from your cards is real protection.');
+        actions.push('Open your bank statement. Find one recurring charge you forgot about. Cancel it today. Even $10 a month is $120 a year you get back.');
+      }else{
+        actions.push('Open your bank app. Look at your checking balance. Write it down. That is your starting line — we protect every dollar from here.');
+        actions.push('Take every credit card out of your wallet. Put them somewhere that requires effort to get to. Go to Settings and remove them from Apple Pay and Google Pay. Debit only from this point.');
+        actions.push('Open your bank statement right now. Find every recurring charge. Write them all down. Cancel anything you forgot about or have not used in 30 days. Do it before you close this app.');
+      }
+      momentum='Most people in this situation keep ignoring it. You opened an app and started moving. That is already different. One action today changes the math.';
+      avoid=['Any purchase that is not essential today — every dollar is working for you now','Ignoring any bill or charge — awareness is the first weapon'];
+
+    }else if(userState==='LEAKAGE'){
+      priority=name+', you make enough. The problem is visibility — your money is disappearing somewhere and today we find it.';
+      if(energy==='low'){
+        actions.push('Open your bank app. Look at your last 7 days of transactions. Find the one purchase that should not have happened. Just find it — write it down. That is your target.');
+        actions.push('Write down your three biggest monthly expenses after rent. From your actual bank statement — not from memory. You need the real number.');
+      }else if(energy==='medium'){
+        actions.push('Open your bank app. Look at your last 7 days of transactions. Find the one purchase that should not have happened. Write it down. That pattern is where your money goes.');
+        actions.push('Go to Settings right now. Remove Apple Pay and Google Pay access from every credit card. Debit only from this point. Every tap you were making unconsciously just became a decision.');
+        actions.push('Write down your three biggest monthly expenses after rent — from your actual bank statement, not from memory. You need the real number, not the estimate.');
+      }else{
+        actions.push('Open your bank app. Look at your last 14 days of transactions. Find the three purchases that should not have happened. Write them down. That pattern is costing you every month.');
+        actions.push('Go to Settings. Remove Apple Pay and Google Pay from every credit card. Debit only. Then go to your subscriptions and find one to cancel today.');
+        actions.push('Write your actual take-home next to your actual fixed expenses. Calculate what is left. That number will surprise you — and it tells you exactly what we are fixing.');
+      }
+      momentum='You already have the income to solve this. You just need to see where it is going. Today you start seeing it clearly.';
+      avoid=['Any purchase you cannot name the reason for right now','Estimating your expenses — look at the actual numbers today'];
+
+    }else if(userState==='INSTABILITY'){
+      priority=name+', you have built something. Today we make sure the next unexpected hit does not wipe it out.';
+      if(energy==='low'){
+        actions.push('Open your savings account right now. Look at the balance. Write it down. That number is a wall — we are going to make it harder to touch.');
+        actions.push('Find your highest-rate credit card. Write down the balance and the minimum payment. We need to know what we are managing.');
+      }else if(energy==='medium'){
+        actions.push('Open your savings account. Look at the balance. That number is a wall — we protect it before we grow it. Write it down.');
+        actions.push('Go to your bank app. If you do not have a separate account labeled for emergencies, open one today. Name it something that makes you think twice before touching it.');
+        actions.push('Find your highest-rate credit card. Write down the balance, the rate, and the minimum payment. That card is what keeps wiping you out — we are going to neutralize it.');
+      }else{
+        actions.push('Open your savings account. Look at the balance. Write it down. Now set up a rule in your bank — any transfer out of savings requires 24 hours. Create that friction deliberately.');
+        actions.push('Open a separate account today labeled "Emergency Only." Transfer even $50 into it. The account existing and being separate is the move.');
+        actions.push('Find every credit card you carry. Write down each balance and rate in order from highest to lowest. That list is your attack sequence — we work from the top.');
+      }
+      momentum='You are not starting from zero. You have something to protect and build on. Today you make it more stable.';
+      avoid=['Touching your savings for anything non-emergency today','Ignoring the credit card balance — awareness is the first step to control'];
+
     }else{
-      if(hasDebt) actions.push('Open your bank app. Find every credit card balance. Write them down in order from highest rate to lowest. That list is your target list. We work from the top.');
-      actions.push('Go to Settings right now. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point forward. 3 minutes.');
-      actions.push('Take every credit card out of your wallet. Put them somewhere inconvenient. You are not canceling them — just removing the impulse path.');
+      // BUILDER
+      priority=name+', you have room to work with. Today we put that surplus to work instead of letting it drift.';
+      if(energy==='low'){
+        actions.push('Open your bank app. Write down your actual surplus — take-home minus all fixed expenses. That number is your weapon. We are going to deploy it deliberately.');
+        actions.push('Find your highest-rate card if you have one. Write the balance down. Even a $25 extra payment this week stops interest compounding against you.');
+      }else if(energy==='medium'){
+        actions.push('Open your bank app right now. Set up an automatic transfer to savings — even $100. Pick a number you will not miss. Set it to repeat monthly. Automation beats intention every time.');
+        actions.push('Write your net worth right now. Assets minus debts. Do not judge it — just write it. That number is your starting line and it is about to move.');
+        actions.push('Find your highest-rate card. Make an extra payment today — above the minimum. Even $50 extra stops the interest from compounding against you.');
+      }else{
+        actions.push('Open your bank app right now. Set up automatic transfers to savings — weekly, not monthly. Pick a number that moves the needle. Automation is the move.');
+        actions.push('Calculate your actual net worth. Every account, every debt. Write it down. That number is your scoreboard — and we are about to move it.');
+        actions.push('Call your highest-rate card. Ask for a rate cut. Script: "I have been a customer for X years and I always pay on time. I want a lower rate." 10 minutes. Works 70% of the time.');
+      }
+      momentum='You have the foundation. Today we make it work harder. Small moves at this stage compound fast.';
+      avoid=['Letting surplus sit idle in checking — it needs to be deployed','Any unplanned purchase over $50 today — you are building, not spending'];
     }
-  }else if(adaptive==='escalate'){
+
+    return{name:name,day:dayNum,priority:priority,energyLine:energyLine,actions:actions.slice(0,3),momentum:momentum,avoid:avoid.slice(0,2),hasDebt:hasDebt,adaptiveLevel:'maintain',state:userState};
+  }
+
+  if(adaptive==='escalate'){
     // Did it yesterday with confidence — push harder
     if(energy==='low'){
       actions.push('Write the single next step after what you completed yesterday. Just write it. Writing locks it in.');
@@ -488,22 +554,29 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
 function getNextStepPreview(plan){
   if(!plan||typeof plan!=='object') return null;
   var hasDebt=plan.hasDebt;
-  var goal=S.profile?S.profile.goal:'';
+  var state=plan.state||(S.profile?S.profile.state:null)||'LEAKAGE';
   var day=S.day||1;
+
   if(day===1){
-    if(hasDebt) return "Tomorrow: call the number on the back of that card. Ask for a lower rate. Every day this waits, you pay more. Takes 10 minutes. We'll handle it.";
-    return "Tomorrow: find the one expense that's bleeding you and cut it. We know where to look. Come back and we'll go straight to it.";
+    if(state==='CRISIS') return "Tomorrow: we call the number on your highest-rate card and ask for a lower rate. Every day this waits, you pay more. Takes 10 minutes. We'll handle it.";
+    if(state==='LEAKAGE') return "Tomorrow: we expose exactly where your money goes. You're going to see a number that surprises you — and then we fix it.";
+    if(state==='INSTABILITY') return "Tomorrow: we make your savings harder to touch and start building a wall between you and the next emergency. Come back.";
+    if(state==='BUILDER') return "Tomorrow: we automate your surplus so it works without you having to decide every time. One setup. Permanent impact.";
+    return "Tomorrow: one more step forward. You started something. Don't let it sit.";
   }
   if(day===2){
-    if(hasDebt) return "Tomorrow: set up automatic minimum payments so you never miss one. Takes 5 minutes. Protects your credit automatically. Don't let this sit.";
-    return "Tomorrow: we look at what's actually coming in vs. going out. One number will change how you see this. Come back.";
+    if(state==='CRISIS') return "Tomorrow: we set up automatic minimum payments so you never miss one. 5 minutes. Protects your credit automatically. Don't let this sit.";
+    if(state==='LEAKAGE') return "Tomorrow: we find the subscription or charge bleeding you monthly and we kill it. Come back.";
+    if(state==='INSTABILITY') return "Tomorrow: we start attacking that card balance — one extra payment. Every dollar above minimum stops interest compounding against you.";
+    if(state==='BUILDER') return "Tomorrow: we look at your net worth and set a 90-day target. You need a scoreboard. Come back.";
   }
   if(day===3){
     return "Tomorrow: Day 3 is where most people quit. You're still here. That already makes you different. Don't let that go.";
   }
-  if(goal==='Get out of debt') return "Tomorrow: one more action toward zero. You already started — stopping now means starting over. Don't let this sit.";
-  if(goal==='Stop living paycheck to paycheck') return "Tomorrow: we find your first $50 of breathing room. It exists in your numbers right now. Come back and we'll find it.";
-  if(goal==='Build my savings') return "Tomorrow: we automate one small transfer. Savings that happen automatically don't require willpower. Come back.";
+  if(state==='CRISIS') return "Tomorrow: one more action toward stability. You already started — stopping now means starting over. Don't let this sit.";
+  if(state==='LEAKAGE') return "Tomorrow: one more layer of visibility. You can't fix what you can't see — and you're starting to see it.";
+  if(state==='INSTABILITY') return "Tomorrow: one more action toward protection. Each day you come back, the wall gets higher.";
+  if(state==='BUILDER') return "Tomorrow: one more move that compounds. Small actions at your stage add up faster than you think.";
   return "Tomorrow: one more step. You started something. Don't let it sit.";
 }
 
@@ -574,6 +647,19 @@ function scheduleReminder(){}
 // ---------------------------------------------------------------------------
 // PROFILE BUILDER
 // ---------------------------------------------------------------------------
+function detectState(th,ch,cd,sv,surplus){
+  // CRISIS: very low cash AND no savings — stop the bleeding
+  if(ch<200&&sv===0) return 'CRISIS';
+  // LEAKAGE: decent income but high debt, low cash relative to income — expose where it goes
+  if(th>=3000&&cd>(th*0.4)&&ch<(th*0.2)) return 'LEAKAGE';
+  // INSTABILITY: has some savings but also carries debt — protect what exists
+  if(sv>0&&cd>0) return 'INSTABILITY';
+  // BUILDER: surplus exists, debt manageable or zero — create distance
+  if(surplus>200||cd===0) return 'BUILDER';
+  // Default fallback
+  return 'LEAKAGE';
+}
+
 function buildProfile(a){
   var n=function(id){return parseInt(a[id])||0;};
   var th=n('takehome'),ch=n('checking'),cd=n('carddebt'),mg=n('rent')||0;
@@ -593,7 +679,8 @@ function buildProfile(a){
   else if(cd>th*3) credit='580-669 - fair';
   else if(cd>0) credit='670-739 - good';
   else credit='740+ - great';
-  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus};
+  var state=th===0?'CRISIS':detectState(th,ch,cd,sv,surplus);
+  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus,state:state};
 }
 
 function fmt(v){return'$'+Math.round(Math.max(0,parseInt(v)||0)).toLocaleString();}
@@ -803,10 +890,15 @@ function renderDashboard(){
     }
   }
 
+  var stateColors={'CRISIS':['ef4444','fff5f5'],'LEAKAGE':['f59e0b','fffbeb'],'INSTABILITY':['3b82f6','eff6ff'],'BUILDER':['10b981','f0fdf4']};
+  var userState=p.state||'LEAKAGE';
+  var sc=stateColors[userState]||stateColors['LEAKAGE'];
+  var stateBadge='<span style="display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;background:#'+sc[1]+';color:#'+sc[0]+';border:1px solid #'+sc[0]+';letter-spacing:1px;margin-left:6px;">'+userState+'</span>';
+
   var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+
     '<div class="header">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
-    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>'+
+    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep'+stateBadge+'</div>'+
     '<div style="font-size:10px;color:var(--muted)">'+p.name+' &middot; Day '+S.day+' &middot; '+p.goal+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:10px">'+
     '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>'+
