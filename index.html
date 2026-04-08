@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -36,23 +37,23 @@ html{background:var(--bg) !important;}
 #app > div {max-width:var(--max);margin:0 auto;position:relative;}
 
 @media(min-width:520px){
-  body{background:#040810;}
-  #app > div {
-    box-shadow:0 0 80px rgba(0,0,0,0.8);
-    background:var(--bg);
-    min-height:100vh;
-  }
-  .header{border-radius:0;}
-  .footer{max-width:var(--max);left:50%;transform:translateX(-50%);}
+body{background:#040810;}
+#app > div {
+box-shadow:0 0 80px rgba(0,0,0,0.8);
+background:var(--bg);
+min-height:100vh;
+}
+.header{border-radius:0;}
+.footer{max-width:var(--max);left:50%;transform:translateX(-50%);}
 }
 
 @media(min-width:520px){
-  .card{padding:18px;font-size:14px;}
-  .plan-body{font-size:15px;}
-  .tab-btn{font-size:9px;}
-  .content{padding:18px 18px 90px;}
-  input,textarea{font-size:14px;}
-  .btn{font-size:16px;}
+.card{padding:18px;font-size:14px;}
+.plan-body{font-size:15px;}
+.tab-btn{font-size:9px;}
+.content{padding:18px 18px 90px;}
+input,textarea{font-size:14px;}
+.btn{font-size:16px;}
 }
 
 .card{background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px;}
@@ -120,7 +121,25 @@ textarea{resize:vertical;min-height:72px;}
 @media(min-width:520px){.install-banner{display:none;}}
 .bmc-btn{display:inline-flex;align-items:center;gap:8px;background:#FFDD00;color:#000000;border:none;border-radius:10px;padding:10px 18px;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;font-family:inherit;}
 .bmc-btn:hover{background:#f5d400;}
+
+/* Completion overlay animation */
+@keyframes completionPop {
+  0%{transform:scale(0.8);opacity:0;}
+  60%{transform:scale(1.05);}
+  100%{transform:scale(1);opacity:1;}
+}
+.completion-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  background:rgba(16,185,129,0.97);
+  z-index:9999;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;padding:40px;
+  animation:completionPop 0.4s ease-out;
+  cursor:pointer;
+}
 </style>
+
 </head>
 <body>
 <div id="app">Loading...</div>
@@ -163,6 +182,10 @@ var S = {
   fbSubmitted: false,
   todayAnswers: { completed: '', avoided: '', blocked: '' },
   editingMoney: false,
+  completionMsg: false,
+  completionInput: '',
+  completionInput2: '',
+  showReminderCard: false,
 };
 
 var KEY = 'nextstep-pwa-v1';
@@ -205,10 +228,10 @@ function load() {
 
 // --- Data -------------------------------------------------------------------
 var QUESTIONS = [
-  { id:'name',     e:'👋', q:"What's your first name?",            type:'text',   ph:'First name' },
-  { id:'takehome', e:'💰', q:'Monthly take-home pay after taxes?', type:'dollar', ph:'e.g. 5000'  },
-  { id:'carddebt', e:'💳', q:'Total credit card debt?',            type:'dollar', ph:'0 if none'  },
-  { id:'checking', e:'🏦', q:'Cash in checking right now?',        type:'dollar', ph:'e.g. 2500'  },
+  { id:'name',     e:'👋', q:"What's your first name?",            type:'text',   ph:'First name', sub:'' },
+  { id:'takehome', e:'💰', q:'What money do you have coming in each month?', type:'dollar', ph:'e.g. 5000', sub:'Enter the numbers you actually manage — just you or your household.' },
+  { id:'carddebt', e:'💳', q:'Total credit card debt?',            type:'dollar', ph:'0 if none',  sub:'' },
+  { id:'checking', e:'🏦', q:'Available cash — what you can use today?', type:'dollar', ph:'e.g. 2500', sub:'Include checking, savings, or anything you\'d actually use right now.' },
 ];
 
 var DIAG = [
@@ -263,16 +286,68 @@ var BILL_SCRIPTS = [
   { name:'Credit Card',      script:'I have been a customer for [X] years and I always pay on time. I would like to request a lower interest rate and possibly a higher credit limit. Can you connect me with someone who can help with that?' },
 ];
 
+var COMPLETION_MSGS = [
+  { head:"Done. That's the move.", sub:"Set your alarm. Same time tomorrow. Don't break it." },
+  { head:"You did it.", sub:"One action. That's all it takes. Come back tomorrow — don't let this be a one-time thing." },
+  { head:"Action taken.", sub:"Most people stop at thinking. You didn't. Now set a reminder and come back tomorrow." },
+  { head:"One step closer.", sub:"Tomorrow you go again. Set an alarm now while you're thinking about it." },
+  { head:"Most people think about it.", sub:"You just did it. That's the whole game. Same time tomorrow." },
+  { head:"You showed up and did the thing.", sub:"Don't break the streak. Set your alarm. See you tomorrow." },
+  { head:"That's real progress.", sub:"One more tomorrow and it starts becoming a pattern." },
+];
+
+var IDENTITY_MSGS = {
+  2: "You're building a streak.",
+  3: "This is becoming a pattern.",
+  5: "This is who you are now.",
+  7: "Seven days. That's discipline, not luck.",
+  10: "Ten days. You're in the top 1% of people who start this."
+};
+
 // --- Plan Generation --------------------------------------------------------
 function generatePlan(profile, dayNum, isDay1, energy, completed, avoided, blocked) {
   var name = profile.name || 'Friend';
   var hasDebt = (profile.cd || 0) > 0;
   var tight = (profile.surplus || 0) < 500;
+  var noIncome = (profile.th || 0) === 0;
   var badCredit = (profile.credit || '').indexOf('580') >= 0 || (profile.credit || '').indexOf('Under') >= 0;
   var didSomething = completed && completed.trim().length > 3;
   var gotBlocked = blocked && blocked.trim().length > 3;
   var goal = profile.goal || 'get organized';
   var stress = profile.stress || '';
+
+  // $0 income path — completely separate plan
+  if (noIncome) {
+    var energyLine0 = '';
+    if (energy === 'high') energyLine0 = 'Your energy is high. Good. You are going to need it. Let\'s move.';
+    else if (energy === 'medium') energyLine0 = 'Your energy is moderate. One focused action today. That is enough.';
+    else if (energy === 'low') energyLine0 = 'Your energy is low. That is okay. One small step still counts.';
+
+    var actions0 = [];
+    if (energy === 'low') {
+      actions0.push('Write down 3 things you could do this week to make $50 or more. Do not filter. Do not judge. Just write them. 5 minutes.');
+      actions0.push('Set a reminder for tomorrow at 8am. Label it "Pick one." You will choose from your list then.');
+    } else if (energy === 'medium') {
+      actions0.push('Write down 3 ways you could make $50 this week. Skill, time, or something you own. Pick the fastest one.');
+      actions0.push('Text one person right now — someone who might hire you, buy something from you, or know someone who needs your skill. Just say you are available.');
+      actions0.push('Check your phone. Find one thing you own that you could sell this week. List it on Facebook Marketplace or OfferUp today.');
+    } else {
+      actions0.push('Write down 3 ways you could make $50 this week. Pick the fastest one. Take one action on it before you close this app.');
+      actions0.push('Text one person right now who might pay you for something — a skill, a service, something you own. Send the text before you overthink it.');
+      actions0.push('Open one gig app right now — Uber, TaskRabbit, Fiverr, Instacart, whatever fits your situation. Start the signup. Takes 10 minutes.');
+    }
+
+    return {
+      name: name, day: dayNum,
+      energyLine: energyLine0,
+      priority: name + ', before anything else — we need income. Debt, savings, budgets — none of that matters until money is coming in. That is the only move right now.',
+      actions: actions0,
+      momentum: 'No income is a temporary situation. The first dollar you earn changes everything. One action today starts the clock.',
+      avoid: ['Spending any money you do not have — every dollar matters right now', 'Waiting for the perfect opportunity — any income beats no income'],
+      hasDebt: hasDebt,
+      noIncome: true
+    };
+  }
 
   var energyLine = '';
   if (energy === 'high') energyLine = 'Your energy is high today. Starting with the hardest thing on your list.';
@@ -431,7 +506,8 @@ function buildProfile(a) {
   var stress = a.blocker || '';
 
   var credit = '';
-  if (cd > th * 6) credit = 'Under 580 - needs work';
+  if (th === 0) credit = 'Income needed first';
+  else if (cd > th * 6) credit = 'Under 580 - needs work';
   else if (cd > th * 3) credit = '580-669 - fair';
   else if (cd > 0) credit = '670-739 - good';
   else credit = '740+ - great';
@@ -492,7 +568,8 @@ function renderOnboarding() {
     '</div>' +
     '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">' +
     '<div style="font-size:52px;margin-bottom:14px;text-align:center">' + q.e + '</div>' +
-    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:28px">' + q.q + '</div>';
+    '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:' + (q.sub?'10':'28') + 'px">' + q.q + '</div>' +
+    (q.sub ? '<div style="font-size:12px;color:var(--muted);text-align:center;margin-bottom:18px;line-height:1.6;padding:0 8px">' + q.sub + '</div>' : '');
 
   html += '<input id="qinput" type="' + (q.type==='dollar'?'tel':q.type) + '" inputmode="' + (q.type==='dollar'?'numeric':'text') + '" placeholder="' + q.ph + '" value="' + val + '" oninput="onInput(this.value)" onkeydown="if(event.key===\'Enter\')nextStep()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
   if (q.type === 'dollar' && val) html += '<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$' + parseInt(val.replace(/[^0-9]/g,'')).toLocaleString() + '</div>';
@@ -545,10 +622,10 @@ function renderChat() {
 function renderNotif() {
   var prefs = S.notifPrefs;
   var items = [
-    { id:'calendar', icon:'📅', title:'Add steps to my Calendar', desc:"We\'ll create calendar events for each action item." },
-    { id:'checkin',  icon:'&#x23F0;', title:'Daily check-in reminders', desc:'A quick nudge each morning to stay on plan.' },
-    { id:'budget',   icon:'🚨', title:'Budget limit alerts',      desc:"Get notified when you\'re approaching a limit." },
-    { id:'milestone',icon:'🎉', title:'Milestone celebrations',   desc:"We\'ll celebrate every win with you." },
+    { id:'calendar', icon:'📅', title:'Add steps to my Calendar', desc:"We'll create calendar events for each action item." },
+    { id:'checkin',  icon:'⏰', title:'Daily check-in reminders', desc:'A quick nudge each morning to stay on plan.' },
+    { id:'budget',   icon:'🚨', title:'Budget limit alerts',      desc:"Get notified when you're approaching a limit." },
+    { id:'milestone',icon:'🎉', title:'Milestone celebrations',   desc:"We'll celebrate every win with you." },
   ];
   var html = '<div class="screen"><div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 8px">' +
     '<div class="center" style="margin-bottom:32px">' +
@@ -574,7 +651,52 @@ function renderDashboard() {
   var done = STEPS.filter(function(s){ return S.checked[s.id]; }).length;
   var pct = Math.round((done / STEPS.length) * 100);
 
-  var html = '<div>' +
+  // Identity message based on completion count
+  var totalChecked = Object.keys(S.checked).length;
+  var identityMsg = '';
+  var identityKeys = Object.keys(IDENTITY_MSGS).map(Number).sort(function(a,b){return b-a;});
+  for (var ii = 0; ii < identityKeys.length; ii++) {
+    if (totalChecked >= identityKeys[ii]) { identityMsg = IDENTITY_MSGS[identityKeys[ii]]; break; }
+  }
+
+  // Completion overlay
+  var completionOverlay = '';
+  if (S.completionMsg) {
+    var msgObj = COMPLETION_MSGS[Math.floor(Math.random() * COMPLETION_MSGS.length)];
+    completionOverlay = '<div class="completion-overlay" style="cursor:default">' +
+      '<div style="font-size:72px;margin-bottom:16px">✓</div>' +
+      (identityMsg ? '<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:10px">' + identityMsg + '</div>' : '') +
+      '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3">' + msgObj.head + '</div>' +
+      '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:24px;line-height:1.5">' + msgObj.sub + '</div>' +
+      '<div style="width:100%;max-width:320px;margin-bottom:12px">' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT DID YOU ACTUALLY DO? <span style="font-weight:400;opacity:0.7">(optional)</span></div>' +
+      '<input id="completion-input" type="text" placeholder="e.g. removed card from Apple Pay, paid $50..." ' +
+      'oninput="S.completionInput=this.value" ' +
+      'style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;" />' +
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT ALMOST STOPPED YOU? <span style="font-weight:400;opacity:0.7">(optional)</span></div>' +
+      '<input id="completion-input2" type="text" placeholder="e.g. felt lazy, wasn\'t sure how, got distracted..." ' +
+      'oninput="S.completionInput2=this.value" ' +
+      'style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;" />' +
+      '</div>' +
+      '<button onclick="dismissCompletion()" style="background:#fff;color:var(--green);border:none;border-radius:12px;padding:14px 40px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">Done</button>' +
+      '</div>';
+  }
+
+  // Reminder card
+  var reminderCard = '';
+  if (S.showReminderCard) {
+    reminderCard = '<div style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.92);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px">' +
+      '<div style="background:var(--surf);border:2px solid var(--gold-b);border-radius:20px;padding:28px 24px;text-align:center;max-width:340px;width:100%">' +
+      '<div style="font-size:40px;margin-bottom:12px">⏰</div>' +
+      '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;color:var(--gold);margin-bottom:8px">Set your alarm now.</div>' +
+      '<div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:20px">Same time tomorrow. The streak only works if you come back. Set the alarm before you close this app.</div>' +
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;padding:10px;background:var(--surf2);border-radius:8px">Clock app → Alarms → Add → Set for tomorrow morning.</div>' +
+      '<button onclick="dismissReminderCard()" class="btn btn-gold" style="margin-bottom:10px">I set my alarm ✓</button>' +
+      '<button onclick="dismissReminderCard()" class="btn btn-ghost" style="font-size:12px;padding:10px">Skip for now</button>' +
+      '</div></div>';
+  }
+
+  var html = '<div>' + completionOverlay + reminderCard +
     '<div class="header">' +
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">' +
     '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>' +
@@ -585,7 +707,7 @@ function renderDashboard() {
     '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">' + pct + '%</div>' +
     '<div style="font-size:9px;color:var(--muted)">complete</div></div>' +
     '</div></div>' +
-    '<div class="track-wrap" style="height:6px"><div class="track-fill" style="height:6px;width:' + pct + '%;background:linear-gradient(90deg,var(--gold)88,var(--gold))"></div></div>' +
+    '<div class="track-wrap" style="height:6px"><div class="track-fill" style="height:6px;width:' + pct + '%;background:linear-gradient(90deg,var(--gold),var(--gold))"></div></div>' +
     '</div>' +
     '<div class="tabs">';
 
@@ -639,12 +761,29 @@ function renderToday() {
   if (streak > 0) {
     var streakMsg = '';
     var streakColor = 'var(--gold)';
-    if (streak >= 7) { streakMsg = streak + ' day streak. You are in rare company.'; streakColor = 'var(--green)'; }
-    else if (streak >= 3) { streakMsg = streak + ' days. Do not break it now.'; }
-    else if (streak === 2) { streakMsg = '2 days in. Most people quit here. Keep going.'; }
+    if (streak >= 10) { streakMsg = streak + ' days. You are in the top 1% of people who start this.'; streakColor = 'var(--green)'; }
+    else if (streak >= 7) { streakMsg = streak + ' day streak. That is discipline, not luck.'; streakColor = 'var(--green)'; }
+    else if (streak >= 5) { streakMsg = streak + ' days. This is who you are now. Keep going.'; streakColor = 'var(--green)'; }
+    else if (streak >= 3) { streakMsg = streak + ' days. This is becoming a pattern. Don\'t break it.'; }
+    else if (streak === 2) { streakMsg = '2 days in. Most people quit here. You\'re still here.'; }
     else { streakMsg = 'Day 1 done. Come back tomorrow or the streak dies.'; }
-    html += '<div class="center" style="margin-top:8px;padding:8px 12px;background:rgba(240,180,41,0.08);border-radius:8px">' +
+
+    // Streak dots — loss aversion
+    var streakDots = '<div style="display:flex;justify-content:center;gap:6px;margin-top:10px;flex-wrap:wrap">';
+    var maxDots = Math.min(streak + 3, 14);
+    for (var sd = 1; sd <= maxDots; sd++) {
+      if (sd <= streak) {
+        streakDots += '<div style="width:12px;height:12px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px rgba(240,180,41,0.5)"></div>';
+      } else {
+        streakDots += '<div style="width:12px;height:12px;border-radius:50%;background:transparent;border:2px solid var(--border)"></div>';
+      }
+    }
+    streakDots += '</div>';
+
+    html += '<div class="center" style="margin-top:8px;padding:10px 12px;background:rgba(240,180,41,0.08);border-radius:10px;border:1px solid rgba(240,180,41,0.15)">' +
       '<span class="streak-fire">🔥</span> <span style="color:' + streakColor + ';font-weight:700;font-size:12px">' + streakMsg + '</span>' +
+      streakDots +
+      '<div style="font-size:10px;color:var(--muted);margin-top:6px">Miss a day and you start over.</div>' +
       '</div>';
   }
   html += '</div>';
@@ -694,7 +833,7 @@ function renderToday() {
       '<div style="font-size:12px;font-weight:700;margin-bottom:12px">How is your energy today?</div>' +
       '<div style="font-size:11px;color:var(--muted);margin-bottom:10px">This shapes your plan. Be honest.</div>' +
       '<div style="display:flex;gap:8px;margin-bottom:4px">';
-    var energyOpts = [['high','🔥 High','sel-high'],['medium','&#x26A1; Medium','sel-medium'],['low','😴 Low','sel-low']];
+    var energyOpts = [['high','🔥 High','sel-high'],['medium','⚡ Medium','sel-medium'],['low','😴 Low','sel-low']];
     energyOpts.forEach(function(e) {
       html += '<button class="energy-btn ' + (S.energy===e[0]?e[2]:'') + '" onclick="setEnergy(\'' + e[0] + '\')">' +
         '<div style="font-size:16px;margin-bottom:3px">' + e[1].split(' ')[0] + '</div>' +
@@ -706,11 +845,11 @@ function renderToday() {
 
   if (!isDay1 && !plan) {
     html += '<div class="card">' +
-      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">Before your Day ' + S.day + ' plan &mdash; what happened yesterday?</div>';
+      '<div style="font-size:12px;font-weight:700;margin-bottom:12px">Before your Day ' + S.day + ' plan — what happened yesterday?</div>';
     var fields = [
-      ['completed','What did you complete?','e.g. called the doctor, paid $100 toward card...'],
-      ['avoided','What did you avoid?','e.g. avoided calling insurance...'],
-      ['blocked','What got in the way?','e.g. work was crazy, felt overwhelmed...'],
+      ['completed','What did you complete?','e.g. called the doctor, paid $100 toward card…'],
+      ['avoided','What did you avoid?','e.g. avoided calling insurance…'],
+      ['blocked','What got in the way?','e.g. work was crazy, felt overwhelmed…'],
     ];
     fields.forEach(function(f) {
       html += '<div style="margin-bottom:10px">' +
@@ -727,12 +866,15 @@ function renderToday() {
   }
 
   if (!plan && isDay1) {
-    html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">Building your Day 1 plan...</div></div>';
+    html += '<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:20px 0">Building your Day 1 plan…</div></div>';
   }
 
   if (plan) {
     html += '<div class="card card-green">';
     if (typeof plan === 'object') {
+      if (plan.noIncome) {
+        html += '<div style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:700;color:var(--red)">⚠️ INCOME FIRST — All other steps unlock once you have money coming in.</div>';
+      }
       if (plan.energyLine) html += '<div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:10px;padding:8px 12px;background:rgba(249,115,22,0.1);border-radius:8px">' + plan.energyLine + '</div>';
       html += '<div class="plan-section"><div class="plan-title">TODAY\'S PRIORITY</div><div class="plan-body">' + plan.priority + '</div></div>';
       html += '<div class="plan-section"><div class="plan-title">DO THIS TODAY</div>';
@@ -801,7 +943,7 @@ function renderToday() {
 function formatPlanText(plan) {
   if (typeof plan === 'string') return plan;
   var t = plan.name + "'s Plan - Day " + plan.day + '\n\n';
-  t += 'TODAY\'S PRIORITY\n' + plan.priority + '\n\n';
+  t += "TODAY'S PRIORITY\n" + plan.priority + '\n\n';
   t += 'DO THIS TODAY\n' + plan.actions.map(function(a,i){ return (i+1)+'. '+a; }).join('\n') + '\n\n';
   t += 'MOMENTUM NOTE\n' + plan.momentum + '\n\n';
   t += 'AVOID TODAY\n' + plan.avoid.map(function(a){ return '- '+a; }).join('\n');
@@ -838,15 +980,15 @@ function renderPlan() {
       var exp = S.expandedStep === step.id;
       var calDone = !!S.calAdded[step.id];
       html += '<div class="step-row' + (d?' done':'') + '" onclick="toggleCheck(\'' + step.id + '\')">' +
-        '<div class="check-box' + (d?' done':'') + '">' + (d?'&#10003;':'') + '</div>' +
+        '<div class="check-box' + (d?' done':'') + '">' + (d?'✓':'') + '</div>' +
         '<div style="flex:1">' +
         '<div style="font-size:13px;font-weight:700;margin-bottom:3px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + step.e + ' ' + step.label + '</div>' +
         '<div class="expand-detail' + (exp&&!d?' open':'') + '">' + step.detail + '</div>' +
         (!d ? '<div style="display:flex;gap:6px;margin-top:6px" onclick="event.stopPropagation()">' +
-          '<button class="cal-btn' + (calDone?' added':'') + '" onclick="downloadICS(\'' + step.id + '\')">' + (calDone?'Added &#10003;':'\uD83D\uDCC5 .ics') + '</button>' +
-          '<button class="cal-btn" onclick="googleCal(\'' + step.id + '\')">\uD83D\uDD17 Google Cal</button>' +
-          '<button class="cal-btn" onclick="toggleExpand(\'' + step.id + '\')">' + (exp?'Less':'Why?') + '</button>' +
-          '</div>' : '') +
+        '<button class="cal-btn' + (calDone?' added':'') + '" onclick="downloadICS(\'' + step.id + '\')">' + (calDone?'Added ✓':'📅 .ics') + '</button>' +
+        '<button class="cal-btn" onclick="googleCal(\'' + step.id + '\')">🔗 Google Cal</button>' +
+        '<button class="cal-btn" onclick="toggleExpand(\'' + step.id + '\')">' + (exp?'Less':'Why?') + '</button>' +
+        '</div>' : '') +
         '</div></div>';
     });
   });
@@ -857,6 +999,32 @@ function renderMoney() {
   var p = S.profile;
   var remaining = p.liquid - p.oblig;
   var html = '';
+
+  if ((p.th || 0) === 0) {
+    html += '<div class="card card-red">' +
+      '<div style="font-weight:800;font-size:15px;color:var(--red);margin-bottom:8px">⚠️ No Income On Record</div>' +
+      '<div style="font-size:13px;color:var(--text);line-height:1.8;margin-bottom:14px">Your plan is currently focused on generating income first. Once you have money coming in, update your numbers here and the full picture unlocks.</div>' +
+      '<button class="btn btn-ghost" onclick="S.editingMoney=true;render()">Update My Numbers</button>' +
+      '</div>';
+
+    if (S.editingMoney) {
+      html += '<div class="card" style="background:var(--gold-dim);border:1px solid var(--gold-b)">' +
+        '<div style="font-weight:800;font-size:14px;margin-bottom:14px;color:var(--gold)">Update My Numbers</div>' +
+        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div>' +
+        '<input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 3000" value="' + (p.th||'') + '"></div>' +
+        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div>' +
+        '<input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 500" value="' + (p.ch||'') + '"></div>' +
+        '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div>' +
+        '<input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 2000" value="' + (p.cd||'') + '"></div>' +
+        '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div>' +
+        '<input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1000" value="' + (p.mg||'') + '"></div>' +
+        '<div style="display:flex;gap:8px">' +
+        '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>' +
+        '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>' +
+        '</div></div>';
+    }
+    return html;
+  }
 
   html += '<div class="card card-red">' +
     '<div class="label">CASH RIGHT NOW</div>' +
@@ -950,7 +1118,7 @@ function renderCalendar() {
         '<div style="font-size:22px;flex-shrink:0">' + r.e + '</div>' +
         '<div style="flex:1">' +
         '<div style="font-size:13px;font-weight:700;color:' + (isDone?'var(--muted)':'var(--text)') + ';text-decoration:' + (isDone?'line-through':'none') + ';margin-bottom:2px">' + r.label + '</div>' +
-        '<div style="font-size:11px;color:' + (r.urgent?'var(--red)':'var(--muted)') + '">' + r.time + (r.urgent?' &mdash; Do this now':'') + '</div>' +
+        '<div style="font-size:11px;color:' + (r.urgent?'var(--red)':'var(--muted)') + '">' + r.time + (r.urgent?' — Do this now':'') + '</div>' +
         '</div>';
       if (!isDone) {
         if (r.step) {
@@ -1021,7 +1189,7 @@ function renderFeedback() {
 
   if (S.fbSubmitted) {
     html += '<div class="card card-green center">' +
-      '<div style="font-size:22px;margin-bottom:6px">&#10003;</div>' +
+      '<div style="font-size:22px;margin-bottom:6px">✓</div>' +
       '<div style="font-size:14px;color:var(--green);font-weight:700">Feedback logged for Day ' + S.day + '</div>' +
       '<div style="font-size:12px;color:var(--muted);margin-top:4px">Come back tomorrow. Keep going.</div></div>';
   }
@@ -1044,7 +1212,7 @@ function renderFeedback() {
       html += '<div class="card">' +
         '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">' +
         '<div style="font-weight:800;font-size:13px">Day ' + entry.day + ' &mdash; ' + entry.date + '</div>' +
-        '<div class="chip" style="background:' + dc.replace('var(','').replace(')','') + '22;color:' + dc + '">' + dl + '</div>' +
+        '<div class="chip" style="background:rgba(16,185,129,0.15);color:' + dc + '">' + dl + '</div>' +
         '</div>';
       if (entry.blocker) html += '<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--muted);margin-bottom:2px">GOT IN THE WAY</div><div style="font-size:12px">' + entry.blocker + '</div></div>';
       if (entry.easier) html += '<div><div style="font-size:10px;color:var(--muted);margin-bottom:2px">WOULD HAVE HELPED</div><div style="font-size:12px">' + entry.easier + '</div></div>';
@@ -1080,7 +1248,7 @@ function renderProtect() {
       '<div style="font-size:13px;font-weight:700;margin-bottom:3px;color:' + (d?'var(--muted)':'var(--text)') + ';text-decoration:' + (d?'line-through':'none') + '">' + b.title + '</div>' +
       (!d?'<div style="font-size:11px;color:var(--muted);line-height:1.5">' + b.why + '</div>':'') +
       '</div>' +
-      '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--bg)">' + (d?'&#10003;':'') + '</div>' +
+      '<div style="width:24px;height:24px;border-radius:50%;flex-shrink:0;border:2px solid ' + (d?'var(--green)':'var(--border)') + ';background:' + (d?'var(--green)':'transparent') + ';display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--bg)">' + (d?'✓':'') + '</div>' +
       '</div>';
   });
 
@@ -1092,7 +1260,7 @@ function renderProtect() {
     var sid = 'sub_' + i;
     var checked = !!S.subChecked[sid];
     html += '<div class="sub-item" onclick="toggleSub(\'' + sid + '\')">' +
-      '<div class="sub-check' + (checked?' done':'') + '">' + (checked?'<div style="color:white;font-size:11px;text-align:center;line-height:18px">&#10003;</div>':'') + '</div>' +
+      '<div class="sub-check' + (checked?' done':'') + '">' + (checked?'<div style="color:white;font-size:11px;text-align:center;line-height:18px">✓</div>':'') + '</div>' +
       '<div style="font-size:13px;color:' + (checked?'var(--muted)':'var(--text)') + ';text-decoration:' + (checked?'line-through':'none') + '">' + sub + '</div>' +
       '</div>';
   });
@@ -1120,7 +1288,7 @@ function renderProtect() {
   return html;
 }
 
-// --- Event Handlers ----------------------------------------------------------
+// --- Event Handlers ---------------------------------------------------------
 function startOnboarding() {
   S.screen='onboarding'; S.step=0; S.diagStep=0;
   render();
@@ -1274,8 +1442,63 @@ function toggleDayCheck(dayKey, stepId) {
   if (!S.dayChecked[dayKey]) S.dayChecked[dayKey] = {};
   var wasChecked = !!S.dayChecked[dayKey][stepId];
   S.dayChecked[dayKey][stepId] = !wasChecked;
-  if (!wasChecked) S.checked[stepId] = true;
+  if (!wasChecked) {
+    S.checked[stepId] = true;
+    S.completionMsg = true;
+    S.completionInput = '';
+    S.completionInput2 = '';
+    S.showReminderCard = false;
+    trackEvent('step_checked', { step_id: stepId, day: S.day });
+  }
   save();
+  render();
+  if (!wasChecked) {
+    setTimeout(function() {
+      var el = document.getElementById('completion-input');
+      if (el) el.focus();
+    }, 100);
+  }
+}
+
+function dismissCompletion() {
+  var input = S.completionInput || '';
+  var input2 = S.completionInput2 || '';
+  var trimmed = input.trim();
+
+  var actionKeywords = [
+    'paid','called','canceled','cancelled','removed','moved','applied',
+    'opened','transferred','cut','deleted','signed','started','completed',
+    'finished','sent','texted','emailed','scheduled','set up','setup',
+    'closed','stopped','listed','sold','downloaded','installed','registered'
+  ];
+
+  var hasKeyword = actionKeywords.some(function(kw) {
+    return trimmed.toLowerCase().indexOf(kw) >= 0;
+  });
+
+  var isHighConfidence = trimmed.length > 15 && hasKeyword;
+
+  if (isHighConfidence) {
+    trackEvent('completion_high_confidence', { action_text: trimmed.slice(0,100), day: S.day });
+  } else if (trimmed.length > 2) {
+    trackEvent('completion_low_confidence', { action_text: trimmed.slice(0,100), day: S.day });
+  } else {
+    trackEvent('completion_dismissed_no_input', { day: S.day });
+  }
+
+  if (input2.trim().length > 2) {
+    trackEvent('completion_hesitation', { hesitation_text: input2.trim().slice(0,100), day: S.day });
+  }
+
+  S.completionMsg = false;
+  S.completionInput = '';
+  S.completionInput2 = '';
+  S.showReminderCard = true;
+  render();
+}
+
+function dismissReminderCard() {
+  S.showReminderCard = false;
   render();
 }
 
@@ -1285,7 +1508,7 @@ function toggleScript(id) {
   if (!el) return;
   var showing = el.style.display !== 'none';
   el.style.display = showing ? 'none' : 'block';
-  if (arrow) arrow.innerHTML = showing ? '&#9660;' : '&#9650;';
+  if (arrow) arrow.innerHTML = showing ? '▼' : '▲';
 }
 
 function toggleCheck(id) {
@@ -1411,11 +1634,15 @@ function resetAll() {
     expandedStep:null, expandedScript:null,
     todayAnswers:{completed:'',avoided:'',blocked:''},
     editingMoney:false,
+    completionMsg:false,
+    completionInput:'',
+    completionInput2:'',
+    showReminderCard:false,
   };
   render();
 }
 
-// --- Init --------------------------------------------------------------------
+// --- Dev Mode ---------------------------------------------------------------
 function loadDevMode() {
   S.profile = buildProfile({
     name: 'Dev', takehome: '5000', carddebt: '8000', checking: '1200',
@@ -1431,6 +1658,7 @@ function loadDevMode() {
   render();
 }
 
+// --- Init -------------------------------------------------------------------
 function init() {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(function(regs) {
@@ -1462,5 +1690,6 @@ function init() {
 
 document.addEventListener('DOMContentLoaded', function() { init(); });
 </script>
+
 </body>
 </html>
