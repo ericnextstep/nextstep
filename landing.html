@@ -84,12 +84,36 @@ nav{padding:20px 24px;display:flex;justify-content:space-between;align-items:cen
 .final-cta{background:#070b15;padding:60px 24px;max-width:var(--max);margin:0 auto;text-align:center;}
 .final-cta h2{font-family:Georgia,serif;font-size:28px;font-weight:900;margin-bottom:12px;line-height:1.3;}
 .final-cta p{font-size:15px;color:var(--muted);margin-bottom:32px;line-height:1.7;}
+
+/* ── EMAIL CAPTURE SECTION ── */
+.stay-loop{background:#070b15;padding:60px 24px;max-width:var(--max);margin:0 auto;}
+.loop-box{background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:36px 24px;}
+.loop-eyebrow{font-size:11px;font-weight:700;letter-spacing:3px;color:var(--gold);margin-bottom:12px;text-transform:uppercase;text-align:center;}
+.loop-box h2{font-family:Georgia,serif;font-size:22px;font-weight:900;margin-bottom:8px;line-height:1.3;text-align:center;}
+.loop-sub{font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.7;text-align:center;}
+.loop-form{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.loop-input{background:#070b15;border:1px solid var(--border);border-radius:10px;padding:14px 16px;color:var(--text);font-size:14px;font-family:inherit;outline:none;width:100%;transition:border-color 0.2s;}
+.loop-input:focus{border-color:var(--gold);}
+.loop-input::placeholder{color:var(--muted);}
+.btn-loop{background:var(--gold);color:var(--navy);border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;width:100%;}
+.loop-divider{display:flex;align-items:center;gap:12px;margin:20px 0;}
+.loop-divider-line{flex:1;height:1px;background:var(--border);}
+.loop-divider-text{font-size:12px;color:var(--muted);white-space:nowrap;letter-spacing:1px;}
+.loop-b2b{background:#070b15;border:1px solid var(--border);border-radius:14px;padding:20px;}
+.loop-b2b-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px;}
+.loop-b2b-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+.btn-b2b{background:none;color:var(--gold);border:1px solid var(--gold-b);border-radius:10px;padding:11px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;width:100%;text-align:center;}
+.loop-note{font-size:12px;color:var(--muted);text-align:center;margin-top:12px;line-height:1.6;}
+
 footer{border-top:1px solid var(--border);padding:24px;text-align:center;}
 footer p{font-size:13px;color:var(--muted);line-height:1.8;}
 @media(min-width:520px){
   body{background:#040810;}
   .hero-cta{flex-direction:row;justify-content:center;}
   .btn-primary,.btn-secondary{width:auto;}
+  .loop-form{flex-direction:row;}
+  .loop-input{flex:1;}
+  .btn-loop{width:auto;padding:14px 24px;}
 }
 </style>
 </head>
@@ -117,28 +141,28 @@ footer p{font-size:13px;color:var(--muted);line-height:1.8;}
   <div class="plan-card">
     <div class="plan-header">
       <div class="plan-dot"></div>
-      <span>DAY 1 PLAN -- MEDIUM ENERGY</span>
+      <span>DAY 1 -- LEAKAGE STATE</span>
     </div>
     <div class="plan-section">
       <div class="plan-tag">Today's Priority</div>
-      <div class="plan-text">Your highest-rate card is costing you money every single day. Today we fight back.</div>
+      <div class="plan-text">You make enough. The problem is visibility. Today we find it.</div>
     </div>
     <div class="plan-section">
-      <div class="plan-tag">Do This Today</div>
-      <div class="plan-action"><div class="plan-num">1.</div><div>Open your bank app. Find your highest-rate credit card. Screenshot the balance.</div></div>
-      <div class="plan-action"><div class="plan-num">2.</div><div>Remove that card from Apple Pay or Google Pay. Debit only from this point.</div></div>
-      <div class="plan-action"><div class="plan-num">3.</div><div>Set a reminder for tomorrow at 8am: "NextStep Day 2."</div></div>
+      <div class="plan-tag">Do This Now</div>
+      <div class="plan-action"><div class="plan-num">1.</div><div>Open your bank app. Find the last 7 days of transactions. Name the one that shouldn't have happened.</div></div>
+      <div class="plan-action"><div class="plan-num">2.</div><div>Remove your card from Apple Pay or Google Pay. Every unconscious tap is now a decision.</div></div>
+      <div class="plan-action"><div class="plan-num">3.</div><div>Write your three biggest expenses from your actual statement — not memory.</div></div>
     </div>
     <div class="plan-section">
       <div class="plan-tag">Momentum Note</div>
-      <div class="plan-text" style="font-style:italic;">Day 1 is always the hardest. You showed up. Everything from here is easier than this moment.</div>
+      <div class="plan-text" style="font-style:italic;">You didn't wait. That's the hardest part. Everything from here moves faster.</div>
     </div>
     <div class="plan-section">
       <div class="plan-tag">Avoid Today</div>
-      <div class="plan-avoid">Using any credit card -- cash or debit only</div>
-      <div class="plan-avoid">Waiting until you feel motivated -- action creates motivation</div>
+      <div class="plan-avoid">Using any card you haven't looked at in the last 7 days</div>
+      <div class="plan-avoid">Estimating from memory -- the statement knows what memory doesn't</div>
     </div>
-    <div class="plan-note">Tomorrow you tell us what happened. We adjust.</div>
+    <div class="plan-note">Tomorrow you tell us what you found. We adjust your next move.</div>
   </div>
 </section>
 
@@ -178,14 +202,14 @@ footer p{font-size:13px;color:var(--muted);line-height:1.8;}
       <div class="step-num">3</div>
       <div class="step-content">
         <h3>Get one clear action for today</h3>
-        <p>Not a plan. Not a dashboard. One specific thing to do today based on your exact situation and your energy level right now.</p>
+        <p>Not a plan. Not a dashboard. One specific thing to do right now based on your exact situation.</p>
       </div>
     </div>
     <div class="step">
       <div class="step-num">4</div>
       <div class="step-content">
         <h3>Come back tomorrow. We adjust based on what you actually did.</h3>
-        <p>Tell us what happened. The plan adjusts based on what you actually did -- not what you planned to do. Every day gets smarter.</p>
+        <p>Tell us what happened. The plan adjusts to what you actually did -- not what you planned to do. Every day gets sharper.</p>
       </div>
     </div>
   </div>
@@ -220,7 +244,7 @@ footer p{font-size:13px;color:var(--muted);line-height:1.8;}
     <div class="privacy-icon">&#128274;</div>
     <div>
       <h3>Your data never leaves your phone. Ever.</h3>
-      <p>Everything you enter is stored locally on your device only. No server. No database. No account. Not even we can see it. That is not a policy -- that is how it is built. Most finance apps store your data on their servers. NextStep stores nothing anywhere.</p>
+      <p>Everything you enter is stored locally on your device only. No server. No database. No account. Not even we can see it. That is not a policy -- that is how it is built.</p>
     </div>
   </div>
 </section>
@@ -235,19 +259,48 @@ footer p{font-size:13px;color:var(--muted);line-height:1.8;}
     <p class="signal-text">"DM you on Day 3 if I don't abandon it like every other finance thing I've tried."</p>
     <p class="signal-attr">-- Same person.</p>
   </div>
-  <p class="signal-note">"Like every other finance thing I've tried." That is exactly who NextStep is built for. Beta data coming soon.</p>
+  <p class="signal-note">"Like every other finance thing I've tried." That is exactly who NextStep is built for.</p>
+</section>
+
+<!-- ── STAY IN THE LOOP / EMAIL CAPTURE ── -->
+<section class="stay-loop" id="stay-in-loop">
+  <div class="loop-box">
+    <div class="loop-eyebrow">Stay In The Loop</div>
+    <h2>Not ready to start?<br>Stay close.</h2>
+    <p class="loop-sub">We send one update when something meaningful changes — a new feature, a real user result, or something worth knowing. No noise. No daily emails. Just signal.</p>
+
+    <div class="loop-form">
+      <!-- TEMP: Links to Google Form until Beehiiv/Mailchimp is set up -->
+      <!-- REPLACE href below with your Beehiiv or Mailchimp embed URL when ready -->
+      <input class="loop-input" type="email" placeholder="your@email.com" id="loop-email" />
+      <button class="btn-loop" onclick="handleLoopSignup()">Keep Me Posted</button>
+    </div>
+    <p class="loop-note">No spam. Unsubscribe any time. We don't sell your email to anyone.</p>
+
+    <div class="loop-divider">
+      <div class="loop-divider-line"></div>
+      <div class="loop-divider-text">OR</div>
+      <div class="loop-divider-line"></div>
+    </div>
+
+    <div class="loop-b2b">
+      <div class="loop-b2b-title">Are you an employer, HR leader, or financial coach?</div>
+      <div class="loop-b2b-sub">We run pilot programs for organizations that want to help their people take real financial action. 3–5 weeks. Measurable outcomes. No fluff.</div>
+      <a href="mailto:mynextstepapp@gmail.com?subject=NextStep%20Pilot%20Inquiry&body=Hi%2C%20I%27m%20interested%20in%20learning%20more%20about%20a%20NextStep%20pilot%20for%20my%20organization." class="btn-b2b">Let's Talk About a Pilot &#8594;</a>
+    </div>
+  </div>
 </section>
 
 <section class="coffee">
   <div class="coffee-box">
     <h3>This is free. And we want to keep it that way.</h3>
-    <p>NextStep is freeware. If it helps you take one action you would not have taken otherwise, consider buying us a coffee. Every dollar goes directly into building what comes next.</p>
-    <a href="https://buymeacoffee.com/nextstepapp" class="btn-coffee" target="_blank">&#9749; Buy Me a Coffee</a>
+    <p>NextStep is free. If it helps you take one action you wouldn't have taken otherwise, consider buying us a coffee. Every dollar goes directly into building what comes next.</p>
+    <a href="https://buymeacoffee.com/mynextstepapp" class="btn-coffee" target="_blank">&#9749; Buy Me a Coffee</a>
   </div>
 </section>
 
 <section class="final-cta">
-  <h2>One focused priority.<br>A few clear steps.<br>Every single day.</h2>
+  <h2>One clear action.<br>Every single day.</h2>
   <p>Not a resolution. Not another budget app. One thing you can do in the next 10 minutes that actually moves you forward.</p>
   <a href="https://ericnextstep.github.io/nextstep/" class="btn-primary">Build My Plan -- Free</a>
 </section>
@@ -256,4 +309,21 @@ footer p{font-size:13px;color:var(--muted);line-height:1.8;}
   <p>NextStep &copy; 2026 &middot; Built by Eric Harris &middot; Columbia, MD</p>
   <p style="margin-top:6px">Not financial advice. For execution support only. Your data stays on your device.</p>
   <p style="margin-top:6px"><a href="mailto:mynextstepapp@gmail.com" style="color:var(--muted)">mynextstepapp@gmail.com</a></p>
-  <p style="display:none"><span class="
+</footer>
+
+<script>
+function handleLoopSignup(){
+  var email = document.getElementById('loop-email').value.trim();
+  if(!email || !email.includes('@')){
+    alert('Enter a valid email address.');
+    return;
+  }
+  // TEMP: Opens pre-filled email to capture manually until Beehiiv/Mailchimp is live
+  // REPLACE this entire function with your Beehiiv/Mailchimp form submission when ready
+  var mailto = 'mailto:mynextstepapp@gmail.com?subject=Email%20List%20Signup&body=' + encodeURIComponent(email + ' wants to stay in the loop.');
+  window.location.href = mailto;
+}
+</script>
+
+</body>
+</html>
