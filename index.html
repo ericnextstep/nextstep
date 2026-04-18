@@ -98,6 +98,28 @@ textarea{resize:vertical;min-height:72px;}
 .toggle{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);background:transparent;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--bg);font-weight:900;flex-shrink:0;}
 .toggle.on{background:var(--green);border-color:var(--green);}
 .dot{width:8px;height:8px;border-radius:50%;background:var(--border);cursor:pointer;display:inline-block;margin:0 2px;}
+/* ── Level 3 Enforcement ─────────────────────────────────────── */
+.l3-wrap{min-height:100vh;display:flex;flex-direction:column;max-width:var(--max);margin:0 auto;background:var(--bg);}
+.l3-bar{height:4px;width:100%;flex-shrink:0;}
+.l3-body{flex:1;padding:36px 24px 24px;overflow-y:auto;}
+.l3-foot{padding:0 24px;padding-bottom:max(32px,env(safe-area-inset-bottom,32px));}
+.l3-headline{font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--text);line-height:1.25;margin-bottom:20px;}
+.l3-action-card{background:var(--surf);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:10px;padding:14px 16px;margin-bottom:20px;}
+.l3-ghost-card{background:var(--surf2);border-radius:8px;padding:12px 14px;border-left:3px solid var(--red);font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:24px;}
+.l3-text{font-size:16px;color:var(--muted);line-height:1.9;margin-bottom:32px;}
+.l3-choice{width:100%;border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;background:var(--surf);color:var(--text);text-align:left;margin-bottom:10px;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent;}
+.l3-choice.danger{border-color:var(--red-b);color:var(--red);}
+.l3-choice.dimmed{opacity:0.35;pointer-events:none;}
+.l3-input{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:inherit;width:100%;outline:none;margin-bottom:12px;}
+.l3-input:focus{border-color:var(--red);}
+.l3-input-date{background:var(--surf2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-size:15px;font-family:inherit;width:100%;outline:none;margin-bottom:12px;color-scheme:dark;}
+.l3-input-date:focus{border-color:var(--red);}
+.l3-reason-btn{width:100%;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:12px 14px;font-size:13px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;color:var(--text);}
+.l3-reason-btn.sel{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.l3-field-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;}
+.l3-exec-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:14px;color:var(--text);line-height:1.8;}
+.l3-fail-banner{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--red);line-height:1.65;}
+.l3-dim-choice{width:100%;border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:13px;font-weight:700;cursor:default;font-family:inherit;background:var(--surf2);color:var(--muted);text-align:center;opacity:0.45;}
 .dot.done{background:var(--gold);}
 .expand-detail{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px;display:none;}
 .expand-detail.open{display:block;}
@@ -115,7 +137,7 @@ textarea{resize:vertical;min-height:72px;}
 .badge-deescalate{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:var(--orange);}
 /* completion overlay */
 @keyframes completionPop{0%{transform:scale(0.8);opacity:0;}60%{transform:scale(1.05);}100%{transform:scale(1);opacity:1;}}
-.completion-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.99);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;animation:completionPop 0.4s ease-out;}
+.completion-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(16,185,129,0.97);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;animation:completionPop 0.4s ease-out;}
 /* v2.1 overwhelmed overlay */
 @keyframes slideUp{0%{transform:translateY(40px);opacity:0;}100%{transform:translateY(0);opacity:1;}}
 .overwhelmed-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.97);z-index:9998;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
@@ -154,12 +176,56 @@ var S = {
   // v2.1 overwhelmed
   overwhelmedMode:false,
   crisisCategory:null,
+  // ── Level 3 Enforcement ──────────────────────────────────────
+  l3Step:1,
+  l3DoingNow:false,
+  l3ExecScreen:false,
+  l3Moving:false,
+  l3MoveDate:'',
+  l3MoveTime:'',
+  l3MoveReason:'',
+  l3Removing:false,
+  l3RemoveReason:'',
+  l3RemoveConfirmStep:false,
+  // v2.5 — re-entry + escalation state
+  showReentryGate:false,
+  l3ReentryAdjustMode:false,
+  l3ReducingScope:false,
+  l3ScopeText:'',
+  l3EscalationDismissed:false,
+  l3EscalationAdjustMode:false,
+  l3ShowSupport:false,
+  enf:{
+    action_id:null,
+    action_text:'',
+    assigned_at:null,
+    completed:false,
+    escalation_level:0,
+    level1_sent_at:null,
+    level2_sent_at:null,
+    level3_triggered_at:null,
+    move_count:0,
+    abandoned_reason:null,
+    accountability_enabled:false,
+    accountability_name:'',
+    accountability_number:'',
+    snoozed_until:null,
+    do_it_now_attempts:0,
+    level3_cycles:0,
+    execution_type:null,
+    execution_target:'',
+    execution_instruction:'',
+    exec_launched_at:null,
+    last_seen_at:null,
+  },
 };
 
 var KEY='nextstep-pwa-v1';
 var DAY_KEY='nextstep-pwa-day';
 var PLAN_KEY='nextstep-pwa-plans';
 var FB_KEY='nextstep-pwa-feedback';
+var ENF_KEY='nextstep-enforcement-v24';
+var ENF_KEY='nextstep-enforcement-v1';
 
 function save(){
   try{
@@ -170,6 +236,54 @@ function save(){
     localStorage.setItem(DAY_KEY,String(S.day));
     localStorage.setItem(PLAN_KEY,JSON.stringify(S.plans));
     localStorage.setItem(FB_KEY,JSON.stringify(S.feedback));
+  }catch(e){}
+}
+
+function saveEnforcement(){
+  try{localStorage.setItem(ENF_KEY,JSON.stringify(S.enf));}catch(e){}
+}
+
+function loadEnforcement(){
+  try{
+    var raw=localStorage.getItem(ENF_KEY);
+    if(raw){
+      var d=JSON.parse(raw);
+      S.enf=Object.assign({
+        action_id:null,action_text:'',assigned_at:null,completed:false,
+        escalation_level:0,level1_sent_at:null,level2_sent_at:null,
+        level3_triggered_at:null,move_count:0,abandoned_reason:null,
+        accountability_enabled:false,accountability_name:'',
+        accountability_number:'',snoozed_until:null,
+        do_it_now_attempts:0,level3_cycles:0,
+        execution_type:null,execution_target:'',execution_instruction:'',
+        exec_launched_at:null,
+        last_seen_at:null,
+      },d);
+    }
+  }catch(e){}
+}
+
+function saveEnforcement(){
+  try{localStorage.setItem(ENF_KEY,JSON.stringify(S.enf));}catch(e){}
+}
+
+function loadEnforcement(){
+  try{
+    var raw=localStorage.getItem(ENF_KEY);
+    if(raw){
+      var d=JSON.parse(raw);
+      S.enf=Object.assign({
+        action_id:null,action_text:'',assigned_at:null,completed:false,
+        escalation_level:0,level1_sent_at:null,level2_sent_at:null,
+        level3_triggered_at:null,move_count:0,abandoned_reason:null,
+        accountability_enabled:false,accountability_name:'',
+        accountability_number:'',snoozed_until:null,
+        do_it_now_attempts:0,level3_cycles:0,
+        execution_type:null,execution_target:'',execution_instruction:'',
+        exec_launched_at:null,
+        last_seen_at:null,
+      },d);
+    }
   }catch(e){}
 }
 
@@ -571,6 +685,12 @@ function render(){
   if(S.screen==='onboarding'){app.innerHTML=renderOnboarding();return;}
   if(S.screen==='chat'){app.innerHTML=renderChat();return;}
   if(S.screen==='notif'){app.innerHTML=renderNotif();return;}
+  // Level 3 enforcement — full-screen takeover, fires before dashboard on every open
+  if(S.profile&&shouldShowLevel3()){app.innerHTML=renderLevel3();return;}
+  // Re-entry gate — fires BEFORE L3 when 24+ hour gap detected
+  if(S.profile&&S.showReentryGate){app.innerHTML=renderL3ReentryGate();return;}
+  // Level 3 enforcement — fires before dashboard on every open
+  if(S.profile&&shouldShowLevel3()){app.innerHTML=renderLevel3();return;}
   if(S.screen==='dashboard'){app.innerHTML=renderDashboard();return;}
 }
 
@@ -686,27 +806,22 @@ function renderDashboard(){
   var identityKeys=Object.keys(IDENTITY_MSGS).map(Number).sort(function(a,b){return b-a;});
   for(var ii=0;ii<identityKeys.length;ii++){if(totalChecked>=identityKeys[ii]){identityMsg=IDENTITY_MSGS[identityKeys[ii]];break;}}
 
-  // Completion overlay — v2.2 "You moved." relief design
+  // Completion overlay
   var completionOverlay='';
   if(S.completionMsg){
-    var currentPlan=S.plans[S.day]||S.plans[S.day-1];
-    var nextStepText='';
-    if(currentPlan&&typeof currentPlan==='object'&&currentPlan.actions&&currentPlan.actions.length>0){
-      nextStepText=currentPlan.actions[0];
-    }
+    var msgObj=COMPLETION_MSGS[Math.floor(Math.random()*COMPLETION_MSGS.length)];
     completionOverlay='<div class="completion-overlay">'+
-      '<div style="max-width:340px;width:100%">'+
-      '<div style="font-family:Georgia,serif;font-size:42px;font-weight:900;color:#ffffff;margin-bottom:16px;line-height:1.05;letter-spacing:-0.5px">You moved.</div>'+
-      '<div style="font-size:16px;color:rgba(255,255,255,0.82);margin-bottom:10px;line-height:1.55;font-weight:600">Most people stop before this.<br>You didn\'t.</div>'+
-      '<div style="font-size:14px;color:rgba(255,255,255,0.5);margin-bottom:36px;line-height:1.6;font-style:italic">That\'s one less thing sitting on you.</div>'+
-      (nextStepText?
-        '<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:16px;padding:18px 20px;margin-bottom:32px;text-align:left">'+
-        '<div style="font-size:10px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.4);margin-bottom:10px;text-transform:uppercase">Tomorrow</div>'+
-        '<div style="font-size:14px;color:rgba(255,255,255,0.88);line-height:1.65">'+nextStepText+'</div>'+
-        '</div>'
-        :'<div style="margin-bottom:32px"></div>')+
-      '<button onclick="dismissCompletion()" style="width:100%;background:#ffffff;color:#070b15;border:none;border-radius:14px;padding:16px 40px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;letter-spacing:0.3px;">Keep it going</button>'+
+      '<div style="font-size:72px;margin-bottom:16px">✓</div>'+
+      (identityMsg?'<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:rgba(255,255,255,0.7);text-transform:uppercase;margin-bottom:10px">'+identityMsg+'</div>':'')+
+      '<div style="font-family:Georgia,serif;font-size:24px;font-weight:900;color:#fff;margin-bottom:6px;line-height:1.3">'+msgObj.head+'</div>'+
+      '<div style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:24px;line-height:1.5">'+msgObj.sub+'</div>'+
+      '<div style="width:100%;max-width:320px;margin-bottom:12px">'+
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT DID YOU ACTUALLY DO? <span style="font-weight:400;opacity:0.7">(optional)</span></div>'+
+      '<input id="completion-input" type="text" placeholder="e.g. removed card from Apple Pay, paid $50..." oninput="S.completionInput=this.value" style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;" />'+
+      '<div style="font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:6px;text-align:left;font-weight:700;letter-spacing:1px">WHAT ALMOST STOPPED YOU? <span style="font-weight:400;opacity:0.7">(optional)</span></div>'+
+      '<input id="completion-input2" type="text" placeholder="e.g. felt lazy, wasn\'t sure how..." oninput="S.completionInput2=this.value" style="width:100%;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:10px;padding:12px 14px;color:#fff;font-size:14px;font-family:inherit;outline:none;" />'+
       '</div>'+
+      '<button onclick="dismissCompletion()" style="background:#fff;color:var(--green);border:none;border-radius:12px;padding:14px 40px;font-size:15px;font-weight:900;cursor:pointer;font-family:inherit;">Done</button>'+
       '</div>';
   }
 
@@ -1499,12 +1614,700 @@ function simulateNextDay(){
 
 function resetAll(){
   localStorage.clear();
-  S={screen:'landing',step:0,diagStep:0,answers:{},profile:null,tab:'today',checked:{},subChecked:{},dayChecked:{},day:1,viewDay:1,plans:{},feedback:[],fbScreen:'view',fbDidIt:'yes',fbBlocker:'',fbEasier:'',fbSubmitted:false,energy:null,notifPrefs:{},editing:false,editText:'',calAdded:{},expandedStep:null,expandedScript:null,todayAnswers:{completed:'',avoided:'',blocked:''},editingMoney:false,completionMsg:false,completionInput:'',completionInput2:'',showReminderCard:false,returnIntent:null,returnTriggerShown:false,returnTimeChoice:null,completionConfidence:null,adaptiveLevel:'maintain',overwhelmedMode:false,crisisCategory:null};
+  S={screen:'landing',step:0,diagStep:0,answers:{},profile:null,tab:'today',checked:{},subChecked:{},dayChecked:{},day:1,viewDay:1,plans:{},feedback:[],fbScreen:'view',fbDidIt:'yes',fbBlocker:'',fbEasier:'',fbSubmitted:false,energy:null,notifPrefs:{},editing:false,editText:'',calAdded:{},expandedStep:null,expandedScript:null,todayAnswers:{completed:'',avoided:'',blocked:''},editingMoney:false,completionMsg:false,completionInput:'',completionInput2:'',showReminderCard:false,returnIntent:null,returnTriggerShown:false,returnTimeChoice:null,completionConfidence:null,adaptiveLevel:'maintain',overwhelmedMode:false,crisisCategory:null,
+  l3Step:1,l3DoingNow:false,l3Moving:false,l3MoveDate:'',l3MoveTime:'',l3MoveReason:'',l3Removing:false,l3RemoveReason:'',
+  enf:{action_id:null,action_text:'',assigned_at:null,completed:false,escalation_level:0,level1_sent_at:null,level2_sent_at:null,level3_triggered_at:null,move_count:0,abandoned_reason:null,accountability_enabled:false,accountability_name:'',accountability_number:'',snoozed_until:null}};
   render();
 }
 
 // ---------------------------------------------------------------------------
-// DEV MODE
+// LEVEL 3 — FORCED EXECUTION SYSTEM (v2.4)
+// ---------------------------------------------------------------------------
+
+var L3_REMOVE_REASONS=[
+  'This is no longer relevant',
+  'Circumstances have changed',
+  'I chose a different approach',
+  'This was not realistic',
+  'Removing this to focus elsewhere',
+];
+
+var L3_MAX_ATTEMPTS=2;
+var L3_MAX_MOVES=2;
+
+function esc(s){
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function shouldShowLevel3(){
+  var e=S.enf;
+  if(!e||!e.action_id) return false;
+  if(e.completed) return false;
+  if(e.abandoned_reason) return false;
+  if(e.escalation_level<3) return false;
+  if(e.snoozed_until&&Date.now()<e.snoozed_until) return false;
+  return true;
+}
+
+function detectExecType(text){
+  var t=(text||'').toLowerCase();
+  if(/\bcall\b|\bdial\b|\bnumber on the back\b|\bphone\b/.test(t)) return 'phone';
+  if(/\btext\b|\bsms\b|\bsend a message\b/.test(t)) return 'sms';
+  if(/\bwebsite\b|\burl\b|\bhttps?\b|\blog in\b|\blogin\b|\bdownload\b/.test(t)) return 'link';
+  return 'timer';
+}
+
+function renderLevel3(){
+  if(S.l3DoingNow)                                               return renderL3DidYouDoIt();
+  if(S.l3ExecScreen)                                             return renderL3ExecBridge();
+  if(S.l3RemoveConfirmStep)                                      return renderL3RemoveConfirm();
+  if(S.l3Moving)                                                 return renderL3MoveForm();
+  if(S.l3ReducingScope)                                          return renderL3ReduceScope();
+  if(S.l3Removing)                                               return renderL3RemoveForm();
+  if(S.l3Step===1)                                               return renderL3Screen1();
+  if(!S.l3EscalationDismissed&&shouldShowFailureEscalation())    return renderL3FailureEscalation();
+  return renderL3Screen2();
+}
+
+/* ── Screen 1: Confrontation ─────────────────────────────────── */
+function renderL3Screen1(){
+  var e=S.enf;
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body">'+
+      '<div class="label" style="color:var(--red);margin-bottom:28px">UNRESOLVED</div>'+
+      '<div class="l3-headline">This is still open.</div>'+
+      '<div class="l3-action-card">'+
+        '<div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:8px">YOU SAID YOU WOULD</div>'+
+        '<div style="font-size:16px;color:var(--text);line-height:1.55">'+esc(e.action_text)+'</div>'+
+      '</div>'+
+      '<div class="l3-text">You still have not done it.<br><br>Right now, this is being left unresolved.</div>'+
+    '</div>'+
+    '<div class="l3-foot">'+
+      '<button class="btn btn-gold" onclick="handleL3Continue()">Continue</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Screen 2: Forced Choice ─────────────────────────────────── */
+function renderL3Screen2(){
+  var e=S.enf;
+  var attempts=e.do_it_now_attempts||0;
+  var canDoItNow=attempts<L3_MAX_ATTEMPTS;
+  var movesLeft=L3_MAX_MOVES-(e.move_count||0);
+  var canMove=movesLeft>0;
+
+  var moveLbl=canMove
+    ?'Move it intentionally &mdash; '+(movesLeft===1?'1 move left':'2 moves left')
+    :'No moves remaining';
+  var moveSub=canMove
+    ?'Requires a specific date, time, and reason'
+    :'All moves used. Your remaining options: execute or remove.';
+
+  var failHtml='';
+  if(attempts>0){
+    var failMsg=attempts>=L3_MAX_ATTEMPTS
+      ?'You chose to do this twice and didn\'t follow through. &ldquo;Do it now&rdquo; is no longer available.'
+      :'You attempted this once and didn\'t follow through.';
+    failHtml='<div class="l3-fail-banner">'+failMsg+'</div>';
+  }
+
+  var moveExhaustHtml=!canMove
+    ?'<div class="l3-fail-banner" style="border-color:rgba(249,115,22,0.3);color:var(--orange)">All moves used. Execute this now or remove it from your plan.</div>'
+    :'';
+
+  var doNowHtml=canDoItNow
+    ?'<button class="btn btn-green" onclick="handleL3DoItNow()" style="margin-bottom:10px">Do it now</button>'
+    :'<div class="l3-dim-choice" style="margin-bottom:10px">Do it now &mdash; removed after '+L3_MAX_ATTEMPTS+' failed attempts</div>';
+
+  var acctHtml='';
+  if(e.accountability_enabled&&e.accountability_name){
+    acctHtml=
+      '<div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">'+
+        '<div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:12px">BRING SOMEONE ELSE IN</div>'+
+        '<button class="btn btn-ghost" onclick="handleL3Accountability()" style="font-size:13px;margin-bottom:8px">'+
+          '&#128172;&nbsp; Send accountability message'+
+        '</button>'+
+        '<div style="font-size:11px;color:var(--muted);line-height:1.6;font-style:italic;padding:0 4px">'+
+          '&ldquo;I said I would handle [task] and I still haven&rsquo;t done it. Check on me tonight.&rdquo;'+
+          '<br>Sends to '+esc(e.accountability_name)+
+        '</div>'+
+      '</div>';
+  }
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body">'+
+      '<div class="label" style="color:var(--red);margin-bottom:20px">ACTION REQUIRED</div>'+
+      '<div class="l3-headline" style="margin-bottom:12px">What are we doing<br>with this?</div>'+
+      '<div class="l3-ghost-card">'+esc(e.action_text)+'</div>'+
+      failHtml+
+      moveExhaustHtml+
+      doNowHtml+
+      '<button class="l3-choice'+(canMove?'':' dimmed')+'" onclick="'+(canMove?'handleL3StartMove()':'')+'">'+
+        '<span style="font-size:20px">'+(canMove?'&#128197;':'&#9888;&#65039;')+'</span>'+
+        '<div style="min-width:0">'+
+          '<div>'+moveLbl+'</div>'+
+          '<div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">'+moveSub+'</div>'+
+        '</div>'+
+      '</button>'+
+      '<button class="l3-choice danger" onclick="handleL3StartRemove()">'+
+        '<span style="font-size:20px">&#10005;</span>'+
+        '<div style="min-width:0">'+
+          '<div>Remove it from my plan</div>'+
+          '<div style="font-size:11px;margin-top:3px;font-weight:400;opacity:0.75">Marks this action as abandoned permanently</div>'+
+        '</div>'+
+      '</button>'+
+      acctHtml+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Execution Bridge (v2.4: ONE button, no escape) ──────────── */
+function renderL3ExecBridge(){
+  var e=S.enf;
+  var type=e.execution_type||detectExecType(e.action_text);
+  var attempts=e.do_it_now_attempts||0;
+
+  var INSTR={
+    'phone':'Your phone dialer will open. Make the call — then come back here and confirm.',
+    'sms':'Your messaging app will open. Send the message — then come back and confirm.',
+    'link':'The relevant app or site will open. Complete the action — then return and confirm.',
+    'timer':'Close this app and do it right now. Come back when it is done and confirm here.',
+  };
+  var LABELS={
+    'phone':'Open dialer — go make the call',
+    'sms':'Open messages — go send it',
+    'link':'Open app / site — go do it',
+    'timer':'I\'m going to do it now',
+  };
+
+  var instruction=e.execution_instruction||INSTR[type]||INSTR['timer'];
+  var btnLabel=LABELS[type]||LABELS['timer'];
+
+  var priorHtml='';
+  if(attempts>0){
+    var remaining=L3_MAX_ATTEMPTS-attempts;
+    priorHtml='<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--red);line-height:1.55">'+
+      'You have marked this incomplete '+attempts+' time'+(attempts>1?'s':'')+' before. '+
+      (remaining>0?remaining+' attempt'+(remaining>1?'s':'')+' remaining before this option is removed.':'This is your last attempt.')+
+    '</div>';
+  }
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--green)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column">'+
+      '<div class="label" style="color:var(--green);margin-bottom:20px">EXECUTION BRIDGE</div>'+
+      '<div class="l3-headline" style="font-size:26px;margin-bottom:14px">You\'re about to do this.</div>'+
+      '<div class="l3-ghost-card" style="border-left-color:var(--green);margin-bottom:16px">'+esc(e.action_text)+'</div>'+
+      '<div class="l3-exec-card">'+esc(instruction)+'</div>'+
+      priorHtml+
+      '<div style="flex:1;min-height:20px"></div>'+
+      '<button class="btn btn-green" onclick="handleL3LaunchExec()">'+esc(btnLabel)+'</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Return check-in ─────────────────────────────────────────── */
+function renderL3DidYouDoIt(){
+  var e=S.enf;
+  var attempts=e.do_it_now_attempts||0;
+  var contextHtml=attempts>=L3_MAX_ATTEMPTS
+    ?'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;font-style:italic">This is your last attempt. A failed response removes this option.</div>'
+    :attempts>1?'<div style="font-size:12px;color:var(--muted);margin-bottom:14px;font-style:italic">Attempt '+attempts+' of '+L3_MAX_ATTEMPTS+'.</div>':'';
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--green)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--green);margin-bottom:24px">CHECK IN</div>'+
+      '<div class="l3-headline">Did you actually do it?</div>'+
+      contextHtml+
+      '<div style="background:var(--surf2);border-radius:8px;padding:14px;border-left:3px solid var(--green);margin-bottom:28px;font-size:14px;color:var(--muted);line-height:1.6">'+
+        esc(e.action_text)+
+      '</div>'+
+      '<button class="btn btn-green" onclick="handleL3DidIt(true)" style="margin-bottom:10px">Yes, I did it</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3DidIt(false)">No, I didn\'t</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Move Form ───────────────────────────────────────────────── */
+function renderL3MoveForm(){
+  var e=S.enf;
+  var isLast=(L3_MAX_MOVES-(e.move_count||0))===1;
+  var today=new Date();today.setDate(today.getDate()+1);
+  var minDate=today.toISOString().slice(0,10);
+  var warningHtml=isLast
+    ?'<div style="background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.35);border-radius:8px;padding:10px 14px;margin-bottom:20px;font-size:12px;color:var(--orange);line-height:1.55">'+
+      '&#9888;&#65039; This is your last allowed move. After this, your only options are to execute or remove it.'+
+    '</div>'
+    :'';
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--orange)"></div>'+
+    '<div class="l3-body">'+
+      '<div class="label" style="color:var(--orange);margin-bottom:20px">INTENTIONAL MOVE</div>'+
+      '<div class="l3-headline" style="font-size:24px;margin-bottom:12px">Lock in a new time.</div>'+
+      warningHtml+
+      '<div class="l3-ghost-card" style="border-left-color:var(--orange)">'+esc(e.action_text)+'</div>'+
+      '<div class="l3-field-label">NEW DATE</div>'+
+      '<input class="l3-input-date" type="date" id="l3-date" min="'+minDate+'" value="'+esc(S.l3MoveDate)+'" onchange="S.l3MoveDate=this.value">'+
+      '<div class="l3-field-label">NEW TIME</div>'+
+      '<input class="l3-input-date" type="time" id="l3-time" value="'+esc(S.l3MoveTime)+'" onchange="S.l3MoveTime=this.value">'+
+      '<div class="l3-field-label" style="margin-top:4px">REASON FOR MOVING</div>'+
+      '<textarea class="l3-input" id="l3-reason" placeholder="Why are you moving this instead of doing it now?" style="min-height:80px" onchange="S.l3MoveReason=this.value">'+esc(S.l3MoveReason)+'</textarea>'+
+      '<button class="btn btn-gold" onclick="handleL3LockMove()" style="margin-bottom:10px">Lock new time</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3CancelMove()">Back</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Remove Confirmation Gate (v2.4) ─────────────────────────── */
+function renderL3RemoveConfirm(){
+  var e=S.enf;
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--red);margin-bottom:28px">ABANDONMENT</div>'+
+      '<div class="l3-headline" style="font-size:27px;line-height:1.3;margin-bottom:20px">You are choosing to<br>leave this unresolved.</div>'+
+      '<div class="l3-ghost-card" style="margin-bottom:32px">'+esc(e.action_text)+'</div>'+
+      '<button class="btn" onclick="handleL3ConfirmRemoveStep()" style="background:var(--red);color:#fff;margin-bottom:12px">Yes, remove it</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3CancelRemoveStep()">No, keep it active</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Remove Reason Form ──────────────────────────────────────── */
+function renderL3RemoveForm(){
+  var e=S.enf;
+  var reasonBtns=L3_REMOVE_REASONS.map(function(r,i){
+    var sel=S.l3RemoveReason===r;
+    return '<button class="l3-reason-btn'+(sel?' sel':'')+'\" onclick="handleL3SelectReason('+i+')">'+esc(r)+'</button>';
+  }).join('');
+  var hasReason=!!S.l3RemoveReason;
+  var removeBtnStyle='margin-top:16px;background:'+(hasReason?'var(--red)':'var(--surf2)')+
+    ';color:'+(hasReason?'#fff':'var(--muted)')+';cursor:'+(hasReason?'pointer':'default');
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body">'+
+      '<div class="label" style="color:var(--red);margin-bottom:20px">REMOVE ACTION</div>'+
+      '<div class="l3-headline" style="font-size:24px;margin-bottom:12px">Select a reason.</div>'+
+      '<div class="l3-ghost-card">'+esc(e.action_text)+'</div>'+
+      '<div class="l3-field-label">REASON</div>'+
+      reasonBtns+
+      '<button class="btn" onclick="handleL3ConfirmRemove()" '+
+        (hasReason?'':'disabled ')+
+        'style="'+removeBtnStyle+'">Remove it</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3CancelRemove()" style="margin-top:10px">Back</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Handlers ────────────────────────────────────────────────── */
+function handleL3Continue(){S.l3Step=2;render();}
+
+function handleL3DoItNow(){
+  S.l3ExecScreen=true;
+  render();
+}
+
+function handleL3LaunchExec(){
+  var e=S.enf;
+  var type=e.execution_type||detectExecType(e.action_text);
+  e.do_it_now_attempts=(e.do_it_now_attempts||0)+1;
+  e.exec_launched_at=Date.now();
+  S.l3DoingNow=true;
+  S.l3ExecScreen=false;
+  saveEnforcement();
+  var ua=navigator.userAgent||'';
+  var isMob=/iphone|android|ipad|mobile/i.test(ua);
+  if(type==='phone'&&e.execution_target){
+    window.location.href='tel:'+e.execution_target.replace(/\D/g,'');
+    return;
+  }
+  if(type==='sms'&&e.execution_target){
+    var msg=e.execution_instruction||e.action_text;
+    window.location.href=isMob
+      ?'sms:'+e.execution_target+'?body='+encodeURIComponent(msg)
+      :'sms:'+e.execution_target+'?&body='+encodeURIComponent(msg);
+    return;
+  }
+  if(type==='link'&&e.execution_target){
+    window.open(e.execution_target,'_blank');
+  }
+  render();
+}
+
+function handleL3DidIt(yes){
+  if(yes){
+    S.enf.completed=true;
+    S.enf.escalation_level=0;
+    S.l3DoingNow=false;
+    S.l3Step=1;
+    saveEnforcement();
+    save();
+    S.screen='dashboard';
+    S.tab='today';
+  } else {
+    S.enf.level3_cycles=(S.enf.level3_cycles||0)+1;
+    S.l3DoingNow=false;
+    S.l3Step=2;
+    saveEnforcement();
+  }
+  render();
+}
+
+function handleL3StartMove(){
+  if((S.enf.move_count||0)>=L3_MAX_MOVES) return;
+  S.l3Moving=true;
+  render();
+}
+
+function handleL3CancelMove(){
+  S.l3Moving=false;
+  S.l3MoveDate='';S.l3MoveTime='';S.l3MoveReason='';
+  render();
+}
+
+function handleL3LockMove(){
+  var dEl=document.getElementById('l3-date');
+  var tEl=document.getElementById('l3-time');
+  var rEl=document.getElementById('l3-reason');
+  var dateVal=(dEl&&dEl.value)||S.l3MoveDate;
+  var timeVal=(tEl&&tEl.value)||S.l3MoveTime;
+  var reasonVal=((rEl&&rEl.value)||S.l3MoveReason||'').trim();
+  if(!dateVal||!timeVal||!reasonVal){alert('Please fill in the date, time, and reason.');return;}
+  var newTs=new Date(dateVal+'T'+timeVal).getTime();
+  if(isNaN(newTs)||newTs<=Date.now()){alert('Date and time must be in the future.');return;}
+  S.enf.move_count=(S.enf.move_count||0)+1;
+  S.enf.snoozed_until=newTs;
+  S.enf.escalation_level=1;
+  S.enf.level3_triggered_at=null;
+  S.l3Moving=false;
+  S.l3MoveDate='';S.l3MoveTime='';S.l3MoveReason='';
+  S.l3Step=1;
+  saveEnforcement();save();
+  alert('Locked. Reappears on '+new Date(newTs).toLocaleString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'.');
+  render();
+}
+
+function handleL3StartRemove(){
+  S.l3RemoveConfirmStep=true;
+  render();
+}
+
+function handleL3ConfirmRemoveStep(){
+  S.l3RemoveConfirmStep=false;
+  S.l3Removing=true;
+  S.l3RemoveReason='';
+  render();
+}
+
+function handleL3CancelRemoveStep(){
+  S.l3RemoveConfirmStep=false;
+  S.l3Step=2;
+  render();
+}
+
+function handleL3CancelRemove(){
+  S.l3Removing=false;
+  S.l3RemoveReason='';
+  render();
+}
+
+function handleL3SelectReason(idx){
+  S.l3RemoveReason=L3_REMOVE_REASONS[idx]||'';
+  render();
+}
+
+function handleL3ConfirmRemove(){
+  if(!S.l3RemoveReason) return;
+  S.enf.abandoned_reason=S.l3RemoveReason;
+  S.enf.completed=true;
+  S.enf.escalation_level=0;
+  S.l3Removing=false;
+  S.l3RemoveReason='';
+  S.l3Step=1;
+  saveEnforcement();save();
+  S.screen='dashboard';
+  render();
+}
+
+function handleL3Accountability(){
+  var e=S.enf;
+  var msg='I said I would handle "'+e.action_text+'" and I still haven\'t done it. Check on me tonight and ask if I handled it.';
+  var num=e.accountability_number||'';
+  var ua=navigator.userAgent||'';
+  var isMob=/iphone|android|ipad|mobile/i.test(ua);
+  var href=isMob?'sms:'+num+'?body='+encodeURIComponent(msg):'sms:'+num+'?&body='+encodeURIComponent(msg);
+  window.location.href=href;
+}
+
+
+// ---------------------------------------------------------------------------
+// v2.5 — RE-ENTRY GATE + FAILURE ESCALATION
+// ---------------------------------------------------------------------------
+
+function shouldShowFailureEscalation(){
+  if(!shouldShowLevel3()) return false;
+  var e=S.enf;
+  var attempts=e.do_it_now_attempts||0;
+  var cycles=e.level3_cycles||0;
+  var moves=e.move_count||0;
+  if(attempts>=L3_MAX_ATTEMPTS) return true;
+  if(cycles>=2) return true;
+  if(attempts>=2&&moves>=1) return true;
+  return false;
+}
+
+/* ── Re-entry Gate ───────────────────────────────────────────── */
+function renderL3ReentryGate(){
+  var e=S.enf;
+  var movesLeft=L3_MAX_MOVES-(e.move_count||0);
+  var canMove=movesLeft>0;
+
+  if(S.l3ReentryAdjustMode){
+    return '<div class="l3-wrap">'+
+      '<div class="l3-bar" style="background:var(--orange)"></div>'+
+      '<div class="l3-body">'+
+        '<div class="label" style="color:var(--orange);margin-bottom:20px">ADJUST</div>'+
+        '<div class="l3-headline" style="font-size:24px;margin-bottom:14px">Choose how to adjust.</div>'+
+        '<div class="l3-ghost-card" style="border-left-color:var(--orange);margin-bottom:24px">'+esc(e.action_text)+'</div>'+
+        '<button class="l3-choice" onclick="handleReentryReduceScope()" style="margin-bottom:10px">'+
+          '<div style="min-width:0">'+
+            '<div>Reduce scope</div>'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">Edit what you\'re committing to</div>'+
+          '</div>'+
+        '</button>'+
+        '<button class="l3-choice'+(canMove?'':' dimmed')+'" onclick="'+(canMove?'handleReentryMove()':'')+'" style="margin-bottom:10px">'+
+          '<div style="min-width:0">'+
+            '<div>Move it'+(canMove?'':' &mdash; no moves remaining')+'</div>'+
+            '<div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">'+
+              (canMove?movesLeft+' move'+(movesLeft===1?'':' left')+' remaining':'All moves used')+
+            '</div>'+
+          '</div>'+
+        '</button>'+
+        '<button class="btn btn-ghost" onclick="handleReentryBack()">Back</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--red);margin-bottom:24px">STILL UNRESOLVED</div>'+
+      '<div class="l3-headline" style="font-size:28px;margin-bottom:12px">This is still open.</div>'+
+      '<div style="font-size:15px;color:var(--muted);margin-bottom:20px;line-height:1.7">Do you want to handle this, or adjust it?</div>'+
+      '<div class="l3-ghost-card" style="margin-bottom:28px">'+esc(e.action_text)+'</div>'+
+      '<button class="btn btn-gold" onclick="handleReentryHandleNow()" style="margin-bottom:10px">Handle it now</button>'+
+      '<button class="l3-choice" onclick="handleReentryAdjust()" style="margin-bottom:10px">'+
+        '<div style="min-width:0"><div>Adjust it</div><div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">Reduce scope or reschedule</div></div>'+
+      '</button>'+
+      '<button class="l3-choice danger" onclick="handleReentryRemove()">'+
+        '<div style="min-width:0"><div>Remove it</div><div style="font-size:11px;margin-top:3px;font-weight:400;opacity:0.75">Route to removal gate</div></div>'+
+      '</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Reduce Scope ────────────────────────────────────────────── */
+function renderL3ReduceScope(){
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--orange)"></div>'+
+    '<div class="l3-body">'+
+      '<div class="label" style="color:var(--orange);margin-bottom:20px">REDUCE SCOPE</div>'+
+      '<div class="l3-headline" style="font-size:24px;margin-bottom:12px">Change what you\'re committing to.</div>'+
+      '<div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.65">The commitment changes. The attempt count does not.</div>'+
+      '<textarea class="l3-input" id="l3-scope-text" style="min-height:110px" onchange="S.l3ScopeText=this.value">'+esc(S.l3ScopeText)+'</textarea>'+
+      '<button class="btn btn-gold" onclick="handleL3SaveScope()" style="margin-bottom:10px">Update commitment</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3CancelScope()">Back</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── Failure Escalation ──────────────────────────────────────── */
+function renderL3FailureEscalation(){
+  var e=S.enf;
+  var movesLeft=L3_MAX_MOVES-(e.move_count||0);
+  var canMove=movesLeft>0;
+
+  /* Support list sub-screen */
+  if(S.l3ShowSupport){
+    return '<div class="l3-wrap">'+
+      '<div class="l3-bar" style="background:var(--orange)"></div>'+
+      '<div class="l3-body">'+
+        '<div class="label" style="color:var(--orange);margin-bottom:20px">SUPPORT OPTIONS</div>'+
+        '<div class="l3-headline" style="font-size:22px;margin-bottom:20px">Different situation, different support.</div>'+
+        '<a href="https://www.nfcc.org" target="_blank" style="display:block;padding:14px 16px;background:var(--surf);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px;margin-bottom:10px;line-height:1.5">'+
+          '<div style="font-weight:700">Financial coach or advisor</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-top:4px">NFCC — nonprofit credit and debt counseling</div>'+
+        '</a>'+
+        '<a href="#" onclick="return false" style="display:block;padding:14px 16px;background:var(--surf);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px;margin-bottom:10px;line-height:1.5">'+
+          '<div style="font-weight:700">Therapist / behavior specialist</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-top:4px">Placeholder &mdash; directory integration coming</div>'+
+        '</a>'+
+        '<a href="#" onclick="return false" style="display:block;padding:14px 16px;background:var(--surf);border:1px solid var(--border);border-radius:10px;color:var(--text);text-decoration:none;font-size:14px;margin-bottom:20px;line-height:1.5">'+
+          '<div style="font-weight:700">Other support</div>'+
+          '<div style="font-size:12px;color:var(--muted);margin-top:4px">Placeholder &mdash; options TBD</div>'+
+        '</a>'+
+        '<button class="btn btn-ghost" onclick="S.l3ShowSupport=false;render()">Back</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  /* Adjust sub-screen */
+  if(S.l3EscalationAdjustMode){
+    return '<div class="l3-wrap">'+
+      '<div class="l3-bar" style="background:var(--orange)"></div>'+
+      '<div class="l3-body">'+
+        '<div class="label" style="color:var(--orange);margin-bottom:20px">ADJUST APPROACH</div>'+
+        '<div class="l3-headline" style="font-size:22px;margin-bottom:14px">Choose how to proceed.</div>'+
+        '<div class="l3-ghost-card" style="border-left-color:var(--orange);margin-bottom:24px">'+esc(e.action_text)+'</div>'+
+        '<button class="l3-choice" onclick="handleEscalationReduceScope()" style="margin-bottom:10px">'+
+          '<div style="min-width:0"><div>Reduce scope</div><div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">Edit what you\'re committing to</div></div>'+
+        '</button>'+
+        '<button class="l3-choice'+(canMove?'':' dimmed')+'" onclick="'+(canMove?'handleEscalationMove()':'')+'" style="margin-bottom:10px">'+
+          '<div style="min-width:0"><div>Move it'+(canMove?'':' &mdash; no moves remaining')+'</div><div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">'+(canMove?movesLeft+' move'+(movesLeft===1?'':' left')+' remaining':'All moves used')+'</div></div>'+
+        '</button>'+
+        '<button class="btn btn-ghost" onclick="S.l3EscalationAdjustMode=false;render()">Back</button>'+
+      '</div>'+
+    '</div>';
+  }
+
+  /* Main escalation screen */
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--orange)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column">'+
+      '<div class="label" style="color:var(--orange);margin-bottom:20px">ESCALATION</div>'+
+      '<div class="l3-headline" style="font-size:23px;line-height:1.35;margin-bottom:12px">You\'ve tried to handle this multiple times and haven\'t followed through.</div>'+
+      '<div style="font-size:14px;color:var(--muted);margin-bottom:20px;line-height:1.65">This may need a different level of support.</div>'+
+      '<div class="l3-ghost-card" style="margin-bottom:24px">'+esc(e.action_text)+'</div>'+
+      '<button class="btn btn-green" onclick="handleEscalationTryAgain()" style="margin-bottom:10px">Try again</button>'+
+      '<button class="l3-choice" onclick="handleEscalationAdjust()" style="margin-bottom:10px">'+
+        '<div style="min-width:0"><div>Adjust approach</div><div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">Reduce scope or reschedule</div></div>'+
+      '</button>'+
+      '<button class="l3-choice" onclick="S.l3ShowSupport=true;render()">'+
+        '<div style="min-width:0"><div>Explore support</div><div style="font-size:11px;color:var(--muted);margin-top:3px;font-weight:400">Financial coach, therapist, or other options</div></div>'+
+      '</button>'+
+    '</div>'+
+  '</div>';
+}
+
+/* ── routeReentry — level-aware return routing ───────────────── */
+function routeReentry(){
+  var level=S.enf.escalation_level||0;
+  S.showReentryGate=false;
+  S.l3ReentryAdjustMode=false;
+  S.enf.last_seen_at=Date.now();
+  saveEnforcement();
+  if(level>=3){
+    S.l3Step=1;
+    render();
+  } else if(level===2){
+    // L2 entry — routes to today tab (placeholder until L2 is built)
+    S.screen='dashboard';S.tab='today';
+    render();
+  } else {
+    // L1 entry — routes to today tab (placeholder until L1 is built)
+    S.screen='dashboard';S.tab='today';
+    render();
+  }
+}
+
+/* ── Re-entry handlers ───────────────────────────────────────── */
+function handleReentryHandleNow(){
+  routeReentry();
+}
+
+function handleReentryAdjust(){
+  S.l3ReentryAdjustMode=true;
+  render();
+}
+
+function handleReentryBack(){
+  S.l3ReentryAdjustMode=false;
+  render();
+}
+
+function handleReentryReduceScope(){
+  S.showReentryGate=false;
+  S.l3ReentryAdjustMode=false;
+  S.l3ScopeText=S.enf.action_text;
+  S.l3ReducingScope=true;
+  S.enf.last_seen_at=Date.now();
+  saveEnforcement();
+  render();
+}
+
+function handleReentryMove(){
+  if((S.enf.move_count||0)>=L3_MAX_MOVES) return;
+  S.showReentryGate=false;
+  S.l3ReentryAdjustMode=false;
+  S.l3Moving=true;
+  S.enf.last_seen_at=Date.now();
+  saveEnforcement();
+  render();
+}
+
+function handleReentryRemove(){
+  S.showReentryGate=false;
+  S.l3ReentryAdjustMode=false;
+  S.l3RemoveConfirmStep=true;
+  S.enf.last_seen_at=Date.now();
+  saveEnforcement();
+  render();
+}
+
+/* ── Reduce scope handlers ───────────────────────────────────── */
+function handleL3SaveScope(){
+  var el=document.getElementById('l3-scope-text');
+  var newText=((el?el.value:'')||S.l3ScopeText||'').trim();
+  if(!newText){alert('Please enter a commitment.');return;}
+  S.enf.action_text=newText;
+  S.l3ReducingScope=false;
+  S.l3ScopeText='';
+  saveEnforcement();
+  S.l3Step=1;
+  render();
+}
+
+function handleL3CancelScope(){
+  S.l3ReducingScope=false;
+  S.l3ScopeText='';
+  render();
+}
+
+/* ── Escalation handlers ─────────────────────────────────────── */
+function handleEscalationTryAgain(){
+  S.l3EscalationDismissed=true;
+  S.l3EscalationAdjustMode=false;
+  S.l3ShowSupport=false;
+  render();
+}
+
+function handleEscalationAdjust(){
+  S.l3EscalationAdjustMode=true;
+  S.l3ShowSupport=false;
+  render();
+}
+
+function handleEscalationReduceScope(){
+  S.l3EscalationAdjustMode=false;
+  S.l3ScopeText=S.enf.action_text;
+  S.l3ReducingScope=true;
+  render();
+}
+
+function handleEscalationMove(){
+  if((S.enf.move_count||0)>=L3_MAX_MOVES) return;
+  S.l3EscalationAdjustMode=false;
+  S.l3Moving=true;
+  render();
+}
+
+// ---------------------------------------------------------------------------
+// DEV MODE — L3 TRIGGER (add ?dev=true&l3=true to URL to test)
 // ---------------------------------------------------------------------------
 function loadDevMode(){
   S.profile=buildProfile({name:'Dev',takehome:'5000',carddebt:'8000',checking:'1200',goal:'Get out of debt',blocker:'Testing dev mode',savings:'$500 to $2,000',rent:'1500'});
@@ -1525,8 +2328,59 @@ function init(){
   var params=new URLSearchParams(window.location.search);
   var urlTab=params.get('tab');
   var devMode=params.get('dev')==='true';
-  if(devMode){loadDevMode();if(urlTab){S.tab=urlTab;render();}return;}
+  var l3Test=params.get('l3')==='true';
+  var reentryTest=params.get('reentry')==='true';
+
+  if(devMode){
+    loadDevMode();
+    if(l3Test){
+      S.enf={
+        action_id:'dev-l3-001',
+        action_text:'Call the bank and resolve the double charge',
+        assigned_at:Date.now()-(72*60*60*1000),
+        completed:false,
+        escalation_level:3,
+        level1_sent_at:Date.now()-(48*60*60*1000),
+        level2_sent_at:Date.now()-(24*60*60*1000),
+        level3_triggered_at:Date.now(),
+        move_count:0,
+        abandoned_reason:null,
+        accountability_enabled:true,
+        accountability_name:'Marcus',
+        accountability_number:'4435551234',
+        snoozed_until:null,
+        do_it_now_attempts:0,
+        level3_cycles:0,
+        execution_type:'phone',
+        execution_target:'',
+        execution_instruction:'Call your bank. Ask specifically about the double charge. Have your account number ready.',
+        exec_launched_at:null,
+        last_seen_at:reentryTest?Date.now()-(25*60*60*1000):Date.now(),
+      };
+      saveEnforcement();
+      if(reentryTest) S.showReentryGate=true;
+    }
+    if(urlTab){S.tab=urlTab;}
+    render();
+    return;
+  }
+
   load();
+  loadEnforcement();
+
+  // Re-entry gate: check BEFORE updating last_seen_at so we catch the gap
+  var _now=Date.now();
+  var _hasGap=S.enf.last_seen_at&&!S.enf.completed&&!S.enf.abandoned_reason
+    &&(_now-S.enf.last_seen_at)>=86400000;
+  if(_hasGap){
+    S.showReentryGate=true;
+  }
+  // Update last_seen_at for next session's gap check
+  if(S.enf.action_id&&!S.enf.completed&&!S.enf.abandoned_reason){
+    S.enf.last_seen_at=_now;
+    saveEnforcement();
+  }
+
   if(S.profile){S.screen='dashboard';if(urlTab) S.tab=urlTab;}
   else{S.screen='landing';}
   render();
