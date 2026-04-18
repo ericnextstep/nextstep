@@ -118,6 +118,19 @@ textarea{resize:vertical;min-height:72px;}
 .l3-reason-btn.sel{background:var(--red-dim);border-color:var(--red);color:var(--red);}
 .l3-field-label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:8px;}
 .l3-exec-card{background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;font-size:14px;color:var(--text);line-height:1.8;}
+/* ── Script Injection (v2.6) ─────────────────────────────────── */
+.l3-script-box{background:rgba(240,180,41,0.07);border-left:3px solid var(--gold);border-radius:0 8px 8px 0;padding:14px 16px;margin-bottom:16px;}
+.l3-script-title{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.l3-script-body{font-size:14px;color:var(--text);line-height:1.7;}
+.l3-script-line{margin-bottom:6px;}
+.l3-script-ifask{margin-top:12px;padding-top:10px;border-top:1px dashed rgba(0,0,0,0.12);}
+.l3-script-ifask-label{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);margin-bottom:6px;}
+.l3-script-ifask-line{font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.55;}
+/* ── Reflection buttons (v2.6) ───────────────────────────────── */
+.l3-reflect-btn{width:100%;background:var(--surf);border:1px solid var(--border);border-radius:10px;padding:14px 16px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;color:var(--text);text-align:left;margin-bottom:10px;-webkit-tap-highlight-color:transparent;}
+.l3-reflect-btn.primary{border-color:var(--green);color:var(--green);}
+.l3-reflect-btn.warn{border-color:var(--red-b);color:var(--red);}
+.l3-reflect-sub{font-size:12px;color:var(--muted);margin-top:3px;font-weight:400;}
 .l3-fail-banner{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--red);line-height:1.65;}
 .l3-dim-choice{width:100%;border:1px solid var(--border);border-radius:12px;padding:14px 16px;font-size:13px;font-weight:700;cursor:default;font-family:inherit;background:var(--surf2);color:var(--muted);text-align:center;opacity:0.45;}
 .dot.done{background:var(--gold);}
@@ -195,6 +208,10 @@ var S = {
   l3EscalationDismissed:false,
   l3EscalationAdjustMode:false,
   l3ShowSupport:false,
+  // v2.6 — return accountability + reflection check
+  l3ShowNoFollowup:false,
+  l3ShowReflection:false,
+  l3ShowResolvedMessage:false,
   enf:{
     action_id:null,
     action_text:'',
@@ -1635,6 +1652,97 @@ var L3_REMOVE_REASONS=[
 var L3_MAX_ATTEMPTS=2;
 var L3_MAX_MOVES=2;
 
+// ── Script Injection System (v2.6) ───────────────────────────
+var SCRIPT_MAP={
+  phone_financial:{
+    title:'Start here — say this',
+    lines:[
+      'Hi, I\'m calling about my account. I need help lowering my rate or setting up a hardship plan.',
+      'Can you walk me through what options you have available today?'
+    ],
+    ifAsk:[
+      '"Why now?" — "My situation changed. I need this lower to keep paying on time."',
+      '"How much?" — "Whatever you can offer. I\'m open to any reduction."',
+      '"We can\'t" — "Can you transfer me to retention or a supervisor?"'
+    ]
+  },
+  phone_healthcare:{
+    title:'Start here — say this',
+    lines:[
+      'Hi, I\'m calling about a bill I received. I need to understand my options before I pay.',
+      'Can you tell me what\'s owed and whether there\'s a payment plan or financial assistance available?'
+    ],
+    ifAsk:[
+      '"Account number?" — Read it off the bill, top right corner.',
+      '"Can you pay in full?" — "Not today. What\'s the minimum I can set up?"',
+      '"Insurance denied" — "Can you help me understand why, or resubmit the claim?"'
+    ]
+  },
+  phone_default:{
+    title:'Start here — say this',
+    lines:[
+      'Hi, I\'m calling to resolve something today. I\'d like to understand my options.',
+      'Can you walk me through what you can do?'
+    ],
+    ifAsk:[
+      '"Account info?" — Give only what they ask for, nothing extra.',
+      '"We can\'t help" — "Who can? Please transfer me or give me a direct number."'
+    ]
+  },
+  text_followup:{
+    title:'Send this',
+    lines:[
+      'Hey — following up on what we talked about. Still want to move this forward.',
+      'What do you need from me to get it done?'
+    ]
+  },
+  text_nudge:{
+    title:'Send this',
+    lines:[
+      'Hey — quick check. Did you get a chance to look at what I sent?',
+      'Let me know either way so I can plan around it.'
+    ]
+  }
+};
+
+function detectScriptType(actionText){
+  var t=(actionText||'').toLowerCase();
+  if(/\bcall\b|\bdial\b|\bphone\b/.test(t)){
+    if(/bank|card|charge|mortgage|loan|credit|debt|rate|interest|statement|payment|account|lender|issuer/.test(t)) return 'phone_financial';
+    if(/doctor|insurance|medical|hospital|clinic|health|provider|copay|deductible/.test(t)) return 'phone_healthcare';
+    return 'phone_default';
+  }
+  if(/\btext\b|\bmessage\b|\bsms\b/.test(t)){
+    if(/nudge|remind|check in|ping|follow.?up again/.test(t)) return 'text_nudge';
+    return 'text_followup';
+  }
+  return null;
+}
+
+function renderScript(actionText){
+  var key=detectScriptType(actionText);
+  if(!key) return '';
+  var s=SCRIPT_MAP[key];
+  if(!s) return '';
+  var linesHtml=s.lines.map(function(l){
+    return '<div class="l3-script-line">'+esc(l)+'</div>';
+  }).join('');
+  var ifAskHtml='';
+  if(s.ifAsk&&s.ifAsk.length){
+    ifAskHtml='<div class="l3-script-ifask">'+
+      '<div class="l3-script-ifask-label">IF THEY ASK</div>'+
+      s.ifAsk.slice(0,3).map(function(l){
+        return '<div class="l3-script-ifask-line">'+esc(l)+'</div>';
+      }).join('')+
+    '</div>';
+  }
+  return '<div class="l3-script-box">'+
+    '<div class="l3-script-title">'+esc(s.title)+'</div>'+
+    '<div class="l3-script-body">'+linesHtml+'</div>'+
+    ifAskHtml+
+  '</div>';
+}
+
 function esc(s){
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -1658,6 +1766,9 @@ function detectExecType(text){
 }
 
 function renderLevel3(){
+  if(S.l3ShowResolvedMessage)                                    return renderL3ResolvedMessage();
+  if(S.l3ShowReflection)                                         return renderL3Reflection();
+  if(S.l3ShowNoFollowup)                                         return renderL3NoFollowup();
   if(S.l3DoingNow)                                               return renderL3DidYouDoIt();
   if(S.l3ExecScreen)                                             return renderL3ExecBridge();
   if(S.l3RemoveConfirmStep)                                      return renderL3RemoveConfirm();
@@ -1801,6 +1912,7 @@ function renderL3ExecBridge(){
       '<div class="l3-headline" style="font-size:26px;margin-bottom:14px">You\'re about to do this.</div>'+
       '<div class="l3-ghost-card" style="border-left-color:var(--green);margin-bottom:16px">'+esc(e.action_text)+'</div>'+
       '<div class="l3-exec-card">'+esc(instruction)+'</div>'+
+      renderScript(e.action_text)+
       priorHtml+
       '<div style="flex:1;min-height:20px"></div>'+
       '<button class="btn btn-green" onclick="handleL3LaunchExec()">'+esc(btnLabel)+'</button>'+
@@ -1825,8 +1937,8 @@ function renderL3DidYouDoIt(){
       '<div style="background:var(--surf2);border-radius:8px;padding:14px;border-left:3px solid var(--green);margin-bottom:28px;font-size:14px;color:var(--muted);line-height:1.6">'+
         esc(e.action_text)+
       '</div>'+
-      '<button class="btn btn-green" onclick="handleL3DidIt(true)" style="margin-bottom:10px">Yes, I did it</button>'+
-      '<button class="btn btn-ghost" onclick="handleL3DidIt(false)">No, I didn\'t</button>'+
+      '<button class="btn btn-green" onclick="handleL3DidIt(true)" style="margin-bottom:10px">Yes — it\'s done</button>'+
+      '<button class="btn btn-ghost" onclick="handleL3DidIt(false)">No — I didn\'t</button>'+
     '</div>'+
   '</div>';
 }
@@ -1941,21 +2053,123 @@ function handleL3LaunchExec(){
 
 function handleL3DidIt(yes){
   if(yes){
-    S.enf.completed=true;
-    S.enf.escalation_level=0;
+    // v2.6: YES routes to reflection, NOT direct completion
     S.l3DoingNow=false;
-    S.l3Step=1;
+    S.l3ShowReflection=true;
     saveEnforcement();
-    save();
-    S.screen='dashboard';
-    S.tab='today';
   } else {
-    S.enf.level3_cycles=(S.enf.level3_cycles||0)+1;
+    // v2.6: NO routes to "you opened it but didn't follow through" screen
     S.l3DoingNow=false;
-    S.l3Step=2;
+    S.l3ShowNoFollowup=true;
     saveEnforcement();
   }
   render();
+}
+
+// ── Return Accountability + Reflection Handlers (v2.6) ──────────
+function handleL3NoFollowupContinue(){
+  // Increment cycle, clear flag, return to forced choice (L3 Screen 2)
+  S.enf.level3_cycles=(S.enf.level3_cycles||0)+1;
+  S.l3ShowNoFollowup=false;
+  S.l3Step=2;
+  saveEnforcement();
+  render();
+}
+
+function handleL3ReflectResolved(){
+  // Show reinforcement screen before marking complete
+  S.l3ShowReflection=false;
+  S.l3ShowResolvedMessage=true;
+  render();
+}
+
+function handleL3ReflectInProgress(){
+  // Allow completion, skip reinforcement, silent dashboard return
+  S.enf.completed=true;
+  S.enf.escalation_level=0;
+  S.l3ShowReflection=false;
+  S.l3ShowNoFollowup=false;
+  S.l3ShowResolvedMessage=false;
+  S.l3DoingNow=false;
+  S.l3Step=1;
+  saveEnforcement();
+  save();
+  S.screen='dashboard';
+  S.tab='today';
+  render();
+}
+
+function handleL3ReflectDidntGo(){
+  // Same as NO — treat as failed follow-through
+  S.l3ShowReflection=false;
+  S.l3ShowNoFollowup=true;
+  saveEnforcement();
+  render();
+}
+
+function handleL3ResolvedDone(){
+  // Mark complete, clear flags, to dashboard
+  S.enf.completed=true;
+  S.enf.escalation_level=0;
+  S.l3ShowResolvedMessage=false;
+  S.l3ShowReflection=false;
+  S.l3ShowNoFollowup=false;
+  S.l3DoingNow=false;
+  S.l3Step=1;
+  saveEnforcement();
+  save();
+  S.screen='dashboard';
+  S.tab='today';
+  render();
+}
+
+// ── Return Accountability + Reflection Screens (v2.6) ───────────
+function renderL3NoFollowup(){
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--red)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--red);margin-bottom:24px">NOT DONE</div>'+
+      '<div class="l3-headline" style="font-size:26px;margin-bottom:16px">You opened it but didn\'t follow through.</div>'+
+      '<div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:32px">This stays open until you actually do it.</div>'+
+      '<button class="btn btn-gold" onclick="handleL3NoFollowupContinue()">Continue</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderL3Reflection(){
+  var e=S.enf;
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--green)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--green);margin-bottom:24px">REFLECTION</div>'+
+      '<div class="l3-headline" style="font-size:26px;margin-bottom:10px">What happened?</div>'+
+      '<div class="l3-ghost-card" style="border-left-color:var(--green);margin-bottom:24px">'+esc(e.action_text)+'</div>'+
+      '<button class="l3-reflect-btn primary" onclick="handleL3ReflectResolved()">'+
+        '<div>Resolved</div>'+
+        '<div class="l3-reflect-sub">Handled. Done.</div>'+
+      '</button>'+
+      '<button class="l3-reflect-btn" onclick="handleL3ReflectInProgress()">'+
+        '<div>In progress</div>'+
+        '<div class="l3-reflect-sub">Took the step. Waiting on next move.</div>'+
+      '</button>'+
+      '<button class="l3-reflect-btn warn" onclick="handleL3ReflectDidntGo()">'+
+        '<div>Didn\'t go through</div>'+
+        '<div class="l3-reflect-sub">Tried but it didn\'t happen.</div>'+
+      '</button>'+
+    '</div>'+
+  '</div>';
+}
+
+function renderL3ResolvedMessage(){
+  return '<div class="l3-wrap">'+
+    '<div class="l3-bar" style="background:var(--green)"></div>'+
+    '<div class="l3-body" style="display:flex;flex-direction:column;justify-content:center">'+
+      '<div class="label" style="color:var(--green);margin-bottom:24px">RESOLVED</div>'+
+      '<div class="l3-headline" style="font-size:28px;margin-bottom:14px">That\'s one less thing sitting on you.</div>'+
+      '<div style="flex:1;min-height:20px"></div>'+
+      '<button class="btn btn-green" onclick="handleL3ResolvedDone()">Done</button>'+
+    '</div>'+
+  '</div>';
 }
 
 function handleL3StartMove(){
