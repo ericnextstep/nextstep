@@ -75,7 +75,8 @@ textarea{resize:vertical;min-height:72px;}
 .screen-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;}
 .opt-btn{width:100%;background:var(--surf);color:var(--text);border:1px solid var(--border);border-radius:12px;padding:14px 18px;font-size:14px;cursor:pointer;font-family:inherit;text-align:left;margin-bottom:8px;}
 .opt-btn.sel{background:var(--gold);color:var(--bg);border-color:var(--gold);font-weight:900;}
-.step-row{display:flex;gap:11px;padding:12px 13px;margin-bottom:7px;border-radius:12px;cursor:pointer;align-items:flex-start;border:1px solid var(--border);background:var(--surf);}
+.step-row{display:flex;gap:11px;padding:12px 13px;margin-bottom:7px;border-radius:12px;cursor:pointer;align-items:flex-start;border:1px solid var(--border);background:var(--surf);overflow:hidden;overflow-wrap:break-word;word-break:break-word;min-width:0;}
+.step-row > *{min-width:0;}
 .step-row.done{background:var(--green-dim);border-color:var(--green-b);}
 .check-box{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:var(--bg);}
 .check-box.done{background:var(--green);border-color:var(--green);}
@@ -146,6 +147,20 @@ textarea{resize:vertical;min-height:72px;}
 .bmc-btn:hover{background:#f5d400;}
 /* v2.0 adaptive badge */
 .adaptive-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;}
+/* v2.7 behavior layer */
+.behavior-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;font-size:10px;font-weight:700;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase;cursor:pointer;border:1px solid currentColor;-webkit-tap-highlight-color:transparent;}
+.behavior-badge:hover{opacity:0.85;}
+.delivery-wrap{border-left:3px solid var(--behavior-color,#a86a00);background:var(--behavior-bg,rgba(168,106,0,0.08));border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:10px;}
+.delivery-preamble{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--behavior-color,#a86a00);margin-bottom:6px;}
+.delivery-action{font-size:14px;font-weight:700;color:var(--text);line-height:1.45;margin-bottom:8px;}
+.delivery-framing{font-size:12px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:6px;}
+.delivery-followup{font-size:11px;color:var(--muted);line-height:1.4;opacity:0.75;}
+.behavior-menu{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(7,11,21,0.92);z-index:9997;display:flex;align-items:flex-start;justify-content:center;padding:24px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.behavior-menu-card{background:var(--surf);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:360px;width:100%;margin-top:8vh;}
+.behavior-option{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:10px;border:2px solid var(--border);background:var(--surf2);cursor:pointer;margin-bottom:8px;text-align:left;}
+.behavior-option.active{border-color:currentColor;}
+.behavior-option-head{display:flex;justify-content:space-between;align-items:center;font-size:13px;font-weight:700;}
+.behavior-option-sub{font-size:11px;color:var(--muted);line-height:1.4;}
 .badge-escalate{background:rgba(16,185,129,0.15);border:1px solid var(--green-b);color:var(--green);}
 .badge-deescalate{background:rgba(249,115,22,0.12);border:1px solid rgba(249,115,22,0.3);color:var(--orange);}
 /* completion overlay */
@@ -189,6 +204,8 @@ var S = {
   // v2.1 overwhelmed
   overwhelmedMode:false,
   crisisCategory:null,
+  // v2.7 behavior layer
+  showBehaviorMenu:false,
   // ── Level 3 Enforcement ──────────────────────────────────────
   l3Step:1,
   l3DoingNow:false,
@@ -241,7 +258,8 @@ var KEY='nextstep-pwa-v1';
 var DAY_KEY='nextstep-pwa-day';
 var PLAN_KEY='nextstep-pwa-plans';
 var FB_KEY='nextstep-pwa-feedback';
-var ENF_KEY='nextstep-enforcement-v24';
+// v2.7.1 fix: was declared twice (v24 then v1). Hoisting made v1 the
+// effective key, so existing user data is under v1. Dropped the v24 dupe.
 var ENF_KEY='nextstep-enforcement-v1';
 
 function save(){
@@ -280,29 +298,10 @@ function loadEnforcement(){
   }catch(e){}
 }
 
-function saveEnforcement(){
-  try{localStorage.setItem(ENF_KEY,JSON.stringify(S.enf));}catch(e){}
-}
-
-function loadEnforcement(){
-  try{
-    var raw=localStorage.getItem(ENF_KEY);
-    if(raw){
-      var d=JSON.parse(raw);
-      S.enf=Object.assign({
-        action_id:null,action_text:'',assigned_at:null,completed:false,
-        escalation_level:0,level1_sent_at:null,level2_sent_at:null,
-        level3_triggered_at:null,move_count:0,abandoned_reason:null,
-        accountability_enabled:false,accountability_name:'',
-        accountability_number:'',snoozed_until:null,
-        do_it_now_attempts:0,level3_cycles:0,
-        execution_type:null,execution_target:'',execution_instruction:'',
-        exec_launched_at:null,
-        last_seen_at:null,
-      },d);
-    }
-  }catch(e){}
-}
+// v2.7.1 fix: duplicate saveEnforcement() and loadEnforcement() definitions
+// removed. Both copies were functionally identical; duplicates were dead
+// code (hoisting made the second pair the ones that actually ran) and
+// a maintenance hazard.
 
 function load(){
   try{
@@ -438,6 +437,82 @@ var CRISIS_CATEGORIES=[
 // ---------------------------------------------------------------------------
 // v2.0 ADAPTIVE PLAN LOGIC
 // ---------------------------------------------------------------------------
+// ===========================================================================
+// v2.7 BEHAVIOR LAYER — hybrid model
+// Financial profile = WHAT to do (unchanged, see generatePlan)
+// Behavior state    = HOW to make it happen (new, this section)
+// Delivery is additive. Does not modify action content.
+// ===========================================================================
+
+var BEHAVIOR_STATES={
+  DISRUPTED:{label:'Disrupted',mode:'SHRINK',color:'#b42318',bg:'rgba(180,35,24,0.12)',tagline:'One tiny step.'},
+  AVOIDER:{label:'Avoider',mode:'START',color:'#a86a00',bg:'rgba(168,106,0,0.12)',tagline:'Do it now.'},
+  CONTROLLER:{label:'Controller',mode:'REVEAL',color:'#6a3ea5',bg:'rgba(106,62,165,0.12)',tagline:'See it first.'},
+  BUILDER:{label:'Builder',mode:'SEQUENCE',color:'#1f7a3a',bg:'rgba(31,122,58,0.12)',tagline:'Next move.'},
+  BLOCKED:{label:'Blocked',mode:'UNBLOCK',color:'#b8882e',bg:'rgba(184,136,46,0.15)',tagline:'Clear the block.'},
+  RESISTANT:{label:'Resistant',mode:'FORCE',color:'#6a1a1a',bg:'rgba(106,26,26,0.12)',tagline:'Start. Now.'}
+};
+
+// Lightweight detection. Safe, overridable, no fragile NLP.
+// Default AVOIDER. Override only on unambiguous signals.
+// Per directive: CONTROLLER is not auto-detected ("I think" heuristic is
+// unsafe). CONTROLLER is only reachable via manual override.
+function detectBehaviorState(text){
+  if(!text||typeof text!=='string') return 'AVOIDER';
+  var t=text.toLowerCase();
+  if(/overwhelmed|too much|can'?t think|scattered|spinning|drowning|falling apart/.test(t)) return 'DISRUPTED';
+  if(/don'?t feel like|not in the mood|don'?t want to|not today|screw (it|this)/.test(t)) return 'RESISTANT';
+  if(/can'?t (do it )?(without|until)|need (someone|access|the info|info|login|the number)|don'?t have (the|access)|waiting (on|for) (someone|them|him|her)/.test(t)) return 'BLOCKED';
+  if(/already (doing|started|working on|handling)|making progress|on top of|have momentum/.test(t)) return 'BUILDER';
+  if(/been meaning|putting (it |this |)off|i'?ll get (to it|around)|keep forgetting|haven'?t gotten around|eventually|later/.test(t)) return 'AVOIDER';
+  return 'AVOIDER';
+}
+
+// The delivery layer. Takes an action string + a behavior, returns
+// an execution object with delivery framing.
+// Contract (per directive):
+//   execution = { action, behavior, mode, preamble, framing, followup }
+// The action text is NEVER modified. Delivery wraps it.
+function applyBehaviorLayer(actionText,behavior){
+  behavior=behavior||'AVOIDER';
+  var cfg=BEHAVIOR_STATES[behavior];
+  if(!cfg){behavior='AVOIDER';cfg=BEHAVIOR_STATES.AVOIDER;}
+  var e={action:actionText||'',behavior:behavior,mode:cfg.mode,preamble:'',framing:'',followup:''};
+  switch(behavior){
+    case 'DISRUPTED':
+      e.preamble='Just the first move:';
+      e.framing='Tiny. One action. Nothing else needs to happen right now.';
+      e.followup='Come back when that\u2019s done. Next piece after.';
+      break;
+    case 'AVOIDER':
+      e.preamble='Do this now:';
+      e.framing='No later. No tomorrow. Right now.';
+      e.followup='I\u2019ll stay here.';
+      break;
+    case 'CONTROLLER':
+      e.preamble='Check this first:';
+      e.framing='Before you act, see the real number.';
+      e.followup='What did you find?';
+      break;
+    case 'BUILDER':
+      e.preamble='Next move:';
+      e.framing='Keep the rhythm. Don\u2019t perfect it.';
+      e.followup='On to the next.';
+      break;
+    case 'BLOCKED':
+      e.preamble='First, unblock:';
+      e.framing='Get the missing piece, then the action opens up.';
+      e.followup='Resource in hand? Keep going.';
+      break;
+    case 'RESISTANT':
+      e.preamble='One step. Only one:';
+      e.framing='Do this micro-step. Nothing else exists right now.';
+      e.followup='Now the next. Don\u2019t stop between.';
+      break;
+  }
+  return e;
+}
+
 function assessConfidence(input){
   if(!input||input.trim().length<3) return 'none';
   var lower=input.toLowerCase().trim();
@@ -661,7 +736,13 @@ function requestNativeNotif(){
     });
   }
 }
-function scheduleReminder(){}
+// v2.7.1 fix: explicit stub. The 8am reminder described in the changelog
+// was never implemented. This function is called on onboarding complete
+// and on plan generation, but currently does nothing. Future work:
+// implement via Notification API + scheduled time check on app load,
+// since service workers cannot be relied on across all platforms
+// (iOS Safari in particular). Leaving as stub until reminder is scoped.
+function scheduleReminder(){/* not implemented — see comment above */}
 
 // ---------------------------------------------------------------------------
 // PROFILE BUILDER
@@ -685,7 +766,10 @@ function buildProfile(a){
   else if(cd>th*3) credit='580-669 - fair';
   else if(cd>0) credit='670-739 - good';
   else credit='740+ - great';
-  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus};
+  // v2.7: lightweight behavior inference from blocker text. Default AVOIDER.
+  // User-overridable via setBehavior() from dashboard badge.
+  var behavior=detectBehaviorState(a.blocker||'');
+  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus,behavior:behavior};
 }
 
 function fmt(v){return'$'+Math.round(Math.max(0,parseInt(v)||0)).toLocaleString();}
@@ -921,7 +1005,28 @@ function renderDashboard(){
     }
   }
 
-  var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+
+  // v2.7: behavior override menu overlay
+  var behaviorMenu='';
+  if(S.showBehaviorMenu){
+    var curState=(p&&p.behavior)||'AVOIDER';
+    behaviorMenu='<div class="behavior-menu" onclick="if(event.target===this)toggleBehaviorMenu()">'+
+      '<div class="behavior-menu-card">'+
+      '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;margin-bottom:4px">How should steps be delivered?</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.5">This changes the framing around your actions &mdash; not the actions themselves.</div>';
+    var order=['DISRUPTED','AVOIDER','CONTROLLER','BUILDER','BLOCKED','RESISTANT'];
+    order.forEach(function(key){
+      var b=BEHAVIOR_STATES[key];
+      var active=curState===key;
+      behaviorMenu+='<div class="behavior-option'+(active?' active':'')+'" onclick="setBehavior(\''+key+'\')" style="color:'+b.color+';background:'+(active?b.bg:'var(--surf2)')+'">'+
+        '<div class="behavior-option-head"><span>'+b.label+'</span><span style="font-size:10px;letter-spacing:1.5px;opacity:0.85">'+b.mode+'</span></div>'+
+        '<div class="behavior-option-sub">'+b.tagline+'</div>'+
+        '</div>';
+    });
+    behaviorMenu+='<button onclick="toggleBehaviorMenu()" style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:inherit;margin-top:8px;padding:8px 0;width:100%">Close</button>'+
+      '</div></div>';
+  }
+
+  var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+behaviorMenu+
     '<div class="header">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
     '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>'+
@@ -1106,12 +1211,27 @@ function renderToday(){
 
     html+='<div class="card card-green">';
     if(adaptiveBadgeHTML) html+=adaptiveBadgeHTML;
+    // v2.7: behavior badge, tappable to override
+    var bState=(S.profile&&S.profile.behavior)||'AVOIDER';
+    var bCfg=BEHAVIOR_STATES[bState]||BEHAVIOR_STATES.AVOIDER;
+    html+='<div class="behavior-badge" style="color:'+bCfg.color+';background:'+bCfg.bg+';" onclick="toggleBehaviorMenu()" title="Tap to change how steps are delivered">● '+bCfg.label+' &middot; '+bCfg.mode+' <span style="opacity:0.6;font-weight:400;margin-left:4px">change</span></div>';
     if(typeof plan==='object'){
       if(plan.energyLine) html+='<div style="font-size:12px;color:var(--orange);font-weight:700;margin-bottom:10px;padding:8px 12px;background:rgba(249,115,22,0.1);border-radius:8px">'+plan.energyLine+'</div>';
       html+='<div class="plan-section"><div class="plan-title">TODAY\'S PRIORITY</div><div class="plan-body">'+plan.priority+'</div></div>';
       html+='<div class="plan-section"><div class="plan-title">DO THIS TODAY</div>';
       plan.actions.forEach(function(a,i){
-        html+='<div class="action-item"><div class="action-num">'+(i+1)+'.</div><div class="plan-body">'+a+'</div></div>';
+        // v2.7: wrap each action with behavior delivery layer
+        var exec=applyBehaviorLayer(a,bState);
+        html+='<div class="action-item"><div class="action-num">'+(i+1)+'.</div>'+
+              '<div style="flex:1">'+
+                '<div class="delivery-wrap" style="--behavior-color:'+bCfg.color+';--behavior-bg:'+bCfg.bg+'">'+
+                  '<div class="delivery-preamble">'+exec.preamble+'</div>'+
+                  '<div class="delivery-action">'+exec.action+'</div>'+
+                  '<div class="delivery-framing">'+exec.framing+'</div>'+
+                  '<div class="delivery-followup">'+exec.followup+'</div>'+
+                '</div>'+
+              '</div>'+
+              '</div>';
       });
       html+='</div>';
 
@@ -1404,7 +1524,8 @@ function nextStep(){
   var q=QUESTIONS[S.step];
   var val=S.answers[q.id]||'';
   if(q.id==='name'&&!val.trim()){showNudge('qinput','We need your name to personalize your plan.');return;}
-  if(q.type==='dollar'&&(!val||parseInt(val.replace(/[^0-9]/g,''))===0)&&q.id==='takehome'){showNudge('qinput','Your income is required to build your plan.');return;}
+  // v2.7.1 fix: $0 income is a supported path in generatePlan(). UI says
+  // "Tap Next to skip with $0". The previous gate here blocked that promise.
   if(!val) S.answers[q.id]='0';
   if(S.step<QUESTIONS.length-1){S.step++;render();setTimeout(function(){var el=document.getElementById('qinput');if(el)el.focus();},50);}
   else{S.screen='chat';S.diagStep=0;render();setTimeout(function(){var el=document.getElementById('diaginput');if(el)el.focus();},50);}
@@ -1507,6 +1628,16 @@ function toggleScript(id){
 function toggleCheck(id){S.checked[id]=!S.checked[id];save();render();}
 function toggleSub(id){S.subChecked[id]=!S.subChecked[id];save();render();}
 function toggleExpand(id){S.expandedStep=(S.expandedStep===id)?null:id;render();}
+
+// v2.7 behavior state override — user-facing control over delivery mode
+function toggleBehaviorMenu(){S.showBehaviorMenu=!S.showBehaviorMenu;render();}
+function setBehavior(newState){
+  if(!BEHAVIOR_STATES[newState]) return;
+  if(S.profile){S.profile.behavior=newState;save();}
+  S.showBehaviorMenu=false;
+  try{if(typeof gtag==='function') gtag('event','behavior_change',{state:newState});}catch(e){}
+  render();
+}
 function startEdit(){S.editText=formatPlanText(S.plans[S.viewDay]);S.editing=true;render();}
 function saveEdit(){var box=document.getElementById('editbox');S.plans[S.viewDay]=box?box.value:S.editText;S.editing=false;save();render();}
 function cancelEdit(){S.editing=false;render();}
