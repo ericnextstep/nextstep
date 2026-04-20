@@ -2,8 +2,8 @@
   "name": "NextStep — Your Daily Financial Plan",
   "short_name": "NextStep",
   "description": "Your plan adjusts daily until you win.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/nextstep/",
+  "scope": "/nextstep/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#070b15",
@@ -21,13 +21,13 @@
     {
       "name": "Today's Plan",
       "short_name": "Today",
-      "url": "/?tab=today",
+      "url": "/nextstep/?tab=today",
       "description": "Open today's financial plan"
     },
     {
       "name": "Log Feedback",
       "short_name": "Feedback",
-      "url": "/?tab=feedback",
+      "url": "/nextstep/?tab=feedback",
       "description": "Log your daily feedback"
     }
   ]
