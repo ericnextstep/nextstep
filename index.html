@@ -891,7 +891,7 @@ function renderNotif(){
       '<div style="font-size:32px;flex-shrink:0">'+item.icon+'</div>'+
       '<div style="flex:1"><div style="font-size:14px;font-weight:800;margin-bottom:3px">'+item.title+'</div>'+
       '<div style="font-size:12px;color:var(--muted);line-height:1.5">'+item.desc+'</div></div>'+
-      '<div class="toggle'+(on?' on':'')+'>'+(on?'&#10003;':'')+'</div></div>';
+      '<div class="toggle'+(on?' on':'')+'">'+(on?'&#10003;':'')+'</div></div>';
   });
   html+='<button class="btn btn-gold" style="font-size:17px;margin-top:8px" onclick="finishNotif()">Continue &rarr;</button></div></div>';
   return html;
