@@ -6,10 +6,10 @@
 <meta name="theme-color" content="#f0b429">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="NextStep">
+<meta name="apple-mobile-web-app-title" content="Handled">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.svg">
-<title>NextStep</title>
+<title>Handled</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-FVSC7VZMQW"></script>
 <script>
 window.dataLayer = window.dataLayer || [];
@@ -204,6 +204,13 @@ var S = {
   // v2.1 overwhelmed
   overwhelmedMode:false,
   crisisCategory:null,
+  // v2.8 attestation + branching coach + own-step valve
+  attestPending:null,
+  coachOpen:false,
+  coachNode:'open',
+  coachHist:[],
+  customStep:'',
+  customStepOpen:false,
   // v2.7 behavior layer
   showBehaviorMenu:false,
   // ── Level 3 Enforcement ──────────────────────────────────────
@@ -267,6 +274,7 @@ function save(){
     localStorage.setItem(KEY,JSON.stringify({
       profile:S.profile,checked:S.checked,subChecked:S.subChecked,
       notifPrefs:S.notifPrefs,calAdded:S.calAdded,dayChecked:S.dayChecked||{},
+      customStep:S.customStep||'',
     }));
     localStorage.setItem(DAY_KEY,String(S.day));
     localStorage.setItem(PLAN_KEY,JSON.stringify(S.plans));
@@ -314,6 +322,7 @@ function load(){
       S.notifPrefs=d.notifPrefs||{};
       S.calAdded=d.calAdded||{};
       S.dayChecked=d.dayChecked||{};
+      S.customStep=d.customStep||'';
     }
     S.day=parseInt(localStorage.getItem(DAY_KEY)||'1');
     S.viewDay=S.day;
@@ -359,7 +368,7 @@ var STEPS=[
 var REMINDERS=[
   {id:'r1',group:'Today',time:'Do it now',e:'🔒',label:'Remove cards from Apple Pay',step:'s1',urgent:true},
   {id:'r2',group:'Today',time:'Do it now',e:'💳',label:'Call credit card - ask for rate cut',step:'s2',urgent:true},
-  {id:'r3',group:'Tomorrow',time:'Morning',e:'📅',label:'Day 2 check-in - open NextStep',step:null,urgent:false},
+  {id:'r3',group:'Tomorrow',time:'Morning',e:'📅',label:'Day 2 check-in - open Handled',step:null,urgent:false},
   {id:'r4',group:'Monday',time:'Monday',e:'📋',label:'Cancel unused subscriptions',step:'s3',urgent:false},
   {id:'r5',group:'Monday',time:'Monday',e:'🏦',label:'Open dedicated savings account',step:'s4',urgent:false},
   {id:'r6',group:'Next Week',time:'Week 2',e:'💼',label:'Define your side income idea',step:'s5',urgent:false},
@@ -595,15 +604,15 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
   if(isDay1){
     if(energy==='low'){
       actions.push('Open your bank app right now. Screenshot your checking balance. 30 seconds. That number is your starting line.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep."');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "Handled."');
     }else if(energy==='medium'){
       if(hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. 60 seconds. That card is the first target.');
       actions.push('Go to phone Settings. Remove Apple Pay or Google Pay access from one credit card. 2 minutes. Every tap you block is money you keep.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep."');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "Handled."');
     }else{
       if(hasDebt) actions.push('Open your bank app. Find your highest-rate credit card. Screenshot the balance. That card is the first target.');
       actions.push('Go to phone Settings. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point. 3 minutes.');
-      actions.push('Set a reminder for tomorrow at 8am. Label it "NextStep."');
+      actions.push('Set a reminder for tomorrow at 8am. Label it "Handled."');
     }
   }else if(adaptive==='escalate'){
     // Did it yesterday with confidence — push harder
@@ -696,11 +705,11 @@ function makeICS(step){
   var start=new Date(now);start.setDate(start.getDate()+1);start.setHours(9,0,0,0);
   var end=new Date(start);end.setHours(9,30,0,0);
   var fmt=function(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');};
-  return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//NextStep//EN','BEGIN:VEVENT',
-    'UID:nextstep-'+step.id+'-'+Date.now()+'@nextstep.app','DTSTAMP:'+fmt(now),
+  return['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Handled//EN','BEGIN:VEVENT',
+    'UID:handled-'+step.id+'-'+Date.now()+'@handled.app','DTSTAMP:'+fmt(now),
     'DTSTART:'+fmt(start),'DTEND:'+fmt(end),
-    'SUMMARY:NextStep: '+step.label,'DESCRIPTION:'+step.detail,
-    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:NextStep reminder','TRIGGER:-PT15M','END:VALARM',
+    'SUMMARY:Handled: '+step.label,'DESCRIPTION:'+step.detail,
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Handled reminder','TRIGGER:-PT15M','END:VALARM',
     'END:VEVENT','END:VCALENDAR'].join('\r\n');
 }
 function downloadICS(stepId){
@@ -720,7 +729,7 @@ function googleCal(stepId){
   var start=new Date(now);start.setDate(start.getDate()+1);start.setHours(9,0,0,0);
   var end=new Date(start);end.setHours(9,30,0,0);
   var fmt=function(d){return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');};
-  var url='https://calendar.google.com/calendar/r/eventedit?text='+encodeURIComponent('NextStep: '+step.label)+'&dates='+fmt(start)+'/'+fmt(end)+'&details='+encodeURIComponent(step.detail);
+  var url='https://calendar.google.com/calendar/r/eventedit?text='+encodeURIComponent('Handled: '+step.label)+'&dates='+fmt(start)+'/'+fmt(end)+'&details='+encodeURIComponent(step.detail);
   window.open(url,'_blank');
   S.calAdded[stepId]='google';save();render();
 }
@@ -731,7 +740,7 @@ function googleCal(stepId){
 function requestNativeNotif(){
   if('Notification' in window){
     Notification.requestPermission().then(function(perm){
-      if(perm==='granted') new Notification('NextStep',{body:'Notifications enabled. See you tomorrow morning.'});
+      if(perm==='granted') new Notification('Handled',{body:'Notifications enabled. See you tomorrow morning.'});
       render();
     });
   }
@@ -800,7 +809,8 @@ function renderLanding(){
   try{isInstalled=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
   return '<div class="screen"><div class="screen-center">'+
     '<div style="font-size:68px;margin-bottom:16px">🌴</div>'+
-    '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">NextStep</div>'+
+    '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">Handled</div>'+
+    '<div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Powered by NextStep</div>'+
     '<div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:8px">Your plan adjusts daily until you win.</div>'+
     '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 4 questions. Have a quick conversation. Get your personalized plan. Takes 3 minutes.</div>'+
     (!isInstalled?'<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience.</div>':'')+
@@ -891,7 +901,7 @@ function renderNotif(){
       '<div style="font-size:32px;flex-shrink:0">'+item.icon+'</div>'+
       '<div style="flex:1"><div style="font-size:14px;font-weight:800;margin-bottom:3px">'+item.title+'</div>'+
       '<div style="font-size:12px;color:var(--muted);line-height:1.5">'+item.desc+'</div></div>'+
-      '<div class="toggle'+(on?' on':'')+'">'+(on?'&#10003;':'')+'</div></div>';
+      '<div class="toggle'+(on?' on':'')+'>'+(on?'&#10003;':'')+'</div></div>';
   });
   html+='<button class="btn btn-gold" style="font-size:17px;margin-top:8px" onclick="finishNotif()">Continue &rarr;</button></div></div>';
   return html;
@@ -1026,10 +1036,51 @@ function renderDashboard(){
       '</div></div>';
   }
 
-  var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+behaviorMenu+
+  // v2.8 attestation overlay
+  var attestOverlay='';
+  if(S.attestPending){
+    attestOverlay='<div class="overwhelmed-overlay" style="align-items:flex-end">'+
+      '<div class="card" style="width:100%;max-width:430px;margin:0">'+
+      '<div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:10px">ONE HONEST SECOND</div>'+
+      '<div style="font-family:Georgia,serif;font-size:23px;font-weight:900;color:var(--text);line-height:1.3;margin-bottom:8px">Did you actually do it &mdash; out there, not in here?</div>'+
+      '<div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:18px">'+S.attestPending.label+'</div>'+
+      '<button class="btn btn-green" style="padding:15px;font-size:15px;margin-bottom:9px" onclick="attestYes()">Yes &mdash; it\'s done &#10003;</button>'+
+      '<button class="btn btn-ghost" style="padding:14px;font-size:14px" onclick="attestNotYet()">Not yet &mdash; I tapped too soon</button>'+
+      '<div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:12px">Nobody is checking but you. "Not yet" costs you nothing &mdash; your step stays right where it is.</div>'+
+      '</div></div>';
+  }
+
+  // v2.8 branching call coach overlay
+  var coachOverlay='';
+  if(S.coachOpen){
+    var cn=COACH_TREE[S.coachNode]||COACH_TREE.open;
+    coachOverlay='<div class="overwhelmed-overlay">'+
+      '<div class="card" style="width:100%;max-width:430px;margin:0">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">'+
+      '<div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1.5px">I\'M ON WITH YOU</div>'+
+      '<button onclick="closeCoach()" style="background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;font-family:inherit">&times;</button>'+
+      '</div>'+
+      '<div style="font-size:10px;color:var(--muted);font-weight:700;letter-spacing:1.5px;margin-bottom:10px">'+cn.sit.toUpperCase()+'</div>'+
+      '<div style="font-family:Georgia,serif;font-size:22px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:16px">'+cn.line+'</div>';
+    if(!cn.terminal){
+      coachOverlay+='<button class="btn btn-ghost" style="padding:11px;font-size:13px;margin-bottom:16px" onclick="coachSpeak()">&#128266; Read it to me</button>'+
+        '<div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1.5px;margin-bottom:9px">WHAT JUST HAPPENED ON THE CALL?</div>';
+      cn.opts.forEach(function(o){
+        coachOverlay+='<div onclick="coachPick(\''+o[1]+'\')" style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:13px 15px;border:1px solid var(--border);border-radius:12px;background:var(--surf);cursor:pointer;margin-bottom:8px;font-size:14px;font-weight:700;color:var(--text)">'+o[0]+'<span style="color:var(--muted)">&rarr;</span></div>';
+      });
+    }
+    coachOverlay+='<div style="display:flex;gap:8px;margin-top:10px">';
+    if(S.coachHist.length) coachOverlay+='<button class="btn btn-ghost" style="flex:0 0 auto;padding:13px 18px;font-size:15px" onclick="coachBack()">&larr;</button>';
+    coachOverlay+='<button class="btn btn-green" style="flex:1;padding:13px;font-size:14px" onclick="coachFinish()">'+(cn.terminal?'Done &mdash; close':'I finished the call')+' &#10003;</button>'+
+      '</div>'+
+      '<div style="text-align:center;font-size:11px;color:var(--muted);margin-top:12px;line-height:1.5">Tap what really happened &mdash; I will give you the next thing to say.</div>'+
+      '</div></div>';
+  }
+
+  var html='<div>'+completionOverlay+reminderCard+overwhelmedOverlay+behaviorMenu+attestOverlay+coachOverlay+
     '<div class="header">'+
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">'+
-    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">NextStep</div>'+
+    '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">Handled</div>'+
     '<div style="font-size:10px;color:var(--muted)">'+p.name+' &middot; Day '+S.day+' &middot; '+p.goal+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:10px">'+
     '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>'+
@@ -1054,7 +1105,7 @@ function renderDashboard(){
   else if(S.tab==='feedback') html+=renderFeedback();
   else if(S.tab==='protect') html+=renderProtect();
 
-  html+='</div><div class="footer">Not financial advice &middot; For execution support only &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support NextStep</a></div></div>';
+  html+='</div><div class="footer">Not financial advice &middot; Powered by NextStep &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support Handled</a></div></div>';
   return html;
 }
 
@@ -1245,7 +1296,9 @@ function renderToday(){
           '<div id="callscript" style="display:none;padding:12px 14px;background:rgba(240,180,41,0.08);border-top:1px solid var(--border)">'+
           '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;font-weight:700">READ THIS WORD FOR WORD:</div>'+
           '<div style="font-size:14px;color:var(--text);line-height:1.8;font-style:italic;margin-bottom:12px">"Hi, I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate on my account. Can you help me with that?"</div>'+
-          '<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none">📞 Open Dialer &mdash; Script is above</a>'+
+          '<a href="tel:" style="display:block;text-align:center;background:var(--green);color:var(--bg);border-radius:10px;padding:12px;font-size:14px;font-weight:900;text-decoration:none;margin-bottom:8px">📞 Open Dialer &mdash; Script is above</a>'+
+          '<div onclick="openCoach()" style="text-align:center;background:var(--surf2);border:1px solid var(--gold);color:var(--gold);border-radius:10px;padding:12px;font-size:14px;font-weight:900;cursor:pointer">🗣 Stay with me on the call</div>'+
+          '<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:8px;text-align:center">Calls never go to script. I will follow what they actually say.</div>'+
           '</div></div></div>';
       }
 
@@ -1272,6 +1325,30 @@ function renderToday(){
       '<button class="btn btn-green" style="flex:1;padding:10px;font-size:12px" onclick="copyPlan()">Copy</button>'+
       '<button class="btn btn-ghost" style="flex:1;padding:10px;font-size:12px" onclick="resetPlan()">Reset Day</button>'+
       '</div></div>';
+
+    // v2.8 — own-step valve
+    if(S.customStep){
+      html+='<div class="card" style="border-color:var(--gold)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px">'+
+        '<div style="font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1.5px">&#9999; YOUR OWN STEP</div>'+
+        '<button onclick="clearCustomStep()" style="background:none;border:none;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">&larr; back to plan</button>'+
+        '</div>'+
+        '<div style="font-size:16px;font-weight:800;color:var(--text);line-height:1.4;margin-bottom:14px">'+S.customStep+'</div>'+
+        '<button class="btn btn-green" style="padding:13px;font-size:14px" onclick="doneCustomStep()">Mark my step done &#10003;</button>'+
+        '</div>';
+    }else if(S.customStepOpen){
+      html+='<div class="card" style="border-color:var(--gold)">'+
+        '<div style="font-size:12px;color:var(--gold);font-weight:800;margin-bottom:8px">What is the move YOU want to make?</div>'+
+        '<input id="customstepinput" type="text" placeholder="e.g. Email my landlord about the deposit">'+
+        '<div style="display:flex;gap:8px;margin-top:10px">'+
+        '<button class="btn btn-gold" style="flex:1;padding:12px;font-size:13px" onclick="saveCustomStep()">Make this my step &rarr;</button>'+
+        '<button class="btn btn-ghost" style="flex:0 0 auto;padding:12px 16px;font-size:13px" onclick="cancelCustomStep()">Cancel</button>'+
+        '</div>'+
+        '<div style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:10px">Same loop, your call. Your plan waits right where you left it.</div>'+
+        '</div>';
+    }else{
+      html+='<button class="btn btn-ghost" style="padding:13px;font-size:13px;margin-bottom:10px" onclick="openCustomStep()">&#9999; This is not my next step &mdash; I will name my own</button>';
+    }
   }
 
   if(!plan&&!isDay1) html+='<div class="card card-dark center"><div style="font-size:13px;color:var(--muted);padding:10px 0">You came back. That is 90% of it.</div></div>';
@@ -1441,7 +1518,7 @@ function renderFeedback(){
   }
   html+='<div class="card card-dark"><div class="label">DAILY FEEDBACK LOG</div><div style="font-size:13px;color:var(--text);line-height:1.7;margin-bottom:12px">Log what you actually did each day. Be honest. Your feedback is what separates a good idea from a real product.</div>'+
     '<button class="btn btn-gold" onclick="S.fbScreen=\'log\';S.fbDidIt=\'yes\';S.fbBlocker=\'\';S.fbEasier=\'\';render()">+ Log Day '+S.day+' Feedback</button>'+
-    '<div style="margin-top:10px;text-align:center"><a href="mailto:mynextstepapp@gmail.com?subject=NextStep Feedback - Day '+S.day+'&body=Did you do the step? (Yes / Partial / No):%0A%0AWhat got in the way?%0A%0AWhat would have made it easier?%0A%0AAnything else?" style="display:block;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;text-align:center;">📧 Email your feedback instead</a></div></div>';
+    '<div style="margin-top:10px;text-align:center"><a href="mailto:eric@elegantkhaos.com?subject=Handled Feedback - Day '+S.day+'&body=Did you do the step? (Yes / Partial / No):%0A%0AWhat got in the way?%0A%0AWhat would have made it easier?%0A%0AAnything else?" style="display:block;background:none;border:1px solid var(--border);border-radius:12px;padding:12px;font-size:13px;font-weight:700;color:var(--muted);text-decoration:none;text-align:center;">📧 Email your feedback instead</a></div></div>';
   if(S.fbSubmitted){
     html+='<div class="card card-green center"><div style="font-size:22px;margin-bottom:6px">✓</div><div style="font-size:14px;color:var(--green);font-weight:700">Feedback logged for Day '+S.day+'</div><div style="font-size:12px;color:var(--muted);margin-top:4px">Come back tomorrow. Keep going.</div></div>';
   }
@@ -1605,16 +1682,100 @@ function toggleDayCheck(dayKey,stepId){
   if(!S.dayChecked) S.dayChecked={};
   if(!S.dayChecked[dayKey]) S.dayChecked[dayKey]={};
   var wasChecked=!!S.dayChecked[dayKey][stepId];
-  S.dayChecked[dayKey][stepId]=!wasChecked;
+  // v2.8: checking ON now passes through the attestation beat. Unchecking is free.
   if(!wasChecked){
-    S.checked[stepId]=true;
-    trackEvent('step_checked',{step:stepId,day:S.day});
-    S.completionMsg=true;
-    S.completionInput='';
-    S.completionInput2='';
+    var st=STEPS.find(function(s){return s.id===stepId;});
+    S.attestPending={dayKey:dayKey,stepId:stepId,label:st?st.label:'this step'};
+    trackEvent('attestation_shown',{step:stepId,day:S.day});
+    render();
+    return;
   }
+  S.dayChecked[dayKey][stepId]=false;
   save();render();
 }
+
+function applyDayCheck(dayKey,stepId){
+  if(!S.dayChecked) S.dayChecked={};
+  if(!S.dayChecked[dayKey]) S.dayChecked[dayKey]={};
+  S.dayChecked[dayKey][stepId]=true;
+  S.checked[stepId]=true;
+  trackEvent('step_checked',{step:stepId,day:S.day});
+  S.completionMsg=true;
+  S.completionInput='';
+  S.completionInput2='';
+  save();render();
+}
+
+// v2.8 — attestation beat. No surveillance, no penalty for "not yet";
+// the point is that self-report becomes a deliberate act, not a reflex tap.
+function attestYes(){
+  var pend=S.attestPending;
+  if(!pend) return;
+  S.attestPending=null;
+  trackEvent('attestation_confirmed',{step:pend.stepId,day:S.day});
+  applyDayCheck(pend.dayKey,pend.stepId);
+}
+
+function attestNotYet(){
+  var pend=S.attestPending;
+  if(pend) trackEvent('attestation_not_yet',{step:pend.stepId,day:S.day});
+  S.attestPending=null;
+  render();
+}
+
+// v2.8 — branching call coach. A linear script breaks the moment the rep goes
+// off-script, so each node asks what actually happened and routes from there.
+var COACH_TREE={
+  open:{sit:'When they pick up',line:'"Hi \u2014 I\'m calling about my account. I have a question about my interest rate."',opts:[['A person answered','ask'],['Menu or on hold','hold'],['It went to voicemail','voicemail']]},
+  ask:{sit:'Make the ask',line:'"I have been a customer for several years and I always pay on time. I am calling to request a lower interest rate. Can you help me with that?"',opts:[['They said yes','close'],['They said no or can\'t','pushback'],['They asked me a question','clarify'],['They offered something smaller','counter']]},
+  hold:{sit:'Stuck on hold',line:'"I\'m happy to hold \u2014 thank you." Stay on the line. Don\'t hang up.',opts:[['Someone picked up','ask'],['Still waiting','hold']]},
+  voicemail:{sit:'Leave a message',line:'"Hi, my name is ___ . I\'m calling about my account and a rate review. Please call me back at ___ . Thank you."',opts:[['Message left','madecall']]},
+  pushback:{sit:'They pushed back',line:'"I understand. What options do I actually have here?"',opts:[['They offered something','counter'],['Still a firm no','escalate']]},
+  clarify:{sit:'They asked a question',line:'"Good question \u2014 let me answer that, and then can we keep going?" Answer honestly, then continue.',opts:[['Back on track','ask'],['It turned into a no','pushback']]},
+  counter:{sit:'They offered less',line:'"Can you do any better than that today? Even a little helps."',opts:[['They improved it','close'],['That is their best offer','close']]},
+  escalate:{sit:'Ask for a supervisor',line:'"Is there a supervisor or a retention team who can look at this?"',opts:[['Being transferred','ask'],['No luck \u2014 they won\'t','madecall']]},
+  close:{sit:'Lock it in',line:'"Thank you \u2014 can I get a confirmation number for this?"',opts:[['Got the confirmation','won']]},
+  won:{sit:'You did it',line:'You got what you called for. Write the confirmation number somewhere you will find it later.',terminal:true},
+  madecall:{sit:'You made the call',line:'It did not land the way you wanted \u2014 but you made the call you had been avoiding. That is the step, and it counts.',terminal:true}
+};
+
+function openCoach(){S.coachOpen=true;S.coachNode='open';S.coachHist=[];trackEvent('coach_opened',{day:S.day});render();}
+function closeCoach(){S.coachOpen=false;try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}render();}
+function coachPick(to){S.coachHist.push(S.coachNode);S.coachNode=to;trackEvent('coach_branch',{node:to,day:S.day});render();}
+function coachBack(){S.coachNode=S.coachHist.pop()||'open';render();}
+function coachSpeak(){
+  try{
+    var n=COACH_TREE[S.coachNode]||COACH_TREE.open;
+    if(window.speechSynthesis){window.speechSynthesis.cancel();var u=new SpeechSynthesisUtterance(n.line.replace(/"/g,''));u.rate=0.95;window.speechSynthesis.speak(u);}
+  }catch(e){}
+}
+function coachFinish(){
+  S.coachOpen=false;
+  try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
+  trackEvent('coach_finished',{node:S.coachNode,day:S.day});
+  applyDayCheck('day'+(S.day-1),'s2');
+}
+
+// v2.8 — own-step valve. If our generated step is wrong for their life, they
+// name their own instead of being boxed into ours.
+function openCustomStep(){S.customStepOpen=true;render();}
+function cancelCustomStep(){S.customStepOpen=false;render();}
+function saveCustomStep(){
+  var el=document.getElementById('customstepinput');
+  var v=el?el.value.trim():'';
+  if(!v) return;
+  S.customStep=v;
+  S.customStepOpen=false;
+  trackEvent('custom_step_named',{day:S.day});
+  save();render();
+}
+function clearCustomStep(){S.customStep='';save();render();}
+function doneCustomStep(){
+  S.attestPending={dayKey:'day'+(S.day-1),stepId:'custom',label:S.customStep};
+  render();
+}
+
+// v2.1 — overwhelmed mode handlers
 
 function toggleScript(id){
   var el=document.getElementById(id);
