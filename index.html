@@ -204,6 +204,9 @@ var S = {
   // v2.1 overwhelmed
   overwhelmedMode:false,
   crisisCategory:null,
+  // v2.8.1: calendar dates stamped per day. Advancement is date-driven.
+  dayDates:{},
+  aprPromoPicking:false, scoreSkipNote:false, aprHelp:false,
   // v2.8 attestation + branching coach + own-step valve
   attestPending:null,
   coachOpen:false,
@@ -268,6 +271,46 @@ var FB_KEY='nextstep-pwa-feedback';
 // v2.7.1 fix: was declared twice (v24 then v1). Hoisting made v1 the
 // effective key, so existing user data is under v1. Dropped the v24 dupe.
 var ENF_KEY='nextstep-enforcement-v1';
+// v2.8.1: new key. Existing keys unchanged.
+var DATES_KEY='nextstep-pwa-daymeta';
+
+// v2.8.1 FIX: test-only controls render only with ?dev=true in the URL.
+var IS_DEV=false;
+try{IS_DEV=/[?&]dev=true/.test(window.location.search||'');}catch(e){}
+
+// v2.8.1 ── calendar-based day advancement ─────────────────────────────────
+// Local date as YYYY-MM-DD. String comparison on this format is chronological.
+function dateStr(d){
+  var m=d.getMonth()+1,dd=d.getDate();
+  return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
+}
+function todayStr(){return dateStr(new Date());}
+var DAY_META={normalized:false};
+function saveDayMeta(){
+  try{localStorage.setItem(DATES_KEY,JSON.stringify({dates:S.dayDates||{},normalized:!!DAY_META.normalized}));}catch(e){}
+}
+// Force-stamp: used when a plan is generated, so the gate measures from the
+// day the user actually did the work.
+function stampDay(d){S.dayDates[d]=todayStr();saveDayMeta();}
+// A day advances only once the local date has moved past the date recorded for
+// the current day, and only if that day was actually planned.
+function canAdvanceDay(){
+  var st=S.dayDates[S.day];
+  return !!S.plans[S.day]&&!!st&&todayStr()>st;
+}
+function hasDayActivity(d){
+  if(S.plans[d]) return true;
+  var k=S.dayChecked&&S.dayChecked['day'+d];
+  if(k){for(var id in k){if(k[id]) return true;}}
+  return false;
+}
+// Real completed-day count. Days that were only advanced into never count.
+function realStreak(){
+  var end=hasDayActivity(S.day)?S.day:S.day-1;
+  var n=0;
+  for(var d=end;d>=1;d--){ if(!hasDayActivity(d)) break; n++; }
+  return n;
+}
 
 function save(){
   try{
@@ -279,6 +322,7 @@ function save(){
     localStorage.setItem(DAY_KEY,String(S.day));
     localStorage.setItem(PLAN_KEY,JSON.stringify(S.plans));
     localStorage.setItem(FB_KEY,JSON.stringify(S.feedback));
+    saveDayMeta();
   }catch(e){}
 }
 
@@ -324,10 +368,48 @@ function load(){
       S.dayChecked=d.dayChecked||{};
       S.customStep=d.customStep||'';
     }
-    S.day=parseInt(localStorage.getItem(DAY_KEY)||'1');
-    S.viewDay=S.day;
     var plans=localStorage.getItem(PLAN_KEY);
     S.plans=plans?JSON.parse(plans):{};
+    S.day=parseInt(localStorage.getItem(DAY_KEY)||'1');
+
+    // v2.8.1 ── day pointer + dates ──────────────────────────────────────
+    var meta={};
+    try{var mraw=localStorage.getItem(DATES_KEY); if(mraw) meta=JSON.parse(mraw)||{};}catch(e){}
+    S.dayDates=meta.dates||{};
+    DAY_META.normalized=!!meta.normalized;
+
+    // One-time migration. Before v2.8.1, S.day was left pointing one PAST the
+    // last planned day (genPlan advanced on generate), so a user whose last
+    // plan was Day 1 could read as "Day 3". Pull the pointer back onto the
+    // highest day that actually has a plan. Nothing is deleted or reset.
+    if(!DAY_META.normalized){
+      if(S.day>1&&!S.plans[S.day]){
+        var hi=0;
+        for(var pk in S.plans){var pn=parseInt(pk,10); if(S.plans[pk]&&pn>hi) hi=pn;}
+        if(hi>=1&&hi<S.day) S.day=hi;
+      }
+      // v2.8.2: an existing user already did the work on their current day, we
+      // just have no date for it. Stamp it YESTERDAY so the gate below moves
+      // them forward on this open instead of making them repeat the day.
+      if(S.plans[S.day]&&!S.dayDates[S.day]){
+        var yd=new Date();yd.setDate(yd.getDate()-1);
+        S.dayDates[S.day]=dateStr(yd);
+      }
+      DAY_META.normalized=true;
+    }
+
+    // Existing users have no recorded dates. Stamp the day they are on with
+    // today and carry on from there — never reset their progress.
+    if(!S.dayDates[S.day]) S.dayDates[S.day]=todayStr();
+
+    // The only place a day advances: the calendar moved on and the current day
+    // was planned. At most +1, however many days were skipped.
+    if(canAdvanceDay()){
+      S.day=S.day+1;
+      if(!S.dayDates[S.day]) S.dayDates[S.day]=todayStr();
+    }
+    S.viewDay=S.day;
+    saveDayMeta();
     var fb=localStorage.getItem(FB_KEY);
     S.feedback=fb?JSON.parse(fb):[];
   }catch(e){}
@@ -343,9 +425,16 @@ var QUESTIONS=[
   {id:'checking',e:'🏦',q:'Available cash — what you can use today?',type:'dollar',ph:'e.g. 2500',sub:"Include checking, savings, or anything you'd actually use right now."},
 ];
 
+// v2.8.1: 'when' gates a question. Missing 'when' = always shown.
 var DIAG=[
   {id:'goal',e:'🎯',q:'What is the main thing you want to fix right now?',type:'choice',
     opts:['Get out of debt','Stop living paycheck to paycheck','Build my savings','Just get control of my money']},
+  {id:'apr',e:'📈',q:"What's the interest rate (APR) on your card? If you have more than one, use the highest.",type:'apr',ph:'e.g. 24',
+    when:function(a){
+      var debt=parseInt(String(a.carddebt||'').replace(/[^0-9]/g,''))||0;
+      return (a.goal==='Get out of debt')||debt>0;
+    }},
+  {id:'creditscore',e:'📊',q:'Know your credit score? Totally optional.',type:'score',ph:'300 to 850'},
   {id:'blocker',e:'🧱',q:'What has been getting in the way?',type:'text',ph:'Be honest - this shapes your plan'},
   {id:'savings',e:'💵',q:'About how much do you have in savings right now?',type:'choice',
     opts:['$0 - nothing saved','Less than $500','$500 to $2,000','More than $2,000']},
@@ -551,7 +640,17 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
   var hasDebt=(profile.cd||0)>0;
   var tight=(profile.surplus||0)<500;
   var noIncome=(profile.th||0)===0;
-  var badCredit=(profile.credit||'').indexOf('580')>=0||(profile.credit||'').indexOf('Under')>=0;
+  // v2.8.1: score-dependent framing only fires when the score is known.
+  var creditScore=(typeof profile.creditScore==='number')?profile.creditScore:null;
+  var badCredit=creditScore!==null&&creditScore<670;
+  var apr=(typeof profile.apr==='number')?profile.apr:null;
+  var aprUnknown=!!profile.aprUnknown;
+  var promo=!!profile.aprPromo;
+  var promoEndLabel=promo?promoLabel(profile.aprPromoEnd):null;
+  var promoMonths=promo?monthsUntil(profile.aprPromoEnd):null;
+  var promoTarget=(promo&&hasDebt&&promoMonths)?Math.ceil((profile.cd||0)/promoMonths):null;
+  var highApr=(apr!==null&&!promo&&apr>=20);
+  var monthlyInterest=(apr!==null&&!promo&&hasDebt)?Math.round((profile.cd||0)*(apr/100)/12):null;
   var didSomething=completed&&completed.trim().length>3;
   var gotBlocked=blocked&&blocked.trim().length>3;
   var goal=profile.goal||'get organized';
@@ -584,7 +683,10 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
 
   var priority='';
   if(isDay1){
-    if(hasDebt&&badCredit) priority=name+', your credit and debt are both bleeding. We stop the bleeding first.';
+    if(hasDebt&&promo) priority=name+', your promo rate ends'+(promoEndLabel?' '+promoEndLabel:' soon')+'. Clear the balance before it does.'+(promoTarget?' That is about '+fmt(promoTarget)+' a month.':'');
+    else if(hasDebt&&aprUnknown) priority=name+', we do not know your rate yet. Find it today — it decides every move after this.';
+    else if(hasDebt&&highApr) priority=name+', at '+apr+'% your card costs you about '+fmt(monthlyInterest)+' a month in interest. That is the bleed we stop first.';
+    else if(hasDebt&&badCredit) priority=name+', your credit and debt are both bleeding. We stop the bleeding first.';
     else if(hasDebt) priority=name+', your highest-rate card is costing you money every single day. Today we fight back.';
     else if(tight) priority=name+', your margin is thin. One cut today creates breathing room for everything else.';
     else priority=name+', you want to '+goal.toLowerCase()+'. Today we build the first step of that road.';
@@ -614,6 +716,15 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
       actions.push('Go to phone Settings. Remove Apple Pay or Google Pay access from every credit card. Debit only from this point. 3 minutes.');
       actions.push('Set a reminder for tomorrow at 8am. Label it "Handled."');
     }
+    // v2.8.1: APR-driven Day 1 framing. These lead the day — the plan is capped
+    // at three actions below, so anything pushed onto the end would be cut.
+    if(hasDebt&&aprUnknown){
+      actions.unshift('Open your card app or your last paper statement. Find your APR. Write it down. Come back and enter it. No app or statement? Call the number on the back of the card and ask for your purchase APR.');
+    }else if(hasDebt&&promo&&promoTarget){
+      actions.unshift('Put '+fmt(promoTarget)+' toward the card this month. That clears it before the promo ends'+(promoEndLabel?' in '+promoEndLabel:'')+'.');
+    }else if(hasDebt&&highApr){
+      actions.unshift('Make one extra payment today. At '+apr+'% you are paying about '+fmt(monthlyInterest)+' a month in interest.');
+    }
   }else if(adaptive==='escalate'){
     // Did it yesterday with confidence — push harder
     if(energy==='low'){
@@ -631,7 +742,7 @@ function generatePlan(profile,dayNum,isDay1,energy,completed,avoided,blocked,ada
     }else{
       if(hasDebt){
         actions.push('Call your highest-rate card right now. Ask for a rate cut. Script: "I always pay on time. I want a lower rate or I will transfer the balance."');
-        actions.push('Make an extra payment on your highest-rate card today. Even $50. Every dollar stops earning interest against you.');
+        actions.push('Make an extra payment on your highest-rate card today. Even $50. '+(promo?'Clear it before the promo ends.':(apr!==null?'At '+apr+'%, every dollar stops costing you.':'Every dollar stops earning interest against you.')));
         actions.push('Set up automatic payments on all cards. Take human error out of it. Do it now.');
       }else{
         actions.push('Open your bank app. Set up an automatic transfer to a dedicated savings account — name it after your goal.');
@@ -769,16 +880,75 @@ function buildProfile(a){
   var surplus=th-oblig-400;
   var goal=a.goal||'Get control of my money';
   var stress=a.blocker||'';
-  var credit='';
-  if(th===0) credit='Income needed first';
-  else if(cd>th*6) credit='Under 580 - needs work';
-  else if(cd>th*3) credit='580-669 - fair';
-  else if(cd>0) credit='670-739 - good';
-  else credit='740+ - great';
+  // v2.8.1: the credit range used to be inferred from the debt-to-income ratio
+  // and presented as fact. It is now only stated when the user tells us.
+  var csRaw=parseInt(String(a.creditscore||'').replace(/[^0-9]/g,''))||0;
+  var creditScore=(csRaw>=300&&csRaw<=850)?csRaw:null;
+  var credit=creditScore?scoreBand(creditScore):'Not provided';
+  var aprRaw=parseFloat(String(a.apr||'').replace(/[^0-9.]/g,''));
+  var aprPromo=!!a.aprPromo;
+  var aprUnknown=!!a.aprUnknown;
+  var apr=(!isNaN(aprRaw)&&aprRaw>=0&&aprRaw<=40)?aprRaw:null;
+  if(aprPromo) apr=0;
+  if(aprUnknown) apr=null;
   // v2.7: lightweight behavior inference from blocker text. Default AVOIDER.
   // User-overridable via setBehavior() from dashboard badge.
   var behavior=detectBehaviorState(a.blocker||'');
-  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus,behavior:behavior};
+  return{name:a.name||'Friend',goal:goal,stress:stress,credit:credit,timeline:'I need help NOW',savings:a.savings||'$0',th:th,ch:ch,sv:sv,mg:mg,cd:cd,minCard:minCard,liquid:liquid,oblig:oblig,surplus:surplus,behavior:behavior,
+    apr:apr,aprPromo:aprPromo,aprPromoEnd:(a.aprPromoEnd||null),aprUnknown:aprUnknown,creditScore:creditScore};
+}
+
+// v2.8.1 ── APR + score helpers ───────────────────────────────────────────
+function scoreBand(n){
+  if(n<580) return 'Under 580 - needs work';
+  if(n<670) return '580-669 - fair';
+  if(n<740) return '670-739 - good';
+  return '740+ - great';
+}
+var MONTH_NAMES=['January','February','March','April','May','June','July','August','September','October','November','December'];
+function monthsUntil(ym){
+  if(!ym) return null;
+  var pr=String(ym).split('-'),y=parseInt(pr[0]),m=parseInt(pr[1]);
+  if(!y||!m||m<1||m>12) return null;
+  var now=new Date();
+  var n=(y-now.getFullYear())*12+(m-(now.getMonth()+1));
+  return n>0?n:1;
+}
+function promoLabel(ym){
+  if(!ym) return null;
+  var pr=String(ym).split('-'),y=parseInt(pr[0]),m=parseInt(pr[1]);
+  if(!y||!m||m<1||m>12) return null;
+  return MONTH_NAMES[m-1]+' '+y;
+}
+// v2.8.1: score-dependent advice. Conditional wording when we do not know.
+function btAdvice(p){
+  if(!p||(p.cd||0)<=0) return '';
+  if(p.aprPromo) return 'You are on a promo rate. Clear the balance before it ends — a transfer is not the move right now.';
+  var cs=(typeof p.creditScore==='number')?p.creditScore:null;
+  if(cs===null) return 'If your score is 670+, a balance transfer may cut your interest. Add your score in Update My Numbers and we will tell you for sure.';
+  if(cs>=670) return 'Your score is '+cs+'. A balance transfer card could cut your interest — worth one look.';
+  return 'At '+cs+', a balance transfer likely will not approve yet. The rate-cut call is your better move.';
+}
+// v2.8.1: not everyone has a card app. Three routes to the same number.
+function aprHelpHTML(){
+  var row=function(label,body){
+    return '<div style="margin-bottom:12px">'+
+      '<div style="font-size:10px;font-weight:800;letter-spacing:1.2px;color:var(--gold);margin-bottom:4px">'+label+'</div>'+
+      '<div style="font-size:12px;color:var(--text);line-height:1.7">'+body+'</div></div>';
+  };
+  return '<div style="background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:14px;margin-top:10px;text-align:left">'+
+    row('IN YOUR CARD APP','Open the card. Tap Statements, or Account Details. Look for &ldquo;APR&rdquo;, &ldquo;Interest Rate&rdquo;, or &ldquo;Purchase APR&rdquo;. If several are listed, use the purchase rate.')+
+    row('ON A PAPER STATEMENT','Turn to the last page. Find the box titled &ldquo;Interest Charge Calculation.&rdquo; Your purchase APR sits in the left column.')+
+    row('NO APP, NO STATEMENT','Call the number on the back of the card. Say: &ldquo;What is the purchase APR on my account?&rdquo; Two minutes.')+
+    '<div style="font-size:11px;color:var(--muted);line-height:1.6">Cannot find it today? Tap &ldquo;I don&rsquo;t know&rdquo; &mdash; finding it becomes your first step.</div>'+
+    '</div>';
+}
+function toggleAprHelp(){S.aprHelp=!S.aprHelp;render();}
+function aprLabel(p){
+  if(!p) return 'Not provided';
+  if(p.aprPromo){var lb=promoLabel(p.aprPromoEnd);return '0% promo'+(lb?' until '+lb:'');}
+  if(typeof p.apr==='number') return p.apr+'%';
+  return 'Not provided';
 }
 
 function fmt(v){return'$'+Math.round(Math.max(0,parseInt(v)||0)).toLocaleString();}
@@ -804,16 +974,40 @@ function render(){
   if(S.screen==='dashboard'){app.innerHTML=renderDashboard();return;}
 }
 
+// v2.8.1 FIX: the instructions were iOS-only. Detect the platform, and hide
+// them entirely when the app is already installed and running standalone.
+function isStandalone(){
+  try{
+    if(window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches) return true;
+    if(window.navigator&&window.navigator.standalone===true) return true;
+  }catch(e){}
+  return false;
+}
+function platformKind(){
+  var ua=(navigator.userAgent||'');
+  if(/iPad|iPhone|iPod/.test(ua)) return 'ios';
+  if(/Macintosh/.test(ua)&&navigator.maxTouchPoints>1) return 'ios';
+  if(/Android/.test(ua)) return 'android';
+  return 'other';
+}
+function installHintHTML(){
+  if(isStandalone()) return '';
+  var k=platformKind(),body;
+  if(k==='ios') body='Tap the Share button in your browser then "Add to Home Screen" for the full experience.';
+  else if(k==='android') body='Tap the &#8942; menu (top right) &rarr; Add to Home screen (or Install app).';
+  else body='Open your browser menu and choose "Add to Home screen" or "Install app" for the full experience.';
+  return '<div class="install-banner">\uD83D\uDCF2 <strong>Install this app:</strong> '+body+'</div>';
+}
+
 function renderLanding(){
-  var isInstalled=false;
-  try{isInstalled=window.matchMedia&&window.matchMedia('(display-mode: standalone)').matches;}catch(e){}
+  var isInstalled=isStandalone();
   return '<div class="screen"><div class="screen-center">'+
     '<div style="font-size:68px;margin-bottom:16px">🌴</div>'+
     '<div style="font-family:Georgia,serif;font-size:30px;font-weight:900;color:var(--gold);margin-bottom:8px">Handled</div>'+
     '<div style="font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Powered by NextStep</div>'+
     '<div style="font-size:15px;color:var(--text);font-weight:700;margin-bottom:8px">Your plan adjusts daily until you win.</div>'+
     '<div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:36px;max-width:300px">Answer 4 questions. Have a quick conversation. Get your personalized plan. Takes 3 minutes.</div>'+
-    (!isInstalled?'<div class="install-banner">📲 <strong>Install this app:</strong> Tap the Share button in your browser then "Add to Home Screen" for the full experience.</div>':'')+
+    installHintHTML()+
     '<button class="btn btn-gold" onclick="startOnboarding()">Build My Plan</button>'+
     '<div style="color:var(--muted);font-size:11px;margin-top:8px;margin-bottom:24px">Takes 2 minutes. Stays on your device.</div>'+
     '<a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" class="bmc-btn">☕ Buy me a coffee</a>'+
@@ -848,21 +1042,51 @@ function renderOnboarding(){
 }
 
 function renderChat(){
-  var dstep=S.diagStep||0;
-  var q=DIAG[dstep];
+  var DL=diagList();
+  var dstep=Math.min(S.diagStep||0,DL.length-1);
+  var q=DL[dstep];
   var val=S.answers[q.id]||'';
-  var pct=Math.round(((QUESTIONS.length+dstep+1)/(QUESTIONS.length+DIAG.length+1))*100);
+  var pct=Math.round(((QUESTIONS.length+dstep+1)/(QUESTIONS.length+DL.length+1))*100);
   var html='<div class="screen">'+
     '<div style="padding-top:52px;margin-bottom:36px">'+
     '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px">'+
-    '<span>Step '+(QUESTIONS.length+dstep+1)+' of '+(QUESTIONS.length+DIAG.length)+' &mdash; Your situation</span>'+
+    '<span>Step '+(QUESTIONS.length+dstep+1)+' of '+(QUESTIONS.length+DL.length)+' &mdash; Your situation</span>'+
     '<span style="color:var(--gold);font-weight:700">'+pct+'%</span></div>'+
     '<div class="track-wrap" style="height:4px"><div class="track-fill" style="height:4px;width:'+pct+'%;background:var(--gold)"></div></div>'+
     '</div>'+
     '<div style="flex:1;display:flex;flex-direction:column;justify-content:center">'+
     '<div style="font-size:52px;margin-bottom:14px;text-align:center">'+q.e+'</div>'+
     '<div style="font-family:Georgia,serif;font-size:20px;font-weight:900;text-align:center;line-height:1.35;margin-bottom:28px">'+q.q+'</div>';
-  if(q.type==='choice'){
+  if(q.type==='apr'){
+    // v2.8.1: asked, not assumed. Three ways out: a rate, a promo, or I don't know.
+    if(S.aprPromoPicking){
+      html+='<div style="font-size:14px;color:var(--muted);text-align:center;margin-bottom:14px">When does the promo end?</div>'+
+        '<input id="diaginput" type="month" value="'+(S.answers.aprPromoEnd||'')+'" oninput="S.answers.aprPromoEnd=this.value" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">'+
+        '<button class="btn btn-gold" style="margin-top:12px" onclick="confirmPromo()">Next</button>'+
+        '<button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="cancelPromo()">Not a promo after all</button>';
+    }else{
+      html+='<input id="diaginput" type="tel" inputmode="decimal" placeholder="'+q.ph+'" value="'+val+'" oninput="S.answers.apr=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
+      if(val!=='') html+='<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">'+val+'%</div>';
+      html+='<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">Next</button>'+
+        '<button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="pickPromo()">It\'s a 0% promo.</button>'+
+        '<button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="pickAprUnknown()">I don\'t know.</button>'+
+        '<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:10px">0 to 40%. Skip it and we will ask again later.</div>'+
+        '<button style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;padding:10px 0;cursor:pointer;font-family:inherit;text-align:center;width:100%" onclick="toggleAprHelp()">'+(S.aprHelp?'Hide':'Where do I find this?')+'</button>'+
+        (S.aprHelp?aprHelpHTML():'');
+    }
+  }else if(q.type==='score'){
+    // v2.8.1: optional. Skipping states the assumption out loud.
+    if(S.scoreSkipNote){
+      html+='<div style="font-size:14px;color:var(--text);line-height:1.8;text-align:center;background:var(--surf);border:1px solid var(--border);border-radius:12px;padding:16px">'+
+        'No problem. We&rsquo;ll assume you&rsquo;re in the middle range (about 670&ndash;739) until you tell us. Anything that depends on your score will say so. You can add it anytime in MONEY.'+
+        '</div>'+
+        '<button class="btn btn-gold" style="margin-top:12px" onclick="continueAfterScoreSkip()">Got it &mdash; continue</button>';
+    }else{
+      html+='<input id="diaginput" type="tel" inputmode="numeric" placeholder="'+q.ph+'" value="'+val+'" oninput="S.answers.creditscore=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">'+
+        '<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">Next</button>'+
+        '<button class="btn btn-ghost" style="margin-top:8px;font-size:13px" onclick="skipScore()">I don\'t know / skip.</button>';
+    }
+  }else if(q.type==='choice'){
     html+='<div style="display:flex;flex-direction:column;gap:8px">';
     q.opts.forEach(function(opt){
       var sel=val===opt;
@@ -872,7 +1096,7 @@ function renderChat(){
   }else{
     html+='<input id="diaginput" type="'+(q.type==='dollar'?'tel':'text')+'" inputmode="'+(q.type==='dollar'?'numeric':'text')+'" placeholder="'+q.ph+'" value="'+val+'" oninput="S.answers[\''+q.id+'\']=this.value" onkeydown="if(event.key===\'Enter\')nextDiag()" style="font-size:18px;text-align:center;border:2px solid var(--gold);border-radius:12px;padding:16px;background:var(--surf)">';
     if(q.type==='dollar'&&val) html+='<div style="text-align:center;color:var(--gold);font-weight:700;font-size:18px;margin-top:8px">$'+parseInt(val.replace(/[^0-9]/g,'')).toLocaleString()+'</div>';
-    html+='<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">'+(dstep<DIAG.length-1?'Next':'Build My Plan')+'</button>';
+    html+='<button class="btn btn-gold" style="margin-top:12px" onclick="nextDiag()">'+(dstep<DL.length-1?'Next':'Build My Plan')+'</button>';
     if(q.type==='dollar') html+='<div style="color:var(--muted);font-size:11px;text-align:center;margin-top:8px">Tap Next to skip with $0</div>';
   }
   html+='</div>';
@@ -1083,7 +1307,7 @@ function renderDashboard(){
     '<div><div style="font-family:Georgia,serif;font-size:18px;font-weight:900">Handled</div>'+
     '<div style="font-size:10px;color:var(--muted)">'+p.name+' &middot; Day '+S.day+' &middot; '+p.goal+'</div></div>'+
     '<div style="display:flex;align-items:center;gap:10px">'+
-    '<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>'+
+    (IS_DEV?'<button onclick="simulateNextDay()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Next Day →</button>':'')+
     '<button onclick="resetAll()" style="background:none;border:1px solid var(--border);border-radius:8px;padding:4px 10px;font-size:10px;color:var(--muted);cursor:pointer;font-family:inherit">Reset</button>'+
     '<div style="text-align:right"><div style="font-size:20px;font-weight:900;color:var(--gold)">'+pct+'%</div>'+
     '<div style="font-size:9px;color:var(--muted)">complete</div></div>'+
@@ -1105,6 +1329,11 @@ function renderDashboard(){
   else if(S.tab==='feedback') html+=renderFeedback();
   else if(S.tab==='protect') html+=renderProtect();
 
+  // v2.8.1: where progress lives, and what erases it.
+  html+='<div style="text-align:center;font-size:10px;color:var(--muted);line-height:1.8;margin-top:20px">'+
+    'Progress saved on this phone. You can close the tab.<br>'+
+    'Clearing browser data or using private mode will erase it.'+
+    '</div>';
   html+='</div><div class="footer">Not financial advice &middot; Powered by NextStep &middot; <a href="https://www.buymeacoffee.com/mynextstepapp" target="_blank" style="color:var(--gold);text-decoration:none;">☕ Support Handled</a></div></div>';
   return html;
 }
@@ -1112,7 +1341,7 @@ function renderDashboard(){
 function renderToday(){
   var isDay1=S.day===1;
   var isCurrentDay=S.viewDay===S.day;
-  var streak=S.day-1;
+  var streak=realStreak();
   var plan=S.plans[S.viewDay];
   var html='';
 
@@ -1147,11 +1376,12 @@ function renderToday(){
 
   if(S.day>1){
     html+='<div style="display:flex;justify-content:center;gap:4px;margin-top:10px;flex-wrap:wrap">';
-    for(var i=1;i<Math.min(S.day,15);i++) html+='<div class="dot'+(S.plans[i]?' done':'')+'" onclick="S.viewDay='+i+';render()"></div>';
+    for(var i=1;i<=Math.min(S.day,14);i++) html+='<div class="dot'+(S.plans[i]?' done':'')+'" onclick="S.viewDay='+i+';render()"></div>';
     html+='</div>';
   }
 
-  if(streak>0){
+  // v2.8.1: current day only. A past day must not reuse today's message.
+  if(streak>0&&isCurrentDay){
     var streakMsg='';var streakColor='var(--gold)';
     if(streak>=10){streakMsg=streak+' days. You are in the top 1% of people who start this.';streakColor='var(--green)';}
     else if(streak>=7){streakMsg=streak+' day streak. That is discipline, not luck.';streakColor='var(--green)';}
@@ -1310,7 +1540,7 @@ function renderToday(){
       html+='<div style="font-size:14px;color:var(--text);line-height:1.9;white-space:pre-wrap">'+plan+'</div>';
     }
 
-    var dayKey='day'+(S.day-1);
+    var dayKey='day'+S.day;
     if(!S.dayChecked) S.dayChecked={};
     if(!S.dayChecked[dayKey]) S.dayChecked[dayKey]={};
     html+='<div style="height:1px;background:var(--green-b);margin:14px 0"></div>';
@@ -1430,8 +1660,20 @@ function renderMoney(){
   html+='<div class="card"><div style="font-weight:800;font-size:14px;margin-bottom:10px">Credit Card Debt</div>'+
     '<div class="row"><span class="row-label">Total balance</span><span style="font-weight:700;color:var(--red)">'+fmt(p.cd)+'</span></div>'+
     '<div class="row"><span class="row-label">Min. payment</span><span style="font-weight:700;color:var(--orange)">'+fmt(p.minCard)+'</span></div>'+
-    '<div class="row"><span class="row-label">Credit range</span><span style="font-weight:700">'+(p.credit||'Unknown')+'</span></div>'+
-    '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">Every surplus dollar attacks the highest-rate card first. No exceptions.</div></div>';
+    '<div class="row"><span class="row-label">APR</span><span style="font-weight:700;color:'+((typeof p.apr==='number'||p.aprPromo)?'var(--text)':'var(--muted)')+'">'+aprLabel(p)+'</span></div>'+
+    '<div class="row"><span class="row-label">Credit score</span><span style="font-weight:700;color:'+(p.creditScore?'var(--text)':'var(--muted)')+'">'+(p.creditScore?p.creditScore+' ('+scoreBand(p.creditScore)+')':'Not provided')+'</span></div>'+
+    '<div style="font-size:11px;color:var(--muted);margin-top:8px;line-height:1.6">Every surplus dollar attacks the highest-rate card first. No exceptions.</div>'+
+    (btAdvice(p)?'<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6">'+btAdvice(p)+'</div>':'')+'</div>';
+  // v2.8.1: if we still do not know the rate, ask for it here instead of guessing.
+  if((p.cd||0)>0&&typeof p.apr!=='number'&&!p.aprPromo){
+    html+='<div class="card" style="border:1px solid var(--gold-b);background:var(--gold-dim)">'+
+      '<div style="font-weight:800;font-size:14px;color:var(--gold);margin-bottom:6px">Add your APR</div>'+
+      '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">Open your card app and find the rate. Your plan sharpens the moment you enter it.</div>'+
+      '<input type="tel" inputmode="decimal" id="m-apr" placeholder="e.g. 24">'+
+      '<button class="btn btn-gold" style="margin-top:10px;padding:12px;font-size:14px" onclick="saveApr()">Save APR</button>'+
+      '<button style="background:none;border:none;color:var(--gold);font-size:12px;font-weight:700;padding:10px 0 0;cursor:pointer;font-family:inherit;width:100%;text-align:center" onclick="toggleAprHelp()">'+(S.aprHelp?'Hide':'Where do I find this?')+'</button>'+
+      (S.aprHelp?aprHelpHTML():'')+'</div>';
+  }
   if(p.th>0&&p.surplus>0){
     var debtExtra=Math.round(p.surplus*0.5);
     var savings=Math.round(p.surplus*0.3);
@@ -1450,7 +1692,9 @@ function renderMoney(){
       '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Checking balance right now</div><input type="tel" inputmode="numeric" id="u-checking" placeholder="e.g. 2500" value="'+(p.ch||'')+'"></div>'+
       '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Total credit card debt</div><input type="tel" inputmode="numeric" id="u-debt" placeholder="e.g. 8000" value="'+(p.cd||'')+'"></div>'+
       '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly take-home pay</div><input type="tel" inputmode="numeric" id="u-income" placeholder="e.g. 5000" value="'+(p.th||'')+'"></div>'+
-      '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div><input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1500" value="'+(p.mg||'')+'"></div>'+
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Monthly rent / biggest fixed expense</div><input type="tel" inputmode="numeric" id="u-rent" placeholder="e.g. 1500" value="'+(p.mg||'')+'"></div>'+
+      '<div style="margin-bottom:10px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Card APR % (0 to 40, leave blank to keep)</div><input type="tel" inputmode="decimal" id="u-apr" placeholder="e.g. 24" value="'+((typeof p.apr==='number'&&!p.aprPromo)?p.apr:'')+'"></div>'+
+      '<div style="margin-bottom:14px"><div style="font-size:11px;color:var(--muted);margin-bottom:4px">Credit score (300 to 850, optional)</div><input type="tel" inputmode="numeric" id="u-score" placeholder="e.g. 690" value="'+(p.creditScore||'')+'"></div>'+
       '<div style="display:flex;gap:8px">'+
       '<button class="btn btn-gold" style="flex:2;padding:12px;font-size:14px" onclick="saveUpdatedNumbers()">Save Numbers</button>'+
       '<button class="btn btn-ghost" style="flex:1;padding:12px;font-size:13px" onclick="S.editingMoney=false;render()">Cancel</button>'+
@@ -1618,19 +1862,58 @@ function prevStep(){
   if(S.step>0){S.step--;render();}
 }
 
-function pickDiag(opt){S.answers[DIAG[S.diagStep].id]=opt;setTimeout(function(){nextDiag();},120);}
+// v2.8.1: the diagnostic flow is now the list of questions that apply to this
+// user. diagStep indexes THAT list, so skipped questions never leave a gap.
+function diagList(){
+  return DIAG.filter(function(q){ return !q.when||q.when(S.answers); });
+}
+function diagQ(){var L=diagList();return L[Math.min(S.diagStep,L.length-1)];}
+
+function pickDiag(opt){S.answers[diagQ().id]=opt;setTimeout(function(){nextDiag();},120);}
 
 function nextDiag(){
-  var q=DIAG[S.diagStep];
+  var L=diagList();
+  var q=L[Math.min(S.diagStep,L.length-1)];
   var val=S.answers[q.id]||'';
   if(q.id==='goal'&&!val){showNudge('diaginput','Please pick your main goal.');return;}
+  // v2.8.1: APR — optional, clamped 0-40. Typing a rate clears promo/unknown.
+  if(q.id==='apr'){
+    if(val!==''){
+      var an=parseFloat(String(val).replace(/[^0-9.]/g,''));
+      if(isNaN(an)){S.answers.apr='';}
+      else{
+        if(an<0) an=0; if(an>40) an=40;
+        S.answers.apr=String(an);
+        if(!S.answers.aprPromo) S.answers.aprUnknown=false;
+      }
+    }
+    S.aprPromoPicking=false;
+  }
+  // v2.8.1: credit score — optional, but a typed value must be in range.
+  if(q.id==='creditscore'&&val!==''){
+    var sn=parseInt(String(val).replace(/[^0-9]/g,''))||0;
+    if(sn<300||sn>850){showNudge('diaginput','Enter a score between 300 and 850, or skip.');return;}
+    S.answers.creditscore=String(sn);
+  }
   if(q.id==='rent'&&(!val||parseInt(val.replace(/[^0-9]/g,''))===0)){showNudge('diaginput','Enter your monthly rent or biggest bill.');return;}
   if(!val) S.answers[q.id]='';
-  if(S.diagStep<DIAG.length-1){S.diagStep++;render();setTimeout(function(){var el=document.getElementById('diaginput');if(el)el.focus();},50);}
+  if(S.diagStep<L.length-1){S.diagStep++;render();setTimeout(function(){var el=document.getElementById('diaginput');if(el)el.focus();},50);}
   else{S.screen='notif';render();}
 }
 
+// v2.8.1 APR side-doors. Neither blocks onboarding.
+function pickPromo(){S.answers.aprPromo=true;S.answers.aprUnknown=false;S.answers.apr='0';S.aprPromoPicking=true;render();}
+function cancelPromo(){S.answers.aprPromo=false;S.answers.aprPromoEnd='';S.answers.apr='';S.aprPromoPicking=false;render();}
+function confirmPromo(){S.aprPromoPicking=false;nextDiag();}
+function pickAprUnknown(){S.answers.aprUnknown=true;S.answers.aprPromo=false;S.answers.apr='';S.answers.aprPromoEnd='';S.aprPromoPicking=false;nextDiag();}
+
+// v2.8.1 credit score skip. Say what we assume, then move on.
+function skipScore(){S.answers.creditscore='';S.scoreSkipNote=true;render();}
+function continueAfterScoreSkip(){S.scoreSkipNote=false;nextDiag();}
+
 function prevDiag(){
+  if(S.aprPromoPicking){S.aprPromoPicking=false;render();return;}
+  if(S.scoreSkipNote){S.scoreSkipNote=false;render();return;}
   if(S.diagStep>0){S.diagStep--;render();}
   else{S.screen='onboarding';S.step=QUESTIONS.length-1;render();}
 }
@@ -1648,6 +1931,7 @@ function finishNotif(){
   if(S.day===1&&!S.plans[1]){
     var plan=generatePlan(S.profile,1,true,'medium','','','','maintain');
     S.plans[1]=plan;S.viewDay=1;
+    stampDay(1);
     S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
   }
   trackEvent('onboarding_complete',{goal:S.profile.goal});
@@ -1660,7 +1944,17 @@ function setEnergy(e){S.energy=e;render();}
 
 // v2.0 — updated genPlan with adaptive level
 function genPlan(){
-  if(S.day===1&&S.plans[1]){S.day=2;S.viewDay=2;S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;save();render();return;}
+  // v2.8.1 FIX: the old first line here assumed "a Day 1 plan exists, so the
+  // user must be back for Day 2" and advanced on the tap. Combined with the
+  // advance at the end of this function it could jump two days in one sitting.
+  if(S.plans[S.day]){
+    S.viewDay=S.day;
+    if(!canAdvanceDay()){render();return;}   // same day: show the existing plan
+    S.day=S.day+1;
+    if(!S.dayDates[S.day]) S.dayDates[S.day]=todayStr();
+    S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
+    saveDayMeta();save();render();return;
+  }
   var isDay1=S.day===1;
   if(!isDay1&&!S.energy){alert('Please select your energy level first.');return;}
   var energy=S.energy||'medium';
@@ -1670,11 +1964,12 @@ function genPlan(){
   S.plans[S.day]=plan;
   trackEvent('plan_generated',{day:S.day,adaptive_level:adaptive});
   if(S.day===2) trackEvent('day2_return',{});
-  var nextDay=S.day+1;
-  S.day=nextDay;S.viewDay=nextDay;
+  // v2.8.1: the day no longer advances here. S.day now means "the day the user
+  // is on", and plans[S.day] is that day's plan. Tomorrow's date advances it.
+  stampDay(S.day);
+  S.viewDay=S.day;
   S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
   scheduleReminder();save();
-  S.viewDay=S.day-1;
   render();
 }
 
@@ -1753,7 +2048,7 @@ function coachFinish(){
   S.coachOpen=false;
   try{if(window.speechSynthesis)window.speechSynthesis.cancel();}catch(e){}
   trackEvent('coach_finished',{node:S.coachNode,day:S.day});
-  applyDayCheck('day'+(S.day-1),'s2');
+  applyDayCheck('day'+S.day,'s2');
 }
 
 // v2.8 — own-step valve. If our generated step is wrong for their life, they
@@ -1771,7 +2066,7 @@ function saveCustomStep(){
 }
 function clearCustomStep(){S.customStep='';save();render();}
 function doneCustomStep(){
-  S.attestPending={dayKey:'day'+(S.day-1),stepId:'custom',label:S.customStep};
+  S.attestPending={dayKey:'day'+S.day,stepId:'custom',label:S.customStep};
   render();
 }
 
@@ -1807,7 +2102,7 @@ function cancelEdit(){S.editing=false;render();}
 function dismissCompletion(){
   var confidence=assessConfidence(S.completionInput);
   S.completionConfidence=confidence;
-  var currentDay=S.day-1;
+  var currentDay=S.day;
   if(currentDay>=1&&S.plans[currentDay]&&typeof S.plans[currentDay]==='object'){
     S.plans[currentDay].confidence=confidence;
   }
@@ -1889,8 +2184,7 @@ function fallbackCopy(text){
 
 function resetPlan(){
   if(!confirm('Reset this day? You will need to generate a new plan.')) return;
-  var d=S.day-1;
-  delete S.plans[d];S.day=d;S.viewDay=d;
+  delete S.plans[S.day];S.viewDay=S.day;
   save();render();
 }
 
@@ -1908,17 +2202,47 @@ function saveUpdatedNumbers(){
   var oblig=mg+minCard+500;
   var surplus=th-oblig-400;
   var liquid=ch+(S.profile.sv||0);
+  // v2.8.1: APR and credit score are optional here. Blank leaves them as they were.
+  var aprEl=document.getElementById('u-apr');
+  var scEl=document.getElementById('u-score');
+  var aprVal=aprEl?aprEl.value.trim():'';
+  var scVal=scEl?scEl.value.trim():'';
+  if(aprVal!==''){
+    var an=parseFloat(aprVal.replace(/[^0-9.]/g,''));
+    if(isNaN(an)||an<0||an>40){alert('APR must be between 0 and 40.');return;}
+  }
+  if(scVal!==''){
+    var sn=parseInt(scVal.replace(/[^0-9]/g,''))||0;
+    if(sn<300||sn>850){alert('Credit score must be between 300 and 850.');return;}
+  }
   S.profile.ch=ch;S.profile.cd=cd;S.profile.th=th;S.profile.mg=mg;
   S.profile.minCard=minCard;S.profile.oblig=oblig;S.profile.surplus=surplus;S.profile.liquid=liquid;
+  if(aprVal!==''){S.profile.apr=parseFloat(aprVal.replace(/[^0-9.]/g,''));S.profile.aprUnknown=false;S.profile.aprPromo=false;S.profile.aprPromoEnd=null;}
+  if(scVal!==''){S.profile.creditScore=parseInt(scVal.replace(/[^0-9]/g,''))||null;S.profile.credit=scoreBand(S.profile.creditScore);}
   S.editingMoney=false;save();render();
   alert('Numbers updated!');
 }
 
-function simulateNextDay(){
-  if(!S.plans[S.day-1]&&S.day>1){alert("Generate today's plan first.");return;}
-  S.day=S.day+1;S.viewDay=S.day;
-  S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
+// v2.8.1: quick APR save from the prompt card.
+function saveApr(){
+  var el=document.getElementById('m-apr');
+  var v=el?parseFloat(String(el.value).replace(/[^0-9.]/g,'')):NaN;
+  if(isNaN(v)||v<0||v>40){alert('Enter a rate between 0 and 40.');return;}
+  S.profile.apr=v;S.profile.aprUnknown=false;S.profile.aprPromo=false;S.profile.aprPromoEnd=null;
+  trackEvent('apr_entered_money_tab',{apr:v});
   save();render();
+}
+
+function simulateNextDay(){
+  if(!S.plans[S.day]){alert("Generate today's plan first.");return;}
+  // v2.8.1: dev tool. Backdates the current day so the normal calendar gate
+  // lets it advance — it does not bypass the gate.
+  var y=new Date();y.setDate(y.getDate()-1);
+  S.dayDates[S.day]=dateStr(y);
+  S.day=S.day+1;S.viewDay=S.day;
+  S.dayDates[S.day]=todayStr();
+  S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
+  saveDayMeta();save();render();
 }
 
 function resetAll(){
@@ -2819,6 +3143,7 @@ function loadDevMode(){
   S.profile=buildProfile({name:'Dev',takehome:'5000',carddebt:'8000',checking:'1200',goal:'Get out of debt',blocker:'Testing dev mode',savings:'$500 to $2,000',rent:'1500'});
   S.day=1;S.viewDay=1;
   S.plans[1]=generatePlan(S.profile,1,true,'medium','','','','maintain');
+  stampDay(1);
   S.screen='dashboard';S.tab='today';
   S.todayAnswers={completed:'',avoided:'',blocked:''};S.energy=null;
   render();
